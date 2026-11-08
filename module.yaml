@@ -1,0 +1,52 @@
+id: groups
+version: 0.1.0
+kind: module
+api: 1
+critical: false
+requires:
+  - id: platform
+    api: 1
+optional:
+  - id: profiles
+    api: 1
+  - id: verification
+    api: 1
+  - id: moderation
+    api: 1
+  - id: qq-binding
+    api: 1
+capabilities:
+  - groups.read
+  - groups.manage
+  - groups.configure
+  - groups.messages.read
+  - groups.messages.send
+  - groups.messages.recall
+scenario_tests:
+  QQ-01:
+    - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
+  QQ-02:
+    - integration_test.go#TestPasswordDoesNotGrantStudentEligibilityAndBlacklistScope
+  QQ-03:
+    - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
+  QQ-04:
+    - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
+  QQ-05:
+    - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
+  QQ-06:
+    - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
+  QQ-07:
+    - integration_test.go#TestRulesCardsReportAndBatchPreview
+  QQ-08:
+    - integration_test.go#TestRulesCardsReportAndBatchPreview
+  QQ-09:
+    - integration_test.go#TestAISuggestionsRequireEnabledActionsAndCurrentAuthorization
+  QQ-10:
+    - integration_test.go#TestRetentionInboxRollbackAndNoRecallViewAudit
+    - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
+  BE-01:
+    - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
+  BE-02:
+    - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
+  BE-03:
+    - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation

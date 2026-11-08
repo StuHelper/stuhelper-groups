@@ -1,0 +1,1298 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "StuHelper Groups",
+    "version": "0.1.0",
+    "description": "Server-authorized QQ group services. UTC RFC3339 times, durations in seconds. Bot ingress is a trusted server Go interface."
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "security": [
+    {
+      "bearer": []
+    }
+  ],
+  "paths": {
+    "/v1/groups/{group}": {
+      "put": {
+        "operationId": "configureGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current result. Pending is not executed; unknown requires lookup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Config"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Config"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "getGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current result. Pending is not executed; unknown requires lookup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Config"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/groups/{group}/commands": {
+      "post": {
+        "operationId": "command",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current result. Pending is not executed; unknown requires lookup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Command"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/groups/{group}/{collection}": {
+      "get": {
+        "operationId": "listRecords",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          {
+            "in": "path",
+            "name": "collection",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "members",
+                "actions",
+                "reports",
+                "hits",
+                "messages",
+                "subscriptions",
+                "blacklist",
+                "warnings",
+                "watch",
+                "deliveries"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current result. Pending is not executed; unknown requires lookup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/groups/{group}/batch": {
+      "post": {
+        "operationId": "batch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current result. Pending is not executed; unknown requires lookup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Bulk"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/groups/blacklists": {
+      "post": {
+        "operationId": "blacklists",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current result. Pending is not executed; unknown requires lookup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlacklistInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/groups": {
+      "get": {
+        "operationId": "listGroups",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current result. Pending is not executed; unknown requires lookup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/groups/{group}/progress": {
+      "get": {
+        "operationId": "ownProgress",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current result. Pending is not executed; unknown requires lookup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Record"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "Config": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "school": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "before",
+              "muted",
+              "password"
+            ]
+          },
+          "require_student": {
+            "type": "boolean"
+          },
+          "accept_alumni": {
+            "type": "boolean"
+          },
+          "accept_temporary": {
+            "type": "boolean"
+          },
+          "grace_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "reminder_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "retention_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "password_hash": {
+            "type": "string",
+            "maxLength": 2048,
+            "writeOnly": true
+          },
+          "card_template": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "auto_card": {
+            "type": "boolean"
+          },
+          "dice_sides": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "mute_probability": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "mute_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "cooldown_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "pity": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "keywords": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          "repeat_threshold": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "auto_actions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "warn",
+                "recall",
+                "mute",
+                "kick",
+                "blacklist"
+              ]
+            }
+          },
+          "welcome": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "rules_template": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "check_card": {
+            "type": "boolean"
+          },
+          "remind_card": {
+            "type": "boolean"
+          },
+          "block_links": {
+            "type": "boolean"
+          },
+          "frequency_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "frequency_limit": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "warning_limit": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "school",
+          "mode",
+          "require_student",
+          "accept_alumni",
+          "accept_temporary",
+          "grace_seconds",
+          "reminder_seconds",
+          "retention_seconds",
+          "card_template",
+          "auto_card",
+          "dice_sides",
+          "mute_probability",
+          "mute_seconds",
+          "cooldown_seconds",
+          "pity",
+          "keywords",
+          "repeat_threshold",
+          "auto_actions",
+          "welcome",
+          "rules_template",
+          "check_card",
+          "remind_card",
+          "block_links",
+          "frequency_seconds",
+          "frequency_limit",
+          "warning_limit"
+        ]
+      },
+      "Command": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "apply",
+              "recheck",
+              "extend",
+              "exempt",
+              "password",
+              "warn",
+              "mute",
+              "unmute",
+              "kick",
+              "blacklist",
+              "unblacklist",
+              "send",
+              "forward",
+              "recall",
+              "card",
+              "dice",
+              "self_mute",
+              "report",
+              "analyze",
+              "preview",
+              "rule",
+              "subscribe",
+              "feedback",
+              "watch",
+              "ai_execute"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 8192
+          },
+          "seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "receiver": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "Result": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "state": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "action": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "value": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "detail": {
+            "type": "string",
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "id",
+          "state",
+          "action",
+          "value",
+          "detail"
+        ]
+      },
+      "Record": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Config"
+          },
+          {
+            "$ref": "#/components/schemas/Member"
+          },
+          {
+            "$ref": "#/components/schemas/Action"
+          },
+          {
+            "$ref": "#/components/schemas/Message"
+          },
+          {
+            "$ref": "#/components/schemas/Report"
+          },
+          {
+            "$ref": "#/components/schemas/Hit"
+          },
+          {
+            "$ref": "#/components/schemas/Subscription"
+          },
+          {
+            "$ref": "#/components/schemas/Blacklist"
+          },
+          {
+            "$ref": "#/components/schemas/Warnings"
+          },
+          {
+            "$ref": "#/components/schemas/Watch"
+          },
+          {
+            "$ref": "#/components/schemas/Delivery"
+          }
+        ]
+      },
+      "Page": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ]
+      },
+      "Problem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "Bulk": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "targets",
+          "command",
+          "preview"
+        ],
+        "properties": {
+          "targets": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          "command": {
+            "$ref": "#/components/schemas/Command"
+          },
+          "preview": {
+            "type": "boolean"
+          }
+        }
+      },
+      "BulkResult": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "target",
+                "result"
+              ],
+              "properties": {
+                "target": {
+                  "type": "string",
+                  "maxLength": 2048
+                },
+                "result": {
+                  "$ref": "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        }
+      },
+      "BlacklistInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "groups",
+          "target",
+          "reason",
+          "seconds",
+          "remove"
+        ],
+        "properties": {
+          "groups": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          "target": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "remove": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Member": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reminder": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "password": {
+            "type": "boolean"
+          },
+          "exempt": {
+            "type": "boolean"
+          },
+          "extended": {
+            "type": "boolean"
+          },
+          "failures": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "last_play": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "muted_until": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string"
+          },
+          "joined": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "owner",
+          "state",
+          "deadline",
+          "reminder",
+          "password",
+          "exempt",
+          "extended",
+          "failures",
+          "last_play",
+          "muted_until",
+          "joined"
+        ],
+        "additionalProperties": false
+      },
+      "Action": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "object",
+            "properties": {
+              "Issuer": {
+                "type": "string"
+              },
+              "Subject": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "Issuer",
+              "Subject"
+            ],
+            "additionalProperties": false
+          },
+          "capability": {
+            "type": "string"
+          },
+          "command": {
+            "$ref": "#/components/schemas/ActionCommand"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "executing",
+              "unknown",
+              "succeeded",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "result": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "group",
+          "actor",
+          "capability",
+          "command",
+          "state",
+          "result",
+          "created"
+        ],
+        "additionalProperties": false
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "recalled": {
+            "type": "boolean"
+          },
+          "expires": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "attachments": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "type": "string",
+              "maxLength": 128
+            },
+            "description": "Opaque media references. Backend proxy enforces current group access and the same expiry."
+          }
+        },
+        "required": [
+          "id",
+          "owner",
+          "body",
+          "recalled",
+          "expires",
+          "attachments"
+        ],
+        "additionalProperties": false
+      },
+      "Report": {
+        "type": "object",
+        "properties": {
+          "reporter": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "analysis": {
+            "type": "string"
+          },
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "feedback": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reporter",
+          "message",
+          "reason",
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "Hit": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "state": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "message",
+          "rules",
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "Subscription": {
+        "type": "object",
+        "properties": {
+          "receiver": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "actor": {
+            "type": "object",
+            "properties": {
+              "Issuer": {
+                "type": "string"
+              },
+              "Subject": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "Issuer",
+              "Subject"
+            ],
+            "additionalProperties": false
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "receiver",
+          "enabled",
+          "actor"
+        ],
+        "additionalProperties": false
+      },
+      "ActionCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "apply",
+              "recheck",
+              "extend",
+              "exempt",
+              "password",
+              "warn",
+              "mute",
+              "unmute",
+              "kick",
+              "blacklist",
+              "unblacklist",
+              "send",
+              "forward",
+              "recall",
+              "card",
+              "dice",
+              "self_mute",
+              "report",
+              "analyze",
+              "preview",
+              "rule",
+              "subscribe",
+              "feedback",
+              "watch",
+              "ai_execute",
+              "approve",
+              "remind",
+              "welcome"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 8192
+          },
+          "seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "receiver": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "Blacklist": {
+        "type": "object",
+        "properties": {
+          "Reason": {
+            "type": "string"
+          },
+          "Until": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "Permanent": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "Reason",
+          "Until",
+          "Permanent",
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "Warnings": {
+        "type": "object",
+        "properties": {
+          "Count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "Count",
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "Watch": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "enabled",
+          "reason",
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "Delivery": {
+        "type": "object",
+        "properties": {
+          "receiver": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "receiver",
+          "action",
+          "state",
+          "id"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}
