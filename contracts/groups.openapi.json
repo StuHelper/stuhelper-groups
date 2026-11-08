@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "StuHelper Groups",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Server-authorized QQ group services. UTC RFC3339 times, durations in seconds. Bot ingress is a trusted server Go interface."
   },
   "servers": [
@@ -16,7 +16,7 @@
     }
   ],
   "paths": {
-    "/v1/groups/{group}": {
+    "/api/v1/groups/{group}": {
       "put": {
         "operationId": "configureGroup",
         "parameters": [
@@ -110,7 +110,7 @@
         }
       }
     },
-    "/v1/groups/{group}/commands": {
+    "/api/v1/groups/{group}/commands": {
       "post": {
         "operationId": "command",
         "parameters": [
@@ -168,7 +168,7 @@
         }
       }
     },
-    "/v1/groups/{group}/{collection}": {
+    "/api/v1/groups/{group}/{collection}": {
       "get": {
         "operationId": "listRecords",
         "parameters": [
@@ -244,7 +244,7 @@
         }
       }
     },
-    "/v1/groups/{group}/batch": {
+    "/api/v1/groups/{group}/batch": {
       "post": {
         "operationId": "batch",
         "parameters": [
@@ -302,7 +302,7 @@
         }
       }
     },
-    "/v1/groups/blacklists": {
+    "/api/v1/groups/blacklists": {
       "post": {
         "operationId": "blacklists",
         "parameters": [
@@ -351,7 +351,7 @@
         }
       }
     },
-    "/v1/groups": {
+    "/api/v1/groups": {
       "get": {
         "operationId": "listGroups",
         "parameters": [
@@ -398,7 +398,7 @@
         }
       }
     },
-    "/v1/groups/{group}/progress": {
+    "/api/v1/groups/{group}/progress": {
       "get": {
         "operationId": "ownProgress",
         "parameters": [

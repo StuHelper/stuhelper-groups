@@ -30,11 +30,11 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 			fn(w, r, p)
 		}
 	}
-	mux.HandleFunc("GET /v1/groups/{group}", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+	mux.HandleFunc("GET /api/v1/groups/{group}", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
 		v, e := s.Configuration(r.Context(), p, r.PathValue("group"))
 		write(w, v, e)
 	}))
-	mux.HandleFunc("PUT /v1/groups/{group}", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+	mux.HandleFunc("PUT /api/v1/groups/{group}", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
 		var c g.Config
 		if e := decode(w, r, &c); e != nil {
 			write(w, nil, e)
@@ -48,7 +48,7 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		v.PasswordHash = ""
 		write(w, v, e)
 	}))
-	mux.HandleFunc("POST /v1/groups/{group}/commands", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+	mux.HandleFunc("POST /api/v1/groups/{group}/commands", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
 		var c g.Command
 		if e := decode(w, r, &c); e != nil {
 			write(w, nil, e)
@@ -57,7 +57,7 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		v, e := s.Command(r.Context(), p, r.PathValue("group"), r.Header.Get("Idempotency-Key"), c)
 		write(w, v, e)
 	}))
-	mux.HandleFunc("GET /v1/groups/{group}/{collection}", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+	mux.HandleFunc("GET /api/v1/groups/{group}/{collection}", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
 		limit := 50
 		if raw := r.URL.Query().Get("limit"); raw != "" {
 			n, e := strconv.Atoi(raw)
@@ -70,7 +70,7 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		v, e := s.List(r.Context(), p, r.PathValue("group"), r.PathValue("collection"), r.URL.Query().Get("cursor"), limit)
 		write(w, v, e)
 	}))
-	mux.HandleFunc("GET /v1/groups", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+	mux.HandleFunc("GET /api/v1/groups", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
 		limit := 50
 		if raw := r.URL.Query().Get("limit"); raw != "" {
 			n, e := strconv.Atoi(raw)
@@ -83,11 +83,11 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		v, e := s.Groups(r.Context(), p, r.URL.Query().Get("cursor"), limit)
 		write(w, v, e)
 	}))
-	mux.HandleFunc("GET /v1/groups/{group}/progress", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+	mux.HandleFunc("GET /api/v1/groups/{group}/progress", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
 		v, e := s.Progress(r.Context(), p, r.PathValue("group"))
 		write(w, v, e)
 	}))
-	mux.HandleFunc("POST /v1/groups/{group}/batch", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+	mux.HandleFunc("POST /api/v1/groups/{group}/batch", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
 		var in g.Bulk
 		if e := decode(w, r, &in); e != nil {
 			write(w, nil, e)
@@ -96,7 +96,7 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		v, e := s.Batch(r.Context(), p, r.PathValue("group"), r.Header.Get("Idempotency-Key"), in)
 		write(w, v, e)
 	}))
-	mux.HandleFunc("POST /v1/groups/blacklists", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+	mux.HandleFunc("POST /api/v1/groups/blacklists", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
 		var in g.BlacklistInput
 		if e := decode(w, r, &in); e != nil {
 			write(w, nil, e)

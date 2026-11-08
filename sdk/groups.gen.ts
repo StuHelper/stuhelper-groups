@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/v1/groups/{group}": {
+    "/api/v1/groups/{group}": {
         parameters: {
             query?: never;
             header?: never;
@@ -20,7 +20,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/groups/{group}/commands": {
+    "/api/v1/groups/{group}/commands": {
         parameters: {
             query?: never;
             header?: never;
@@ -36,7 +36,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/groups/{group}/{collection}": {
+    "/api/v1/groups/{group}/{collection}": {
         parameters: {
             query?: never;
             header?: never;
@@ -52,7 +52,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/groups/{group}/batch": {
+    "/api/v1/groups/{group}/batch": {
         parameters: {
             query?: never;
             header?: never;
@@ -68,7 +68,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/groups/blacklists": {
+    "/api/v1/groups/blacklists": {
         parameters: {
             query?: never;
             header?: never;
@@ -84,7 +84,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/groups": {
+    "/api/v1/groups": {
         parameters: {
             query?: never;
             header?: never;
@@ -100,7 +100,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/groups/{group}/progress": {
+    "/api/v1/groups/{group}/progress": {
         parameters: {
             query?: never;
             header?: never;

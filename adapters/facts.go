@@ -6,6 +6,7 @@ import (
 	g "github.com/StuHelper/stuhelper-groups"
 	q "github.com/StuHelper/stuhelper-qq-binding"
 	v "github.com/StuHelper/stuhelper-verification"
+	"slices"
 )
 
 type Binding interface {
@@ -15,11 +16,6 @@ type Verification interface {
 	Facts(context.Context, v.Principal, string, string) (v.Summary, error)
 }
 
-// Details supplies explicitly authorized stage/profile fields. Summary alone
-// cannot distinguish alumni or temporary entrants, so nil fails closed.
-type Details interface {
-	GroupFacts(context.Context, string, string) (alumni, temporary bool, fields map[string]string, err error)
-}
 type Facts struct {
 	Binding      Binding
 	Verification Verification
@@ -39,20 +35,38 @@ func (f Facts) Current(ctx context.Context, owner, school string) (g.Facts, erro
 	if f.Verification != nil {
 		s, e := f.Verification.Facts(ctx, f.Principal, owner, school)
 		if e != nil {
-			return out, e
+			return g.Facts{}, e
 		}
 		out.Student = s.CampusEligibility
 		out.StudentKnown = true
 	}
 	if f.Details != nil {
-		a, t, fields, e := f.Details.GroupFacts(ctx, owner, school)
+		details, e := f.Details.GroupFacts(ctx, f.Principal, owner, school)
 		if e != nil {
-			return out, e
+			return g.Facts{}, e
 		}
-		out.Alumni = a
-		out.Temporary = t
-		out.Fields = fields
-		out.StageKnown = true
+		if !details.StageKnown && (details.Alumni || details.Temporary) {
+			return g.Facts{}, g.ErrUnavailable
+		}
+		out.Alumni = details.Alumni
+		out.Temporary = details.Temporary
+		out.StageKnown = details.StageKnown
+		out.Fields = map[string]string{}
+		for name, field := range details.Fields {
+			if !slices.Contains([]string{"school", "grade", "department", "name", "student_id", "gender", "nickname"}, name) {
+				return g.Facts{}, g.ErrUnavailable
+			}
+			if !field.Allowed || !field.Available {
+				continue
+			}
+			if len(field.Value) > 2048 {
+				return g.Facts{}, g.ErrUnavailable
+			}
+			if name == "gender" && !slices.Contains([]string{"male", "female", "unknown"}, field.Value) {
+				return g.Facts{}, g.ErrUnavailable
+			}
+			out.Fields[name] = field.Value
+		}
 	}
 	return out, nil
 }

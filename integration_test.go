@@ -452,7 +452,7 @@ func TestHTTPRejectsUnknownFieldsAndNeverTrustsRequestActor(t *testing.T) {
 	f := setup(t)
 	h := httpapi.Handler(f.s, func(*http.Request) (account.Principal, error) { return user, nil })
 	for _, body := range []string{`{"kind":"kick","target":"victim","admin":true}`, `{"kind":"dice"} {}`, `{"kind":"self_mute","target":"victim"}`} {
-		r := httptest.NewRequest("POST", "/v1/groups/g/commands", strings.NewReader(body))
+		r := httptest.NewRequest("POST", "/api/v1/groups/g/commands", strings.NewReader(body))
 		r.Header.Set("Idempotency-Key", "http")
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, r)
@@ -462,7 +462,7 @@ func TestHTTPRejectsUnknownFieldsAndNeverTrustsRequestActor(t *testing.T) {
 	}
 	h = httpapi.Handler(f.s, nil)
 	w := httptest.NewRecorder()
-	h.ServeHTTP(w, httptest.NewRequest("GET", "/v1/groups/g", nil))
+	h.ServeHTTP(w, httptest.NewRequest("GET", "/api/v1/groups/g", nil))
 	if w.Code != 401 {
 		t.Fatal(w.Code)
 	}

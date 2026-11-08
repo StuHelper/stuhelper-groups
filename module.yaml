@@ -1,5 +1,5 @@
 id: groups
-version: 0.1.0
+version: 0.2.0
 kind: module
 api: 1
 critical: false
@@ -26,6 +26,7 @@ scenario_tests:
   QQ-01:
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-02:
+    - adapters/facts_test.go#TestUnknownOrUnavailableFactsNeverBecomeKnownStage
     - integration_test.go#TestPasswordDoesNotGrantStudentEligibilityAndBlacklistScope
   QQ-03:
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
@@ -36,12 +37,14 @@ scenario_tests:
   QQ-06:
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-07:
+    - adapters/facts_test.go#TestGroupFactsPropagatesIdentityAndFiltersFieldPermissions
     - integration_test.go#TestRulesCardsReportAndBatchPreview
   QQ-08:
     - integration_test.go#TestRulesCardsReportAndBatchPreview
   QQ-09:
     - integration_test.go#TestAISuggestionsRequireEnabledActionsAndCurrentAuthorization
   QQ-10:
+    - contract_test.go#TestAPIPrefixMatchesContractRoutesAndGeneratedClient
     - integration_test.go#TestRetentionInboxRollbackAndNoRecallViewAudit
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
   BE-01:

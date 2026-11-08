@@ -8,7 +8,7 @@ updated: 2026-11-09
 
 ## 当前实现
 
-OpenAPI、Go/TypeScript 客户端、HTTP Handler、Service 与 PostgreSQL Repository 已建立。群与学校关联、分范围管理、本人申请进度、三项绑定和资格判断、动态口令、宽限期、恢复、延期、豁免与自动移出均由服务端处理。
+OpenAPI 0.2.0 使用 /api/v1/groups 前缀，Go/TypeScript 客户端、HTTP Handler、Service 与 PostgreSQL Repository 已建立。群与学校关联、分范围管理、本人申请进度、三项绑定和资格判断、动态口令、宽限期、恢复、延期、豁免与自动移出均由服务端处理。
 
 群名片检查区分资料缺失和不合规，性别未知使用中性分隔符。检查、提醒和自动修改分别配置。模板可引用许可字段及自由昵称，名片不合规不触发资格失效移出。
 
@@ -32,10 +32,10 @@ OpenAPI、Go/TypeScript 客户端、HTTP Handler、Service 与 PostgreSQL Reposi
 
 ## 接入限制
 
-Stage 与名片字段使用 adapters.Details 接口，当前依赖仓库尚无直接满足全部字段授权要求的公开接口。backend 需要接入公开事实后才能启用要求区分校友、临时新生的群。
+阶段与名片字段使用 adapters.Details 接口，显式传递服务身份、阶段已知状态和逐字段披露许可。机器人身份双向解析使用 adapters.IdentityResolver 接口，当前依赖仓库尚无直接满足全部字段授权要求的公开接口。backend 需要接入公开事实后才能启用要求区分校友、临时新生的群。
 
 机器人执行器、身份反向解析、图片媒体代理和实时工作台推送由 backend 与 Koishi 装配。本仓使用模拟机器人验证实际成功、失败和未知结果，不访问真实 QQ。
 
 Repository 使用模块级事务锁保护状态转换，批量上限为 100。AI 和资格查询具有事务超时，但仍占用锁；大规模群并发前需要按业务规模建立基准，再拆分锁和外部查询阶段。
 
-groups 是本地候选仓库，未创建远程。现有模块不在本任务写入范围，backend 依赖、工作区锁、管理端和 Koishi 未修改。
+远程仓库为 StuHelper/stuhelper-groups，本轮仅本地提交，由负责人推送。现有模块不在本任务写入范围，backend 依赖、工作区锁、管理端和 Koishi 未修改。

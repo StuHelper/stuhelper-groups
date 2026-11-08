@@ -958,52 +958,52 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 // The interface specification for the client above.
 type ClientInterface interface {
 
-	// ListGroups performs a GET /v1/groups (the `ListGroups` operationId) request.
+	// ListGroups performs a GET /api/v1/groups (the `ListGroups` operationId) request.
 	ListGroups(ctx context.Context, params *ListGroupsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// BlacklistsWithBody performs a POST /v1/groups/blacklists (the `Blacklists` operationId) request,
+	// BlacklistsWithBody performs a POST /api/v1/groups/blacklists (the `Blacklists` operationId) request,
 	// with any type of body and a specified content type.
 	BlacklistsWithBody(ctx context.Context, params *BlacklistsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Blacklists performs a POST /v1/groups/blacklists (the `Blacklists` operationId) request.
+	// Blacklists performs a POST /api/v1/groups/blacklists (the `Blacklists` operationId) request.
 	// Takes a body of the `application/json` content type.
 	Blacklists(ctx context.Context, params *BlacklistsParams, body BlacklistsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetGroup performs a GET /v1/groups/{group} (the `GetGroup` operationId) request.
+	// GetGroup performs a GET /api/v1/groups/{group} (the `GetGroup` operationId) request.
 	GetGroup(ctx context.Context, group string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ConfigureGroupWithBody performs a PUT /v1/groups/{group} (the `ConfigureGroup` operationId) request,
+	// ConfigureGroupWithBody performs a PUT /api/v1/groups/{group} (the `ConfigureGroup` operationId) request,
 	// with any type of body and a specified content type.
 	ConfigureGroupWithBody(ctx context.Context, group string, params *ConfigureGroupParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ConfigureGroup performs a PUT /v1/groups/{group} (the `ConfigureGroup` operationId) request.
+	// ConfigureGroup performs a PUT /api/v1/groups/{group} (the `ConfigureGroup` operationId) request.
 	// Takes a body of the `application/json` content type.
 	ConfigureGroup(ctx context.Context, group string, params *ConfigureGroupParams, body ConfigureGroupJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// BatchWithBody performs a POST /v1/groups/{group}/batch (the `Batch` operationId) request,
+	// BatchWithBody performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request,
 	// with any type of body and a specified content type.
 	BatchWithBody(ctx context.Context, group string, params *BatchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Batch performs a POST /v1/groups/{group}/batch (the `Batch` operationId) request.
+	// Batch performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request.
 	// Takes a body of the `application/json` content type.
 	Batch(ctx context.Context, group string, params *BatchParams, body BatchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CommandWithBody performs a POST /v1/groups/{group}/commands (the `Command` operationId) request,
+	// CommandWithBody performs a POST /api/v1/groups/{group}/commands (the `Command` operationId) request,
 	// with any type of body and a specified content type.
 	CommandWithBody(ctx context.Context, group string, params *CommandParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Command performs a POST /v1/groups/{group}/commands (the `Command` operationId) request.
+	// Command performs a POST /api/v1/groups/{group}/commands (the `Command` operationId) request.
 	// Takes a body of the `application/json` content type.
 	Command(ctx context.Context, group string, params *CommandParams, body CommandJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// OwnProgress performs a GET /v1/groups/{group}/progress (the `OwnProgress` operationId) request.
+	// OwnProgress performs a GET /api/v1/groups/{group}/progress (the `OwnProgress` operationId) request.
 	OwnProgress(ctx context.Context, group string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ListRecords performs a GET /v1/groups/{group}/{collection} (the `ListRecords` operationId) request.
+	// ListRecords performs a GET /api/v1/groups/{group}/{collection} (the `ListRecords` operationId) request.
 	ListRecords(ctx context.Context, group string, collection ListRecordsParamsCollection, params *ListRecordsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
-// ListGroups performs a GET /v1/groups (the `ListGroups` operationId) request.
+// ListGroups performs a GET /api/v1/groups (the `ListGroups` operationId) request.
 func (c *Client) ListGroups(ctx context.Context, params *ListGroupsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListGroupsRequest(c.Server, params)
 	if err != nil {
@@ -1016,7 +1016,7 @@ func (c *Client) ListGroups(ctx context.Context, params *ListGroupsParams, reqEd
 	return c.Client.Do(req)
 }
 
-// BlacklistsWithBody performs a POST /v1/groups/blacklists (the `Blacklists` operationId) request,
+// BlacklistsWithBody performs a POST /api/v1/groups/blacklists (the `Blacklists` operationId) request,
 // with any type of body and a specified content type.
 func (c *Client) BlacklistsWithBody(ctx context.Context, params *BlacklistsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewBlacklistsRequestWithBody(c.Server, params, contentType, body)
@@ -1030,7 +1030,7 @@ func (c *Client) BlacklistsWithBody(ctx context.Context, params *BlacklistsParam
 	return c.Client.Do(req)
 }
 
-// Blacklists performs a POST /v1/groups/blacklists (the `Blacklists` operationId) request.
+// Blacklists performs a POST /api/v1/groups/blacklists (the `Blacklists` operationId) request.
 // Takes a body of the `application/json` content type.
 func (c *Client) Blacklists(ctx context.Context, params *BlacklistsParams, body BlacklistsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewBlacklistsRequest(c.Server, params, body)
@@ -1044,7 +1044,7 @@ func (c *Client) Blacklists(ctx context.Context, params *BlacklistsParams, body 
 	return c.Client.Do(req)
 }
 
-// GetGroup performs a GET /v1/groups/{group} (the `GetGroup` operationId) request.
+// GetGroup performs a GET /api/v1/groups/{group} (the `GetGroup` operationId) request.
 func (c *Client) GetGroup(ctx context.Context, group string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetGroupRequest(c.Server, group)
 	if err != nil {
@@ -1057,7 +1057,7 @@ func (c *Client) GetGroup(ctx context.Context, group string, reqEditors ...Reque
 	return c.Client.Do(req)
 }
 
-// ConfigureGroupWithBody performs a PUT /v1/groups/{group} (the `ConfigureGroup` operationId) request,
+// ConfigureGroupWithBody performs a PUT /api/v1/groups/{group} (the `ConfigureGroup` operationId) request,
 // with any type of body and a specified content type.
 func (c *Client) ConfigureGroupWithBody(ctx context.Context, group string, params *ConfigureGroupParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewConfigureGroupRequestWithBody(c.Server, group, params, contentType, body)
@@ -1071,7 +1071,7 @@ func (c *Client) ConfigureGroupWithBody(ctx context.Context, group string, param
 	return c.Client.Do(req)
 }
 
-// ConfigureGroup performs a PUT /v1/groups/{group} (the `ConfigureGroup` operationId) request.
+// ConfigureGroup performs a PUT /api/v1/groups/{group} (the `ConfigureGroup` operationId) request.
 // Takes a body of the `application/json` content type.
 func (c *Client) ConfigureGroup(ctx context.Context, group string, params *ConfigureGroupParams, body ConfigureGroupJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewConfigureGroupRequest(c.Server, group, params, body)
@@ -1085,7 +1085,7 @@ func (c *Client) ConfigureGroup(ctx context.Context, group string, params *Confi
 	return c.Client.Do(req)
 }
 
-// BatchWithBody performs a POST /v1/groups/{group}/batch (the `Batch` operationId) request,
+// BatchWithBody performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request,
 // with any type of body and a specified content type.
 func (c *Client) BatchWithBody(ctx context.Context, group string, params *BatchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewBatchRequestWithBody(c.Server, group, params, contentType, body)
@@ -1099,7 +1099,7 @@ func (c *Client) BatchWithBody(ctx context.Context, group string, params *BatchP
 	return c.Client.Do(req)
 }
 
-// Batch performs a POST /v1/groups/{group}/batch (the `Batch` operationId) request.
+// Batch performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request.
 // Takes a body of the `application/json` content type.
 func (c *Client) Batch(ctx context.Context, group string, params *BatchParams, body BatchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewBatchRequest(c.Server, group, params, body)
@@ -1113,7 +1113,7 @@ func (c *Client) Batch(ctx context.Context, group string, params *BatchParams, b
 	return c.Client.Do(req)
 }
 
-// CommandWithBody performs a POST /v1/groups/{group}/commands (the `Command` operationId) request,
+// CommandWithBody performs a POST /api/v1/groups/{group}/commands (the `Command` operationId) request,
 // with any type of body and a specified content type.
 func (c *Client) CommandWithBody(ctx context.Context, group string, params *CommandParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCommandRequestWithBody(c.Server, group, params, contentType, body)
@@ -1127,7 +1127,7 @@ func (c *Client) CommandWithBody(ctx context.Context, group string, params *Comm
 	return c.Client.Do(req)
 }
 
-// Command performs a POST /v1/groups/{group}/commands (the `Command` operationId) request.
+// Command performs a POST /api/v1/groups/{group}/commands (the `Command` operationId) request.
 // Takes a body of the `application/json` content type.
 func (c *Client) Command(ctx context.Context, group string, params *CommandParams, body CommandJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCommandRequest(c.Server, group, params, body)
@@ -1141,7 +1141,7 @@ func (c *Client) Command(ctx context.Context, group string, params *CommandParam
 	return c.Client.Do(req)
 }
 
-// OwnProgress performs a GET /v1/groups/{group}/progress (the `OwnProgress` operationId) request.
+// OwnProgress performs a GET /api/v1/groups/{group}/progress (the `OwnProgress` operationId) request.
 func (c *Client) OwnProgress(ctx context.Context, group string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewOwnProgressRequest(c.Server, group)
 	if err != nil {
@@ -1154,7 +1154,7 @@ func (c *Client) OwnProgress(ctx context.Context, group string, reqEditors ...Re
 	return c.Client.Do(req)
 }
 
-// ListRecords performs a GET /v1/groups/{group}/{collection} (the `ListRecords` operationId) request.
+// ListRecords performs a GET /api/v1/groups/{group}/{collection} (the `ListRecords` operationId) request.
 func (c *Client) ListRecords(ctx context.Context, group string, collection ListRecordsParamsCollection, params *ListRecordsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListRecordsRequest(c.Server, group, collection, params)
 	if err != nil {
@@ -1176,7 +1176,7 @@ func NewListGroupsRequest(server string, params *ListGroupsParams) (*http.Reques
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/groups")
+	operationPath := fmt.Sprintf("/api/v1/groups")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1253,7 +1253,7 @@ func NewBlacklistsRequestWithBody(server string, params *BlacklistsParams, conte
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/groups/blacklists")
+	operationPath := fmt.Sprintf("/api/v1/groups/blacklists")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1302,7 +1302,7 @@ func NewGetGroupRequest(server string, group string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/groups/%s", pathParam0)
+	operationPath := fmt.Sprintf("/api/v1/groups/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1347,7 +1347,7 @@ func NewConfigureGroupRequestWithBody(server string, group string, params *Confi
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/groups/%s", pathParam0)
+	operationPath := fmt.Sprintf("/api/v1/groups/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1407,7 +1407,7 @@ func NewBatchRequestWithBody(server string, group string, params *BatchParams, c
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/groups/%s/batch", pathParam0)
+	operationPath := fmt.Sprintf("/api/v1/groups/%s/batch", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1467,7 +1467,7 @@ func NewCommandRequestWithBody(server string, group string, params *CommandParam
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/groups/%s/commands", pathParam0)
+	operationPath := fmt.Sprintf("/api/v1/groups/%s/commands", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1516,7 +1516,7 @@ func NewOwnProgressRequest(server string, group string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/groups/%s/progress", pathParam0)
+	operationPath := fmt.Sprintf("/api/v1/groups/%s/progress", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1557,7 +1557,7 @@ func NewListRecordsRequest(server string, group string, collection ListRecordsPa
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/groups/%s/%s", pathParam0, pathParam1)
+	operationPath := fmt.Sprintf("/api/v1/groups/%s/%s", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1658,62 +1658,62 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 
-	// ListGroupsWithResponse performs a GET /v1/groups (the `ListGroups` operationId) request.
+	// ListGroupsWithResponse performs a GET /api/v1/groups (the `ListGroups` operationId) request.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	ListGroupsWithResponse(ctx context.Context, params *ListGroupsParams, reqEditors ...RequestEditorFn) (*ListGroupsResponse, error)
 
-	// BlacklistsWithBodyWithResponse performs a POST /v1/groups/blacklists (the `Blacklists` operationId) request,
+	// BlacklistsWithBodyWithResponse performs a POST /api/v1/groups/blacklists (the `Blacklists` operationId) request,
 	// with any type of body and a specified content type.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	BlacklistsWithBodyWithResponse(ctx context.Context, params *BlacklistsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BlacklistsResponse, error)
 
-	// BlacklistsWithResponse performs a POST /v1/groups/blacklists (the `Blacklists` operationId) request.
+	// BlacklistsWithResponse performs a POST /api/v1/groups/blacklists (the `Blacklists` operationId) request.
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	BlacklistsWithResponse(ctx context.Context, params *BlacklistsParams, body BlacklistsJSONRequestBody, reqEditors ...RequestEditorFn) (*BlacklistsResponse, error)
 
-	// GetGroupWithResponse performs a GET /v1/groups/{group} (the `GetGroup` operationId) request.
+	// GetGroupWithResponse performs a GET /api/v1/groups/{group} (the `GetGroup` operationId) request.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	GetGroupWithResponse(ctx context.Context, group string, reqEditors ...RequestEditorFn) (*GetGroupResponse, error)
 
-	// ConfigureGroupWithBodyWithResponse performs a PUT /v1/groups/{group} (the `ConfigureGroup` operationId) request,
+	// ConfigureGroupWithBodyWithResponse performs a PUT /api/v1/groups/{group} (the `ConfigureGroup` operationId) request,
 	// with any type of body and a specified content type.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	ConfigureGroupWithBodyWithResponse(ctx context.Context, group string, params *ConfigureGroupParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ConfigureGroupResponse, error)
 
-	// ConfigureGroupWithResponse performs a PUT /v1/groups/{group} (the `ConfigureGroup` operationId) request.
+	// ConfigureGroupWithResponse performs a PUT /api/v1/groups/{group} (the `ConfigureGroup` operationId) request.
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	ConfigureGroupWithResponse(ctx context.Context, group string, params *ConfigureGroupParams, body ConfigureGroupJSONRequestBody, reqEditors ...RequestEditorFn) (*ConfigureGroupResponse, error)
 
-	// BatchWithBodyWithResponse performs a POST /v1/groups/{group}/batch (the `Batch` operationId) request,
+	// BatchWithBodyWithResponse performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request,
 	// with any type of body and a specified content type.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	BatchWithBodyWithResponse(ctx context.Context, group string, params *BatchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BatchResponse, error)
 
-	// BatchWithResponse performs a POST /v1/groups/{group}/batch (the `Batch` operationId) request.
+	// BatchWithResponse performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request.
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	BatchWithResponse(ctx context.Context, group string, params *BatchParams, body BatchJSONRequestBody, reqEditors ...RequestEditorFn) (*BatchResponse, error)
 
-	// CommandWithBodyWithResponse performs a POST /v1/groups/{group}/commands (the `Command` operationId) request,
+	// CommandWithBodyWithResponse performs a POST /api/v1/groups/{group}/commands (the `Command` operationId) request,
 	// with any type of body and a specified content type.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	CommandWithBodyWithResponse(ctx context.Context, group string, params *CommandParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CommandResponse, error)
 
-	// CommandWithResponse performs a POST /v1/groups/{group}/commands (the `Command` operationId) request.
+	// CommandWithResponse performs a POST /api/v1/groups/{group}/commands (the `Command` operationId) request.
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	CommandWithResponse(ctx context.Context, group string, params *CommandParams, body CommandJSONRequestBody, reqEditors ...RequestEditorFn) (*CommandResponse, error)
 
-	// OwnProgressWithResponse performs a GET /v1/groups/{group}/progress (the `OwnProgress` operationId) request.
+	// OwnProgressWithResponse performs a GET /api/v1/groups/{group}/progress (the `OwnProgress` operationId) request.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	OwnProgressWithResponse(ctx context.Context, group string, reqEditors ...RequestEditorFn) (*OwnProgressResponse, error)
 
-	// ListRecordsWithResponse performs a GET /v1/groups/{group}/{collection} (the `ListRecords` operationId) request.
+	// ListRecordsWithResponse performs a GET /api/v1/groups/{group}/{collection} (the `ListRecords` operationId) request.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	ListRecordsWithResponse(ctx context.Context, group string, collection ListRecordsParamsCollection, params *ListRecordsParams, reqEditors ...RequestEditorFn) (*ListRecordsResponse, error)
@@ -2103,7 +2103,7 @@ func (r ListRecordsResponse) ContentType() string {
 	return ""
 }
 
-// ListGroupsWithResponse performs a GET /v1/groups (the `ListGroups` operationId) request.
+// ListGroupsWithResponse performs a GET /api/v1/groups (the `ListGroups` operationId) request.
 //
 // Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ListGroupsWithResponse(ctx context.Context, params *ListGroupsParams, reqEditors ...RequestEditorFn) (*ListGroupsResponse, error) {
@@ -2114,7 +2114,7 @@ func (c *ClientWithResponses) ListGroupsWithResponse(ctx context.Context, params
 	return ParseListGroupsResponse(rsp)
 }
 
-// BlacklistsWithBodyWithResponse performs a POST /v1/groups/blacklists (the `Blacklists` operationId) request,
+// BlacklistsWithBodyWithResponse performs a POST /api/v1/groups/blacklists (the `Blacklists` operationId) request,
 // with any type of body and a specified content type.
 //
 // Returns a wrapper object for the known response body format(s).
@@ -2126,7 +2126,7 @@ func (c *ClientWithResponses) BlacklistsWithBodyWithResponse(ctx context.Context
 	return ParseBlacklistsResponse(rsp)
 }
 
-// BlacklistsWithResponse performs a POST /v1/groups/blacklists (the `Blacklists` operationId) request.
+// BlacklistsWithResponse performs a POST /api/v1/groups/blacklists (the `Blacklists` operationId) request.
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) BlacklistsWithResponse(ctx context.Context, params *BlacklistsParams, body BlacklistsJSONRequestBody, reqEditors ...RequestEditorFn) (*BlacklistsResponse, error) {
 	rsp, err := c.Blacklists(ctx, params, body, reqEditors...)
@@ -2136,7 +2136,7 @@ func (c *ClientWithResponses) BlacklistsWithResponse(ctx context.Context, params
 	return ParseBlacklistsResponse(rsp)
 }
 
-// GetGroupWithResponse performs a GET /v1/groups/{group} (the `GetGroup` operationId) request.
+// GetGroupWithResponse performs a GET /api/v1/groups/{group} (the `GetGroup` operationId) request.
 //
 // Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetGroupWithResponse(ctx context.Context, group string, reqEditors ...RequestEditorFn) (*GetGroupResponse, error) {
@@ -2147,7 +2147,7 @@ func (c *ClientWithResponses) GetGroupWithResponse(ctx context.Context, group st
 	return ParseGetGroupResponse(rsp)
 }
 
-// ConfigureGroupWithBodyWithResponse performs a PUT /v1/groups/{group} (the `ConfigureGroup` operationId) request,
+// ConfigureGroupWithBodyWithResponse performs a PUT /api/v1/groups/{group} (the `ConfigureGroup` operationId) request,
 // with any type of body and a specified content type.
 //
 // Returns a wrapper object for the known response body format(s).
@@ -2159,7 +2159,7 @@ func (c *ClientWithResponses) ConfigureGroupWithBodyWithResponse(ctx context.Con
 	return ParseConfigureGroupResponse(rsp)
 }
 
-// ConfigureGroupWithResponse performs a PUT /v1/groups/{group} (the `ConfigureGroup` operationId) request.
+// ConfigureGroupWithResponse performs a PUT /api/v1/groups/{group} (the `ConfigureGroup` operationId) request.
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ConfigureGroupWithResponse(ctx context.Context, group string, params *ConfigureGroupParams, body ConfigureGroupJSONRequestBody, reqEditors ...RequestEditorFn) (*ConfigureGroupResponse, error) {
 	rsp, err := c.ConfigureGroup(ctx, group, params, body, reqEditors...)
@@ -2169,7 +2169,7 @@ func (c *ClientWithResponses) ConfigureGroupWithResponse(ctx context.Context, gr
 	return ParseConfigureGroupResponse(rsp)
 }
 
-// BatchWithBodyWithResponse performs a POST /v1/groups/{group}/batch (the `Batch` operationId) request,
+// BatchWithBodyWithResponse performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request,
 // with any type of body and a specified content type.
 //
 // Returns a wrapper object for the known response body format(s).
@@ -2181,7 +2181,7 @@ func (c *ClientWithResponses) BatchWithBodyWithResponse(ctx context.Context, gro
 	return ParseBatchResponse(rsp)
 }
 
-// BatchWithResponse performs a POST /v1/groups/{group}/batch (the `Batch` operationId) request.
+// BatchWithResponse performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request.
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) BatchWithResponse(ctx context.Context, group string, params *BatchParams, body BatchJSONRequestBody, reqEditors ...RequestEditorFn) (*BatchResponse, error) {
 	rsp, err := c.Batch(ctx, group, params, body, reqEditors...)
@@ -2191,7 +2191,7 @@ func (c *ClientWithResponses) BatchWithResponse(ctx context.Context, group strin
 	return ParseBatchResponse(rsp)
 }
 
-// CommandWithBodyWithResponse performs a POST /v1/groups/{group}/commands (the `Command` operationId) request,
+// CommandWithBodyWithResponse performs a POST /api/v1/groups/{group}/commands (the `Command` operationId) request,
 // with any type of body and a specified content type.
 //
 // Returns a wrapper object for the known response body format(s).
@@ -2203,7 +2203,7 @@ func (c *ClientWithResponses) CommandWithBodyWithResponse(ctx context.Context, g
 	return ParseCommandResponse(rsp)
 }
 
-// CommandWithResponse performs a POST /v1/groups/{group}/commands (the `Command` operationId) request.
+// CommandWithResponse performs a POST /api/v1/groups/{group}/commands (the `Command` operationId) request.
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) CommandWithResponse(ctx context.Context, group string, params *CommandParams, body CommandJSONRequestBody, reqEditors ...RequestEditorFn) (*CommandResponse, error) {
 	rsp, err := c.Command(ctx, group, params, body, reqEditors...)
@@ -2213,7 +2213,7 @@ func (c *ClientWithResponses) CommandWithResponse(ctx context.Context, group str
 	return ParseCommandResponse(rsp)
 }
 
-// OwnProgressWithResponse performs a GET /v1/groups/{group}/progress (the `OwnProgress` operationId) request.
+// OwnProgressWithResponse performs a GET /api/v1/groups/{group}/progress (the `OwnProgress` operationId) request.
 //
 // Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) OwnProgressWithResponse(ctx context.Context, group string, reqEditors ...RequestEditorFn) (*OwnProgressResponse, error) {
@@ -2224,7 +2224,7 @@ func (c *ClientWithResponses) OwnProgressWithResponse(ctx context.Context, group
 	return ParseOwnProgressResponse(rsp)
 }
 
-// ListRecordsWithResponse performs a GET /v1/groups/{group}/{collection} (the `ListRecords` operationId) request.
+// ListRecordsWithResponse performs a GET /api/v1/groups/{group}/{collection} (the `ListRecords` operationId) request.
 //
 // Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ListRecordsWithResponse(ctx context.Context, group string, collection ListRecordsParamsCollection, params *ListRecordsParams, reqEditors ...RequestEditorFn) (*ListRecordsResponse, error) {
