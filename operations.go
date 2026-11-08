@@ -172,7 +172,7 @@ func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c Config
 	if s.Facts == nil {
 		return out, ErrUnavailable
 	}
-	f, e := s.Facts.Current(ctx, cmd.Target, c.School)
+	f, e := s.currentFacts(ctx, cmd.Target, c.School)
 	if e != nil {
 		return out, ErrUnavailable
 	}
@@ -187,14 +187,14 @@ func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c Config
 			if !ok {
 				return Result{State: "pending_profile"}, nil
 			}
-			text = strings.ReplaceAll(text, token, v)
+			text = strings.ReplaceAll(text, token, v.Value)
 		}
 	}
 	sep := "·"
-	if f.Fields["gender"] == "male" {
+	if f.Fields["gender"].Value == "male" {
 		sep = "-"
 	}
-	if f.Fields["gender"] == "female" {
+	if f.Fields["gender"].Value == "female" {
 		sep = "+"
 	}
 	text = strings.ReplaceAll(text, "{separator}", sep)

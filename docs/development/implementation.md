@@ -28,14 +28,14 @@ OpenAPI 0.2.0 使用 /api/v1/groups 前缀，Go/TypeScript 客户端、HTTP Hand
 
 规格 QQ-01 至 QQ-10、BE-01 至 BE-03 的后端测试函数登记在 module.yaml。QQ-10 的菜单位置由前端和 Koishi 完成，本仓测试覆盖撤回内容权限和娱乐动作边界。
 
-本地检查执行生成一致性、仓库规则、文档、模块边界、gofmt、go vet、go test -race、go build 和 workflow 校验。真实账号验收、跨仓装配、远程 CI、部署和性能基准待执行。
+本地检查执行生成一致性、仓库规则、文档、模块边界、gofmt、go vet、go test -race、go build 和 workflow 校验。远程 CI 验证公开源码组合。真实账号验收、backend 跨仓装配、部署和性能基准待执行。
 
 ## 接入限制
 
-阶段与名片字段使用 adapters.Details 接口，显式传递服务身份、阶段已知状态和逐字段披露许可。机器人身份双向解析使用 adapters.IdentityResolver 接口，当前依赖仓库尚无直接满足全部字段授权要求的公开接口。backend 需要接入公开事实后才能启用要求区分校友、临时新生的群。
+groups 仅依赖自有接口、公开 platform 与公开第三方库。资格、字段许可与机器人身份类型定义在 dependencies.go；verification、profiles 和 qq-binding 的事实读取、DTO 转换及错误映射由 backend 实现。
 
 机器人执行器、身份反向解析、图片媒体代理和实时工作台推送由 backend 与 Koishi 装配。本仓使用模拟机器人验证实际成功、失败和未知结果，不访问真实 QQ。
 
 Repository 使用模块级事务锁保护状态转换，批量上限为 100。AI 和资格查询具有事务超时，但仍占用锁；大规模群并发前需要按业务规模建立基准，再拆分锁和外部查询阶段。
 
-远程仓库为 StuHelper/stuhelper-groups，本轮仅本地提交，由负责人推送。现有模块不在本任务写入范围，backend 依赖、工作区锁、管理端和 Koishi 未修改。
+远程仓库为 StuHelper/stuhelper-groups，候选通过 feat/backend-decisions 草稿 PR 验证。现有模块不在本任务写入范围，backend 依赖、工作区锁、管理端和 Koishi 未修改。

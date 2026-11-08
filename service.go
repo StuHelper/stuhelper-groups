@@ -519,7 +519,7 @@ func (s *Service) eligible(ctx context.Context, tx Tx, c Config, m Member) (bool
 	if s.Facts == nil {
 		return false, ErrUnavailable
 	}
-	f, e := s.Facts.Current(ctx, m.Owner, c.School)
+	f, e := s.currentFacts(ctx, m.Owner, c.School)
 	if e != nil {
 		return false, ErrUnavailable
 	}

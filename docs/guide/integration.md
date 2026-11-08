@@ -11,7 +11,7 @@ updated: 2026-11-09
 1. 将 groups 作为独立 Go 模块引入，注册 module.yaml 中的依赖和能力。平台必需；QQ 绑定、认证、资料与 AI 能力按操作分别判断。
 2. 使用迁移身份执行 postgres.Schema。给 groups 运行身份授予 groups schema 的 USAGE、表的 SELECT/INSERT/UPDATE/DELETE 和序列 USAGE/SELECT，不授予其他模块数据权限或 DDL 权限。
 3. 构造 postgres.Repository 与 groups.Service。Auth 注入 platform admin.Service，PlatformIdentity 注入相同的可信 admin.Identity。全平台黑名单额外检查平台管理员身份。
-4. 注入 adapters.Facts：Binding 使用 qq-binding.Service.Status，Verification 使用 verification.Service.Facts，Principal 使用仅有 facts.read 权限的服务身份。Details 使用同一 Principal 提供阶段与逐字段披露许可。
+4. backend 实现 groups.FactsProvider 并注入 Service.Facts，将可信服务身份配置到 Service.FactsPrincipal。groups 只接收自有 Facts 类型；调用 verification、profiles、qq-binding 的代码与凭据留在 backend。
 5. 用 HTTP 认证中间件提供 account.Principal，挂载 httpapi.Handler。请求体中的角色、学校或主体声明不能替代认证身份。群的学校创建后不能通过配置迁移。
 6. 注入 Bot 与可选 Analyzer。Bot 以 Action.ID 幂等执行并查询实际结果，使用绑定事实和配置把内部群、用户标识映射到平台标识。禁止从请求自行决定机器人身份。
 7. 启动 Repository.Relay。它 LISTEN groups_outbox，启动时补读，空闲最多每 60 秒补读；按来源和对象保序，每批最多 100。投递失败从 5 秒指数退避至 1 小时，累计 24 小时进入 held。
@@ -27,15 +27,15 @@ held 事件通过 Repository.Retry 按原 ID 重试。这个方法仅供后台�
 
 ## 外部依赖接口
 
-以下是 groups 消费端的精确 Go 接口，定义与 adapters/dependencies.go 一致。verification/profiles 和 qq-binding 保持各自的数据归属，backend 用桥接适配器转换提供方 DTO 和错误，避免提供方反向导入 groups 形成循环依赖。
+以下是 groups 消费端的精确 Go 接口，定义与 dependencies.go 一致。verification/profiles 和 qq-binding 保持各自的数据归属，backend 用桥接适配器转换提供方 DTO 和错误，避免提供方反向导入 groups 形成循环依赖。
 
 ```go
-package adapters
+package groups
 
 import (
     "context"
+
     "github.com/StuHelper/stuhelper-platform/account"
-    v "github.com/StuHelper/stuhelper-verification"
 )
 
 // CardField separates disclosure permission from source availability. Only
@@ -46,20 +46,22 @@ type CardField struct {
     Value     string
 }
 
-// GroupDetails describes current stage and approved card fields for one school.
-// StageKnown=false never implies an ordinary enrolled student.
-type GroupDetails struct {
-    StageKnown bool
-    Alumni     bool
-    Temporary  bool
-    Fields     map[string]CardField
+// Facts contains current eligibility and card disclosure decisions supplied by backend.
+// Bound is true only when all three independent QQ bindings are currently complete.
+type Facts struct {
+    StudentKnown bool
+    StageKnown   bool
+    Bound        bool
+    Student      bool
+    Alumni       bool
+    Temporary    bool
+    Fields       map[string]CardField
 }
 
-// Details is a consumer-owned port. Backend bridges provider-owned DTOs without
-// making verification or profiles import groups. Principal is a trusted service
-// identity with school-scoped facts and per-field disclosure authorization.
-type Details interface {
-    GroupFacts(ctx context.Context, principal v.Principal, owner, school string) (GroupDetails, error)
+// FactsProvider is owned by groups; backend implements all provider mappings.
+// Unknown stages and provider failures must not be turned into valid eligibility.
+type FactsProvider interface {
+    GroupFacts(ctx context.Context, principal account.Principal, owner, school string) (Facts, error)
 }
 
 // BotScope identifies a registered adapter instance. Platform is onebot or
@@ -89,7 +91,7 @@ GroupFacts 的 principal 是 backend 注入的可信服务身份，owner 是 pla
 
 现有 verification.Service.Facts 使用 facts.read 检查学校范围。GroupFacts 的 backend 桥接应复用这项授权，并通过 profiles/verification 的字段许可检查取得名片字段。原始证件、邮箱、手机号和未许可字段不进入返回值。
 
-学校资格布尔值继续来自 Verification.Facts；GroupDetails 只补充当前阶段和字段许可。StageKnown=false 表示没有可用阶段事实，Alumni 和 Temporary 必须同时为 false，不能把未知阶段解释为普通在校生。
+backend 将 verification 的资格摘要映射到 Facts.StudentKnown 和 Facts.Student，将阶段映射到 Facts.StageKnown、Alumni、Temporary。StageKnown=false 表示没有可用阶段事实，Alumni 和 Temporary 必须同时为 false，不能把未知阶段解释为普通在校生。
 
 StageKnown=true 时，Alumni 表示该学校的当前有效资格属于校友，Temporary 表示临时新生。两个值都为 false 才表示已确认的其他有效阶段。提供方不得根据年份自行推断毕业或资格失效。
 
@@ -99,7 +101,7 @@ Allowed=false 表示当前服务身份和用途不允许披露；Available=false
 
 gender 的可用值为 male、female、unknown，不从姓名等字段推断。nickname 来自获准取得的自由昵称。groups 还会过滤被拒绝或缺失的字段，拒绝未知字段名、非法性别和矛盾的阶段事实。
 
-Details 为 nil 时 StageKnown 保持 false；返回 StageKnown=false 且 err=nil 是明确的未知事实。提供方故障返回错误，不能返回空的成功结果。要求学生资格的群不会依据未知阶段放行。
+FactsProvider 为 nil 时返回 ErrUnavailable；返回 StageKnown=false 且 err=nil 是明确的未知事实。提供方故障返回错误，不能返回空的成功结果。要求学生资格的群不会依据未知阶段放行。
 
 ### qq-binding：ResolveOwner 与 ResolveBotIdentity
 
@@ -109,7 +111,7 @@ ResolveOwner 的 BotIdentity 必须来自经认证的机器人 session。Platfor
 
 ResolveBotIdentity 按 owner 和指定 BotScope 返回当前绑定身份，返回值的 Bot 必须与请求完全一致，UserID 不得为空。官方机器人身份按实例隔离，不把其他机器人实例的身份或 QQ 互联标识替代为目标身份。
 
-两个解析方法只解析指定绑定项，不要求三项全部完成。入群资格仍由 Binding.Status 分别检查三项绑定。QQ 互联 connect 不能作为机器人平台；三项绑定不代表同一个 QQ。
+两个解析方法只解析指定绑定项，不要求三项全部完成。backend 读取绑定状态后分别检查三项，再设置 Facts.Bound。QQ 互联 connect 不能作为机器人平台；三项绑定不代表同一个 QQ。
 
 backend 在每次接收事件与执行动作前重新解析，并检查当前群配置、动作授权与 owner 一致性。解绑后不得沿用旧身份缓存；解析结果不得把 UserID、群号或机器人 ID 当作权限证明。
 
@@ -126,22 +128,31 @@ backend 在每次接收事件与执行动作前重新解析，并检查当前群
 | ErrConflict | 当前公开事实无法得到一致结果 | 存在歧义绑定，不能唯一解析 |
 | ErrUnavailable | 依赖故障、未知错误或响应不符合约定 | 依赖故障或无法确认当前绑定状态 |
 
-没有有效学生资格由 Verification.Facts 返回 CampusEligibility=false；阶段未知由 GroupFacts 返回 StageKnown=false，均不冒充依赖故障。字段级披露被拒绝通过 Allowed=false 表达；整个资格请求越权返回 ErrForbidden。
+没有有效学生资格映射为 Facts.StudentKnown=true、Student=false；阶段未知由 GroupFacts 返回 StageKnown=false，均不冒充依赖故障。字段级披露被拒绝通过 Allowed=false 表达；整个资格请求越权返回 ErrForbidden。
 
-既有绑定状态与资格摘要接口保持如下签名。Binding.Status 没有调用者参数，仅供 backend 内部经授权的桥接使用，不直接作为公开的任意 owner 查询接口。
+### backend 桥接映射
 
-```go
-type Binding interface {
-    Status(context.Context, string) (q.Status, error)
-}
-type Verification interface {
-    Facts(context.Context, v.Principal, string, string) (v.Summary, error)
-}
-```
+backend 实现上述接口，直接导入私有模块并调用它们的公开 Service 方法。groups 仓库、测试及 CI 不导入或 checkout 私有源码。接口中的 account.Principal 来自公开 platform，桥接按 Issuer、Subject 转换为提供方的主体类型。
 
-上述 q 为 github.com/StuHelper/stuhelper-qq-binding，v 为 github.com/StuHelper/stuhelper-verification。Status 的字符串参数为 owner；Facts 的字符串参数依次为 owner、school。
+| 来源事实 | groups 字段或返回值 | 映射要求 |
+| --- | --- | --- |
+| qq-binding 绑定状态 | Facts.Bound | Complete、OneBot.Bound、Connect.Bound、Official.Bound 同时为真才为 true |
+| verification.Facts 成功返回的 CampusEligibility | StudentKnown=true、Student=CampusEligibility | 无资格是明确的 false；调用失败返回错误与零值 Facts |
+| verification/profiles 当前学校阶段 | StageKnown、Alumni、Temporary | 没有阶段事实时 StageKnown=false；不按年份推断阶段 |
+| profiles/verification 字段披露决定 | Fields[name].Allowed | 按服务身份、学校与用途逐字段判断 |
+| 已取得的名片字段 | Fields[name].Available、Value | 未许可或尚未取得时 Value 为空；姓名、学号、性别不得自行推断 |
+| 当前机器人绑定的 owner | ResolveOwner 的字符串结果 | 唯一匹配指定机器人命名空间，编码为 account.Principal.Key() |
+| owner 在指定机器人的当前绑定 | ResolveBotIdentity 的 BotIdentity | Bot 等于请求值，UserID 来自该绑定，不使用其他机器人或 connect 身份替代 |
 
-接口定义不表示提供方已实现新方法。本轮仅更新 groups 消费端定义和桥接行为，verification/profiles、qq-binding 的公开实现及 backend 装配仍由各仓任务完成。
+资格和阶段只读取目标学校，字段来自授权后的公开方法。任一实际调用失败时，桥接立即返回零值 Facts 与映射后的错误，不保留已经取得的 QQ 或资格部分结果。尚未接入的可选事实用 Known=false 表示，不能把已经发生的依赖故障隐藏为未知事实。
+
+提供方的 invalid_input、无效主体或标识错误映射 ErrInvalid；未登录或服务身份失效映射 ErrUnauthenticated；范围越权映射 ErrForbidden；授权后对象不存在或绑定已撤销映射 ErrNotFound；歧义绑定或事实冲突映射 ErrConflict。
+
+提供方停用、断连、响应无法验证与其他未知错误映射 ErrUnavailable；context.Canceled 和 context.DeadlineExceeded 保留原错误。桥接按具体提供方错误值使用 errors.Is 匹配，不根据错误文本猜测。面向群业务的 Service 将事实依赖失败统一返回 unavailable，并回滚本次写入。
+
+groups 的 currentFacts 在资格判断和名片操作前校验自有 Facts，过滤无权披露或未取得的字段，拒绝矛盾阶段与无效字段。它不访问来源模块，也不负责来源 DTO 或错误转换。行为测试只使用本仓库的 FactsProvider 替身。
+
+backend 的机器人执行器还应校验解析返回值与请求实例一致，再调用实际机器人。解析接口是宿主装配约定，groups 不提供身份解析实现；调用方不得用空字符串或零值 BotIdentity 代表解析成功。
 
 事件生产方按 EVENT-DELIVERY.md 输出 CloudEvents 1.0，携带稳定 ID、source、subject 和单调 revision。groups 的 Consume 接受 qq-binding 与 verification 来源，再读取当前事实。
 

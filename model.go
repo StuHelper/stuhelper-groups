@@ -80,20 +80,6 @@ type Member struct {
 	LastPlay   time.Time `json:"last_play"`
 	MutedUntil time.Time `json:"muted_until"`
 }
-type Facts struct {
-	StudentKnown bool
-	StageKnown   bool
-	Bound        bool
-	Student      bool
-	Alumni       bool
-	Temporary    bool
-	Fields       map[string]string
-}
-
-// FactsProvider must use authorized public APIs. Unknown stages fail closed.
-type FactsProvider interface {
-	Current(context.Context, string, string) (Facts, error)
-}
 type Authorizer interface {
 	Evaluate(context.Context, account.Principal, string, admin.Scope) error
 }
@@ -152,6 +138,7 @@ type Service struct {
 	Repo             Repository
 	Auth             Authorizer
 	Facts            FactsProvider
+	FactsPrincipal   account.Principal
 	Bot              Bot
 	AI               Analyzer
 	Now              func() time.Time

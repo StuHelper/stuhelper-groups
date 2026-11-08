@@ -59,7 +59,7 @@ type facts struct {
 	err   error
 }
 
-func (f *facts) Current(context.Context, string, string) (g.Facts, error) {
+func (f *facts) GroupFacts(context.Context, account.Principal, string, string) (g.Facts, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return f.value, f.err
@@ -137,7 +137,7 @@ func setup(t *testing.T) *fixture {
 		}
 		adminPool.Close()
 	})
-	f := &fixture{r: &postgres.Repository{Pool: pool}, pool: pool, now: time.Date(2026, 11, 9, 0, 0, 0, 0, time.UTC), facts: &facts{value: g.Facts{Bound: true, Student: true, StudentKnown: true, StageKnown: true, Fields: map[string]string{"name": "测试", "gender": "unknown", "nickname": "自由昵称"}}}, bot: &bot{out: map[string]g.Outcome{}}}
+	f := &fixture{r: &postgres.Repository{Pool: pool}, pool: pool, now: time.Date(2026, 11, 9, 0, 0, 0, 0, time.UTC), facts: &facts{value: g.Facts{Bound: true, Student: true, StudentKnown: true, StageKnown: true, Fields: map[string]g.CardField{"name": {Allowed: true, Available: true, Value: "测试"}, "gender": {Allowed: true, Available: true, Value: "unknown"}, "nickname": {Allowed: true, Available: true, Value: "自由昵称"}}}}, bot: &bot{out: map[string]g.Outcome{}}}
 	if e = f.r.Migrate(ctx); e != nil {
 		t.Fatal(e)
 	}

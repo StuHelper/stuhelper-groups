@@ -28,18 +28,6 @@ jobs:
           ref: 0efdba00ff59cddc9d7894092aace9b9212696f0
           path: .tools/candidates/platform
           persist-credentials: false
-      - uses: actions/checkout@v7.0.1
-        with:
-          repository: StuHelper/stuhelper-verification
-          ref: d9045908aa41dafe256865ed222ff2bca5d03804
-          path: .tools/candidates/verification
-          persist-credentials: false
-      - uses: actions/checkout@v7.0.1
-        with:
-          repository: StuHelper/stuhelper-qq-binding
-          ref: 47f1d06881aff22ae06cc86ef86f4241db232fa9
-          path: .tools/candidates/qq-binding
-          persist-credentials: false
       - name: Record candidate sources
         run: |
           cat candidate-sources.json >> "$GITHUB_STEP_SUMMARY"

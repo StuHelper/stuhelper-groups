@@ -1,10 +1,9 @@
-package adapters
+package groups
 
 import (
 	"context"
 
 	"github.com/StuHelper/stuhelper-platform/account"
-	v "github.com/StuHelper/stuhelper-verification"
 )
 
 // CardField separates disclosure permission from source availability. Only
@@ -15,20 +14,22 @@ type CardField struct {
 	Value     string
 }
 
-// GroupDetails describes current stage and approved card fields for one school.
-// StageKnown=false never implies an ordinary enrolled student.
-type GroupDetails struct {
-	StageKnown bool
-	Alumni     bool
-	Temporary  bool
-	Fields     map[string]CardField
+// Facts contains current eligibility and card disclosure decisions supplied by backend.
+// Bound is true only when all three independent QQ bindings are currently complete.
+type Facts struct {
+	StudentKnown bool
+	StageKnown   bool
+	Bound        bool
+	Student      bool
+	Alumni       bool
+	Temporary    bool
+	Fields       map[string]CardField
 }
 
-// Details is a consumer-owned port. Backend bridges provider-owned DTOs without
-// making verification or profiles import groups. Principal is a trusted service
-// identity with school-scoped facts and per-field disclosure authorization.
-type Details interface {
-	GroupFacts(ctx context.Context, principal v.Principal, owner, school string) (GroupDetails, error)
+// FactsProvider is owned by groups; backend implements all provider mappings.
+// Unknown stages and provider failures must not be turned into valid eligibility.
+type FactsProvider interface {
+	GroupFacts(ctx context.Context, principal account.Principal, owner, school string) (Facts, error)
 }
 
 // BotScope identifies a registered adapter instance. Platform is onebot or

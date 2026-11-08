@@ -26,7 +26,7 @@ scenario_tests:
   QQ-01:
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-02:
-    - adapters/facts_test.go#TestUnknownOrUnavailableFactsNeverBecomeKnownStage
+    - facts_test.go#TestGroupFactsRejectsUnknownContradictoryAndFailedFacts
     - integration_test.go#TestPasswordDoesNotGrantStudentEligibilityAndBlacklistScope
   QQ-03:
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
@@ -37,7 +37,7 @@ scenario_tests:
   QQ-06:
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-07:
-    - adapters/facts_test.go#TestGroupFactsPropagatesIdentityAndFiltersFieldPermissions
+    - facts_test.go#TestGroupFactsFiltersFieldsAtServiceBoundary
     - integration_test.go#TestRulesCardsReportAndBatchPreview
   QQ-08:
     - integration_test.go#TestRulesCardsReportAndBatchPreview
