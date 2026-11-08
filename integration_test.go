@@ -151,8 +151,8 @@ func setup(t *testing.T) *fixture {
 	}
 	return f
 }
-func config() g.Config {
-	return g.Config{ID: "g", School: "school", Mode: "before", RequireStudent: true, GraceSeconds: 3600, ReminderSeconds: 600, RetentionSeconds: 120, DiceSides: 6, MuteProbability: 100, MuteSeconds: 60, CooldownSeconds: 30, Pity: 3, CheckCard: true, CardTemplate: "{name}{separator}{nickname}", Keywords: []string{"spam"}}
+func config() g.GroupConfigInput {
+	return g.GroupConfigInput{GroupSettings: g.GroupSettings{Name: "测试群", BotEnabled: true, AutoActions: []string{}, ID: "g", School: "school", Mode: "before", RequireStudent: true, GraceSeconds: 3600, ReminderSeconds: 600, RetentionSeconds: 120, DiceSides: 6, MuteProbability: 100, MuteSeconds: 60, CooldownSeconds: 30, Pity: 3, CheckCard: true, CardTemplate: "{name}{separator}{nickname}", Keywords: []string{"spam"}}, Number: strptr("123456789")}
 }
 func command(t *testing.T, f *fixture, p account.Principal, key string, c g.Command) g.Result {
 	t.Helper()
@@ -172,19 +172,11 @@ func count(t *testing.T, f *fixture, b string) int {
 }
 func actions(t *testing.T, f *fixture) []g.Action {
 	t.Helper()
-	p, e := f.s.List(ctx, manager, "g", "actions", "", 100)
+	p, e := f.s.Actions(ctx, manager, "g", "", 100)
 	if e != nil {
 		t.Fatal(e)
 	}
-	out := []g.Action{}
-	for _, b := range p.Items {
-		var a g.Action
-		if e = json.Unmarshal(b, &a); e != nil {
-			t.Fatal(e)
-		}
-		out = append(out, a)
-	}
-	return out
+	return p.Items
 }
 func TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval(t *testing.T) {
 	f := setup(t)
@@ -303,7 +295,7 @@ func TestScopedAuthorizationRevocationAndSensitiveReads(t *testing.T) {
 	}
 	c := config()
 	c.ID = "other"
-	_, e = f.s.Configure(ctx, manager, "outside", c)
+	_, e = configureCurrent(t, f, manager, "outside", c)
 	if !errors.Is(e, g.ErrForbidden) {
 		t.Fatal(e)
 	}
@@ -317,7 +309,7 @@ func TestScopedAuthorizationRevocationAndSensitiveReads(t *testing.T) {
 	if !errors.Is(e, g.ErrForbidden) || f.bot.calls != 0 {
 		t.Fatal(e)
 	}
-	_, e = f.s.List(ctx, manager, "g", "messages", "", 100)
+	_, e = f.s.Messages(ctx, manager, "g", "", 100)
 	if !errors.Is(e, g.ErrForbidden) {
 		t.Fatal(e)
 	}
@@ -354,7 +346,7 @@ func TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation(t *testing.T) {
 	c := config()
 	c.DiceSides = 0
 	c.MuteProbability = 0
-	_, e = f.s.Configure(ctx, manager, "disable", c)
+	_, e = configureCurrent(t, f, manager, "disable", c)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -385,7 +377,7 @@ func TestRetentionInboxRollbackAndNoRecallViewAudit(t *testing.T) {
 		t.Fatal("duplicate or stale stored")
 	}
 	before := count(t, f, "g/audit")
-	page, err := f.s.List(ctx, manager, "g", "messages", "", 10)
+	page, err := f.s.Messages(ctx, manager, "g", "", 10)
 	if err != nil || len(page.Items) != 1 {
 		t.Fatalf("%+v %v", page, err)
 	}
@@ -393,7 +385,7 @@ func TestRetentionInboxRollbackAndNoRecallViewAudit(t *testing.T) {
 		t.Fatal("recall view audit")
 	}
 	f.now = f.now.Add(120 * time.Second)
-	page, err = f.s.List(ctx, manager, "g", "messages", "", 10)
+	page, err = f.s.Messages(ctx, manager, "g", "", 10)
 	if err != nil || len(page.Items) != 0 {
 		t.Fatal("expired content exposed")
 	}
@@ -456,7 +448,7 @@ func TestHTTPRejectsUnknownFieldsAndNeverTrustsRequestActor(t *testing.T) {
 		r.Header.Set("Idempotency-Key", "http")
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, r)
-		if w.Code != 400 && w.Code != 403 {
+		if w.Code != 400 && w.Code != 403 && w.Code != 422 {
 			t.Fatalf("%d %s", w.Code, w.Body.String())
 		}
 	}
@@ -587,7 +579,7 @@ func TestAISuggestionsRequireEnabledActionsAndCurrentAuthorization(t *testing.T)
 	}
 	c := config()
 	c.AutoActions = []string{"warn"}
-	if _, err := f.s.Configure(ctx, manager, "enableWarn", c); err != nil {
+	if _, err := configureCurrent(t, f, manager, "enableWarn", c); err != nil {
 		t.Fatal(err)
 	}
 	command(t, f, manager, "allowedAI", g.Command{Kind: "ai_execute", Target: r.ID})
@@ -600,8 +592,8 @@ func TestPasswordDoesNotGrantStudentEligibilityAndBlacklistScope(t *testing.T) {
 	f := setup(t)
 	c := config()
 	c.Mode = "password"
-	c.PasswordHash = "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b"
-	if _, e := f.s.Configure(ctx, manager, "passwordConfig", c); e != nil {
+	c.Password = strptr("secret")
+	if _, e := configureCurrent(t, f, manager, "passwordConfig", c); e != nil {
 		t.Fatal(e)
 	}
 	f.facts.set(false)
@@ -688,14 +680,11 @@ func TestSubscriptionTargetsRemainIndependentAndBatchPayloadConflict(t *testing.
 		}
 	}
 	for i, id := range []string{"receiver1", "receiver2"} {
-		page, e := f.s.List(ctx, root, id, "actions", "", 100)
+		page, e := f.s.Actions(ctx, root, id, "", 100)
 		if e != nil || len(page.Items) != 1 {
 			t.Fatalf("%s %+v %v", id, page, e)
 		}
-		var a g.Action
-		if e = json.Unmarshal(page.Items[0], &a); e != nil {
-			t.Fatal(e)
-		}
+		a := page.Items[0]
 		f.bot.failure = i == 1
 		a, e = f.s.Execute(ctx, id, a.ID)
 		if e != nil {
@@ -784,4 +773,16 @@ func TestConcurrentEventDeduplicationAndExecutionClaim(t *testing.T) {
 	if f.bot.calls != 1 {
 		t.Fatal("duplicate bot calls", f.bot.calls)
 	}
+}
+
+func strptr(s string) *string { return &s }
+func configureCurrent(t *testing.T, f *fixture, p account.Principal, key string, in g.GroupConfigInput) (g.GroupConfig, error) {
+	t.Helper()
+	old, e := f.s.Configuration(ctx, p, in.ID)
+	if e == nil {
+		in.ExpectedRevision = old.Revision
+	} else if !errors.Is(e, g.ErrNotFound) && !errors.Is(e, g.ErrForbidden) {
+		return g.GroupConfig{}, e
+	}
+	return f.s.Configure(ctx, p, key, in)
 }

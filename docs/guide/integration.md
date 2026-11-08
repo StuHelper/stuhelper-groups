@@ -170,12 +170,70 @@ backend 的机器人执行器还应校验解析返回值与请求实例一致，
 
 ## 接口使用
 
-OpenAPI 与模块版本为 0.2.0，HTTP 路由统一使用 /api/v1/groups 前缀。SDK 的 server 参数填写服务根地址。
+OpenAPI 与模块版本为 0.3.0，HTTP 路由使用 /api/v1/groups 前缀。SDK 的 server 参数填写服务根地址。以下路径中的 {group} 是内部群 ID。
 
-GET /api/v1/groups 按当前管理范围分页；GET/PUT /api/v1/groups/{group} 读取或配置单群；POST commands 提交动作；GET progress 读取本人申请进度。
+| 方法与路径 | 请求 / 响应 | 用途 |
+| --- | --- | --- |
+| GET /api/v1/groups | GroupSummaryPage | 群摘要与计数 |
+| GET /api/v1/groups/{group} | GroupConfig | 当前配置与 revision |
+| PUT /api/v1/groups/{group} | GroupConfigInput / GroupConfig | 创建或更新配置 |
+| GET /api/v1/groups/{group}/members | MemberPage | 成员与资格处理阶段 |
+| GET /api/v1/groups/{group}/actions | ActionPage | 动作与实际执行结果 |
+| GET /api/v1/groups/{group}/reports | ReportPage | 举报与分析结果 |
+| GET /api/v1/groups/{group}/hits | HitPage | 规则命中 |
+| GET /api/v1/groups/{group}/messages | MessagePage | 获准留存的消息 |
+| GET /api/v1/groups/{group}/subscriptions | SubscriptionPage | 事件订阅 |
+| GET /api/v1/groups/{group}/blacklist | BlacklistPage | 群黑名单 |
+| GET /api/v1/groups/{group}/warnings | WarningsPage | 警告累计 |
+| GET /api/v1/groups/{group}/watch | WatchPage | 观察名单 |
+| GET /api/v1/groups/{group}/deliveries | DeliveryPage | 各接收目标的动作结果 |
+| GET /api/v1/groups/{group}/progress | Member | 本人申请进度 |
+| POST /api/v1/groups/{group}/commands | Command / Result | 管理或用户命令 |
+| POST /api/v1/groups/{group}/batch | Bulk / BulkResult | 批量预览与逐项执行 |
+| POST /api/v1/groups/blacklists | BlacklistInput / Result | 单群、多群及全平台黑名单 |
 
-GET /api/v1/groups/{group}/{collection} 读取成员、动作、举报、规则命中、留存消息和订阅。消息读取使用 groups.messages.read，发送和撤回使用各自能力。查看撤回内容不新增审计。
+### 群摘要与列表
 
-POST batch 接受最多 100 个对象。preview 只显示对象和影响；实际执行返回每个对象的状态，pending 表示已经入队。POST /api/v1/groups/blacklists 支持单群、多群和全平台范围，必须提供原因。
+GroupSummary 包含 id、school、name、number、member_count、bot_enabled、require_student、pending_count、revision。number 只显示群号末四位，其余位为星号；未登记群号时为空字符串。
 
-所有写接口要求 Idempotency-Key。相同键和内容返回原结果，内容不同返回 conflict。分页上限为 100；时间为 UTC RFC3339，时长单位为秒，金额字段不适用。
+member_count 统计 joined=true 的成员。pending_count 是待处理资格记录数与 pending/executing/unknown 动作数之和，同一成员可能同时贡献两项。revision 是配置修订号，成员与动作变化不递增配置修订号。
+
+所有列表返回明确类型的 items 与 next_cursor，limit 默认 50，范围 1–100。按记录 ID 的字节顺序升序排列，cursor 为上页最后扫描的 ID。读取每页时重新检查权限与留存期限。
+
+权限或到期过滤后可能出现 items 为空而 next_cursor 非空，客户端应继续翻页。next_cursor 为空表示扫描结束。单页最多扫描 limit 条记录，不读取全表后在内存分页。
+
+成员 ID 对应 owner，其他 ID 为记录键。Action.actor 和 Subscription.actor 使用 issuer、subject；Warnings 使用 count，Blacklist 使用 reason、until、permanent。所有时间字段为 UTC date-time。
+
+Member 中尚未设置的 deadline、reminder、last_play、muted_until 使用 0001-01-01T00:00:00Z。Action.lease_until 只在 executing 时存在，result 保存实际结果码或 lookup_required，不承载租约时间。
+
+### 配置并发与口令
+
+PUT 使用 GroupConfigInput，expected_revision 必填。首次创建传 0，后续传当前配置 revision。服务端在同一事务中比较并递增 revision，过期更新返回 HTTP 409、groups_conflict，不写配置、审计或 outbox。
+
+同一 Idempotency-Key 与相同请求返回原结果，即使当前修订已推进。键相同但内容不同返回 groups_conflict。更新时重新校验操作者当前权限，学校不能通过配置修改迁移。
+
+password 仅在 PUT 请求中接收：省略表示保留，空字符串表示清除。password 模式下必须已有或新设非空口令。服务端保存随机盐与 PBKDF2-SHA256 摘要，配置响应只给出 password_set，不返回口令或摘要。
+
+number 在 PUT 中可选，传入 5–20 位数字时保存掩码后的显示值；省略保留当前掩码。机器人路由仍按 backend 的内部群 ID 映射，不能用显示群号决定目标。
+
+### 命令与错误
+
+Command 是以 kind 为判别字段的 oneOf，每个分支禁止无关字段并列出必填字段。mute 必须提供 target、seconds；send 必须提供 text；subscribe 必须提供 receiver、enabled，false 也是有效输入。
+
+apply、password、dice、self_mute、report 属于用户命令，从认证身份取得操作者，不接受 target。其余命令用于管理端，按群和操作能力授权。前端应按 OpenAPI 的分支类型构造请求。
+
+批量命令使用独立 BatchCommand，支持 warn、mute、unmute、kick、recheck、extend、exempt、card。target 由 targets 数组逐项填入，命令中不接收 target。每批最多 100 个对象，preview 不写业务数据，执行逐项返回结果。
+
+Problem.code 是固定枚举，所有操作明确列出响应码。HTTP 400 表示 JSON、分页或幂等键格式错误；401 表示未认证，403 表示越权，404 表示对象不存在。HTTP 409 包括修订或幂等冲突以及冷却/容量限制。
+
+HTTP 422 表示请求不符合分支字段要求或功能未启用，分别使用 groups_unprocessable、groups_disabled。HTTP 503 使用 groups_unavailable，表示依赖不可用或返回事实无法验证。错误响应不返回内部异常文本。
+
+### 接入与数据升级
+
+0.3.0 是管理端首次接入前的最终契约整改。消费端需重新生成类型，改用独立集合客户端、GroupSummary、GroupConfigInput.expected_revision、分支命令及 groups_ 错误码。没有通用 Record、动态 collection 路由或旧字段别名。
+
+先合入本模块契约及迁移，再由 backend 固定候选提交并装配，最后管理端按同一契约生成类型与联调。本次只验证 groups，管理端和 backend 的实际提交组合由各自任务记录。
+
+迁移将候选旧数据中的 actor、警告和黑名单字段转换为 snake_case，并为已有群配置建立 revision。旧的无盐口令摘要被删除，password_set=false；原 password 模式保留，管理员重新设置口令前无法通过口令校验。
+
+迁移可重复执行，不删除成员、动作与处置记录。已完成的口令重设不会在重复迁移时被清除。旧 executing 动作的租约时间转换为 lease_until，保留后续查询与恢复流程。

@@ -2,7 +2,7 @@
 
 QQ 群服务候选模块，采用 AGPL-3.0-only。模块提供群配置、入群资格、成员处置、消息留存、举报建议、群事件订阅与娱乐命令。所有管理操作由服务端按学校、群和能力调用 platform `admin.Service.Evaluate`。
 
-[OpenAPI](contracts/groups.openapi.json) 版本为 0.2.0，HTTP 接口统一使用 `/api/v1/groups` 前缀，生成客户端位于 [sdk](sdk)。[装配指南](docs/guide/integration.md) 描述 backend、数据库与 Koishi 接入；[实施状态](docs/development/implementation.md) 记录验证与剩余接口。
+[OpenAPI](contracts/groups.openapi.json) 版本为 0.3.0，HTTP 接口统一使用 `/api/v1/groups` 前缀，生成客户端位于 [sdk](sdk)。[装配指南](docs/guide/integration.md) 描述 backend、数据库与 Koishi 接入；[实施状态](docs/development/implementation.md) 记录验证与剩余接口。
 
 ```bash
 python3 scripts/prepare-candidates.py

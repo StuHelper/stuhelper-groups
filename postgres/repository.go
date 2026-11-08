@@ -71,7 +71,7 @@ func (t *transaction) List(bucket, cursor string, limit int) ([]g.Row, error) {
 	if limit < 1 || limit > 100 {
 		return nil, g.ErrInvalid
 	}
-	rows, e := t.tx.Query(t.ctx, "SELECT id,data FROM groups.records WHERE bucket=$1 AND id>$2 ORDER BY id LIMIT $3", bucket, cursor, limit)
+	rows, e := t.tx.Query(t.ctx, `SELECT id,data FROM groups.records WHERE bucket=$1 AND id COLLATE "C">$2 COLLATE "C" ORDER BY id COLLATE "C" LIMIT $3`, bucket, cursor, limit)
 	if e != nil {
 		return nil, e
 	}
@@ -173,4 +173,33 @@ func (t *transaction) PendingActions(group string) (int, error) {
 	var n int
 	e := t.tx.QueryRow(t.ctx, "SELECT count(*) FROM (SELECT 1 FROM groups.records WHERE bucket=$1 AND data->>'state' IN ('pending','executing','unknown') LIMIT 1000) q", group+"/actions").Scan(&n)
 	return n, e
+}
+
+// GroupCounts computes the requested page's counts in one query. Bucket indexes
+// constrain the scan to these groups; no per-item service query is needed.
+func (t *transaction) GroupCounts(ids []string) (map[string]g.GroupCounts, error) {
+	out := map[string]g.GroupCounts{}
+	if len(ids) == 0 {
+		return out, nil
+	}
+	if len(ids) > 100 {
+		return nil, g.ErrInvalid
+	}
+	rows, e := t.tx.Query(t.ctx, `SELECT item.id,
+ count(*) FILTER (WHERE r.bucket=item.id||'/members' AND r.data->>'joined'='true'),
+ count(*) FILTER (WHERE (r.bucket=item.id||'/members' AND r.data->>'state' IN ('requested','awaiting_verification','grace','extended','removal_pending')) OR (r.bucket=item.id||'/actions' AND r.data->>'state' IN ('pending','executing','unknown')))
+ FROM unnest($1::text[]) AS item(id) LEFT JOIN groups.records r ON r.bucket IN (item.id||'/members',item.id||'/actions') GROUP BY item.id`, ids)
+	if e != nil {
+		return nil, e
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id string
+		var n g.GroupCounts
+		if e = rows.Scan(&id, &n.Members, &n.Pending); e != nil {
+			return nil, e
+		}
+		out[id] = n
+	}
+	return out, rows.Err()
 }

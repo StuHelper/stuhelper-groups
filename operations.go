@@ -39,7 +39,7 @@ func (s *Service) Ingest(ctx context.Context, g string, event Event, m Message) 
 		m.Attachments = []string{}
 	}
 	return s.run(ctx, func(tx Tx) error {
-		var c Config
+		var c GroupConfig
 		if e := tx.Get("config", g, &c); e != nil {
 			return e
 		}
@@ -82,7 +82,7 @@ func (s *Service) Consume(ctx context.Context, g string, e Event, owner string) 
 		return ErrInvalid
 	}
 	return s.run(ctx, func(tx Tx) error {
-		var c Config
+		var c GroupConfig
 		if err := tx.Get("config", g, &c); err != nil {
 			return err
 		}
@@ -96,7 +96,7 @@ func (s *Service) Consume(ctx context.Context, g string, e Event, owner string) 
 		return err
 	})
 }
-func (s *Service) rule(ctx context.Context, tx Tx, p account.Principal, c Config, cmd Command, preview bool) (Result, error) {
+func (s *Service) rule(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, cmd Command, preview bool) (Result, error) {
 	out := Result{State: "clear"}
 	hits := []string{}
 	if c.BlockLinks && (strings.Contains(cmd.Text, "http://") || strings.Contains(cmd.Text, "https://")) {
@@ -167,7 +167,7 @@ func (s *Service) rule(ctx context.Context, tx Tx, p account.Principal, c Config
 	}
 	return out, nil
 }
-func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c Config, cmd Command) (Result, error) {
+func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, cmd Command) (Result, error) {
 	out := Result{State: "unavailable"}
 	if s.Facts == nil {
 		return out, ErrUnavailable
@@ -240,7 +240,7 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 			return ErrConflict
 		}
 		lookup = a.State == "unknown"
-		var c Config
+		var c GroupConfig
 		if e := tx.Get("config", g, &c); e != nil {
 			return e
 		}
@@ -272,24 +272,37 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 				return tx.Put(bucket(g, "actions"), id, a)
 			}
 		} else {
-			if e := s.auth(ctx, a.Actor, a.Capability, c); e != nil {
+			if e := s.auth(ctx, a.Actor.Principal(), a.Capability, c); e != nil {
 				return e
 			}
 		}
 		if a.Command.Kind == "send" && a.Command.Receiver != "" {
-			var source Config
+			var source GroupConfig
 			if e := tx.Get("config", a.Command.Receiver, &source); e != nil {
 				return e
 			}
-			if e := s.auth(ctx, a.Actor, "groups.read", source); e != nil {
+			if e := s.auth(ctx, a.Actor.Principal(), "groups.read", source); e != nil {
 				return e
 			}
+		}
+		if !c.BotEnabled {
+			a.State = "cancelled"
+			a.LeaseUntil = nil
+			if e := tx.Put(bucket(g, "actions"), id, a); e != nil {
+				return e
+			}
+			if e := s.audit(tx, a.Actor.Principal(), g, a.Command.Kind, a.Command.Target, a.State); e != nil {
+				return e
+			}
+			return s.event(tx, g, "action.result", map[string]string{"id": id, "state": a.State})
 		}
 		if s.Bot == nil {
 			return ErrUnavailable
 		}
 		a.State = "executing"
-		a.Result = s.now().Add(30 * time.Second).Format(time.RFC3339Nano)
+		deadline := s.now().Add(30 * time.Second)
+		a.LeaseUntil = &deadline
+		a.Result = ""
 		return tx.Put(bucket(g, "actions"), id, a)
 	})
 	if e != nil || a.State != "executing" {
@@ -307,6 +320,7 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 	}
 	// A timeout is an unknown outcome. The adapter must resolve it, never replay blindly.
 	a.State = "succeeded"
+	a.LeaseUntil = nil
 	a.Result = result.Code
 	if !result.Success {
 		a.State = "failed"
@@ -327,12 +341,13 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 				return err
 			}
 			m.State = "removed"
+			m.Joined = false
 			if err := tx.Put(bucket(g, "members"), m.Owner, m); err != nil {
 				return err
 			}
 		}
 		if a.State == "succeeded" && a.Command.Kind == "warn" {
-			var warnings struct{ Count int64 }
+			var warnings Warnings
 			err := tx.Get(bucket(g, "warnings"), a.Command.Target, &warnings)
 			if err != nil && !errors.Is(err, ErrNotFound) {
 				return err
@@ -341,20 +356,20 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 			if err = tx.Put(bucket(g, "warnings"), a.Command.Target, warnings); err != nil {
 				return err
 			}
-			var c Config
+			var c GroupConfig
 			if err = tx.Get("config", g, &c); err != nil {
 				return err
 			}
 			if c.WarningLimit > 0 && warnings.Count%c.WarningLimit == 0 && slices.Contains(c.AutoActions, "mute") {
-				if err = s.auth(finish, a.Actor, "groups.manage", c); err != nil {
+				if err = s.auth(finish, a.Actor.Principal(), "groups.manage", c); err != nil {
 					return err
 				}
-				if _, err = s.queue(tx, a.Actor, c, Command{Kind: "mute", Target: a.Command.Target, Seconds: c.MuteSeconds, Text: "warning_limit"}, "groups.manage"); err != nil {
+				if _, err = s.queue(tx, a.Actor.Principal(), c, Command{Kind: "mute", Target: a.Command.Target, Seconds: c.MuteSeconds, Text: "warning_limit"}, "groups.manage"); err != nil {
 					return err
 				}
 			}
 		}
-		if err := s.audit(tx, a.Actor, g, a.Command.Kind, a.Command.Target, a.State); err != nil {
+		if err := s.audit(tx, a.Actor.Principal(), g, a.Command.Kind, a.Command.Target, a.State); err != nil {
 			return err
 		}
 		return s.event(tx, g, "action.result", map[string]string{"id": id, "state": a.State})
@@ -379,8 +394,8 @@ func (s *Service) Recover(ctx context.Context, g, cursor string) (string, error)
 			if e = json.Unmarshal(r.Data, &a); e != nil {
 				return e
 			}
-			deadline, err := time.Parse(time.RFC3339Nano, a.Result)
-			if a.State == "executing" && err == nil && !s.now().Before(deadline) {
+			if a.State == "executing" && a.LeaseUntil != nil && !s.now().Before(*a.LeaseUntil) {
+				a.LeaseUntil = nil
 				a.State = "unknown"
 				a.Result = "lookup_required"
 				if e = tx.Put(bucket(g, "actions"), r.ID, a); e != nil {
@@ -398,7 +413,7 @@ func (s *Service) Recover(ctx context.Context, g, cursor string) (string, error)
 func (s *Service) Cleanup(ctx context.Context, g, cursor string) (string, error) {
 	next := ""
 	e := s.run(ctx, func(tx Tx) error {
-		var c Config
+		var c GroupConfig
 		if e := tx.Get("config", g, &c); e != nil {
 			return e
 		}

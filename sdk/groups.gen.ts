@@ -36,22 +36,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/groups/{group}/{collection}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listRecords"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/groups/{group}/batch": {
         parameters: {
             query?: never;
@@ -91,6 +75,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering. */
         get: operations["listGroups"];
         put?: never;
         post?: never;
@@ -116,11 +101,331 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/groups/{group}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering. */
+        get: operations["listMembers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/{group}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering. */
+        get: operations["listActions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/{group}/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering. */
+        get: operations["listReports"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/{group}/hits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering. */
+        get: operations["listHits"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/{group}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering. */
+        get: operations["listMessages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/{group}/subscriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering. */
+        get: operations["listSubscriptions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/{group}/blacklist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering. */
+        get: operations["listBlacklist"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/{group}/warnings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering. */
+        get: operations["listWarnings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/{group}/watch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering. */
+        get: operations["listWatch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/{group}/deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering. */
+        get: operations["listDeliverys"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        Config: {
+        Command: components["schemas"]["ApplyCommand"] | components["schemas"]["PasswordCommand"] | components["schemas"]["DiceCommand"] | components["schemas"]["SelfMuteCommand"] | components["schemas"]["ReportCommand"] | components["schemas"]["RecheckCommand"] | components["schemas"]["ExtendCommand"] | components["schemas"]["ExemptCommand"] | components["schemas"]["WarnCommand"] | components["schemas"]["MuteCommand"] | components["schemas"]["UnmuteCommand"] | components["schemas"]["KickCommand"] | components["schemas"]["BlacklistCommand"] | components["schemas"]["UnblacklistCommand"] | components["schemas"]["SendCommand"] | components["schemas"]["ForwardCommand"] | components["schemas"]["RecallCommand"] | components["schemas"]["CardCommand"] | components["schemas"]["AnalyzeCommand"] | components["schemas"]["PreviewCommand"] | components["schemas"]["RuleCommand"] | components["schemas"]["SubscribeCommand"] | components["schemas"]["FeedbackCommand"] | components["schemas"]["WatchCommand"] | components["schemas"]["AiExecuteCommand"];
+        Result: {
+            id: string;
+            state: string;
+            action: string;
+            /** Format: int64 */
+            value: number;
+            detail: string;
+        };
+        Problem: {
+            /**
+             * @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. groups_unauthenticated: Missing or invalid authenticated identity. groups_forbidden: Current identity cannot perform this operation. groups_not_found: Requested group, member, message or related object does not exist. groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled. groups_cooldown: Cooldown or pending action capacity prevents this operation. groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.
+             * @enum {string}
+             */
+            code: "groups_invalid_request" | "groups_unauthenticated" | "groups_forbidden" | "groups_not_found" | "groups_conflict" | "groups_unprocessable" | "groups_disabled" | "groups_cooldown" | "groups_unavailable";
+        };
+        Bulk: {
+            targets: string[];
+            command: components["schemas"]["BatchCommand"];
+            preview: boolean;
+        };
+        BulkResult: {
+            items: {
+                target: string;
+                result: components["schemas"]["Result"];
+            }[];
+        };
+        BlacklistInput: {
+            groups: string[];
+            target: string;
+            reason: string;
+            /** Format: int64 */
+            seconds: number;
+            remove: boolean;
+        };
+        Member: {
+            owner: string;
+            state: string;
+            /**
+             * Format: date-time
+             * @description UTC timestamp. 0001-01-01T00:00:00Z means no deadline/event is currently set.
+             */
+            deadline: string;
+            /**
+             * Format: date-time
+             * @description UTC timestamp. 0001-01-01T00:00:00Z means no deadline/event is currently set.
+             */
+            reminder: string;
+            password: boolean;
+            exempt: boolean;
+            extended: boolean;
+            /** Format: int64 */
+            failures: number;
+            /**
+             * Format: date-time
+             * @description UTC timestamp. 0001-01-01T00:00:00Z means no deadline/event is currently set.
+             */
+            last_play: string;
+            /**
+             * Format: date-time
+             * @description UTC timestamp. 0001-01-01T00:00:00Z means no deadline/event is currently set.
+             */
+            muted_until: string;
+            id: string;
+            joined: boolean;
+        };
+        Action: {
+            id: string;
+            group: string;
+            actor: components["schemas"]["Actor"];
+            capability: string;
+            command: components["schemas"]["ActionCommand"];
+            /** @enum {string} */
+            state: "pending" | "executing" | "unknown" | "succeeded" | "failed" | "cancelled";
+            result: string;
+            /** Format: date-time */
+            created: string;
+            /**
+             * Format: date-time
+             * @description Execution lease deadline; present only while executing.
+             */
+            lease_until?: string;
+        };
+        Message: {
+            id: string;
+            owner: string;
+            body: string;
+            recalled: boolean;
+            /** Format: date-time */
+            expires: string;
+            /** @description Opaque media references. Backend proxy enforces current group access and the same expiry. */
+            attachments: string[];
+        };
+        Report: {
+            reporter: string;
+            message: string;
+            reason: string;
+            state: string;
+            analysis?: string;
+            suggestions?: string[];
+            feedback?: string;
+            id: string;
+        };
+        Hit: {
+            owner: string;
+            message: string;
+            rules: string[];
+            state: string;
+            id: string;
+        };
+        Subscription: {
+            receiver: string;
+            enabled: boolean;
+            actor: components["schemas"]["Actor"];
+            id: string;
+        };
+        ActionCommand: {
+            /** @enum {string} */
+            kind: "ai_execute" | "analyze" | "apply" | "approve" | "blacklist" | "card" | "dice" | "exempt" | "extend" | "feedback" | "forward" | "kick" | "mute" | "password" | "preview" | "recall" | "recheck" | "remind" | "report" | "rule" | "self_mute" | "send" | "subscribe" | "unblacklist" | "unmute" | "warn" | "watch" | "welcome";
+            target?: string;
+            text?: string;
+            /** Format: int64 */
+            seconds?: number;
+            message?: string;
+            receiver?: string;
+            enabled?: boolean;
+        };
+        Blacklist: {
+            id: string;
+            reason: string;
+            /** Format: date-time */
+            until: string;
+            permanent: boolean;
+        };
+        Warnings: {
+            id: string;
+            /** Format: int64 */
+            count: number;
+        };
+        Watch: {
+            enabled: boolean;
+            reason: string;
+            id: string;
+        };
+        Delivery: {
+            receiver: string;
+            action: string;
+            state: string;
+            id: string;
+        };
+        GroupConfig: {
             id: string;
             school: string;
             /** @enum {string} */
@@ -134,7 +439,6 @@ export interface components {
             reminder_seconds: number;
             /** Format: int64 */
             retention_seconds: number;
-            password_hash?: string;
             card_template: string;
             auto_card: boolean;
             /** Format: int64 */
@@ -162,157 +466,466 @@ export interface components {
             frequency_limit: number;
             /** Format: int64 */
             warning_limit: number;
-        };
-        Command: {
-            /** @enum {string} */
-            kind: "apply" | "recheck" | "extend" | "exempt" | "password" | "warn" | "mute" | "unmute" | "kick" | "blacklist" | "unblacklist" | "send" | "forward" | "recall" | "card" | "dice" | "self_mute" | "report" | "analyze" | "preview" | "rule" | "subscribe" | "feedback" | "watch" | "ai_execute";
-            target?: string;
-            text?: string;
+            name: string;
+            bot_enabled: boolean;
+            /** @description Masked QQ group number; only its final four digits are shown. */
+            number: string;
             /** Format: int64 */
-            seconds?: number;
-            message?: string;
-            receiver?: string;
-            enabled?: boolean;
+            revision: number;
+            password_set: boolean;
         };
-        Result: {
+        GroupConfigInput: {
             id: string;
-            state: string;
-            action: string;
+            school: string;
+            /** @enum {string} */
+            mode: "before" | "muted" | "password";
+            require_student: boolean;
+            accept_alumni: boolean;
+            accept_temporary: boolean;
             /** Format: int64 */
-            value: number;
-            detail: string;
+            grace_seconds: number;
+            /** Format: int64 */
+            reminder_seconds: number;
+            /** Format: int64 */
+            retention_seconds: number;
+            card_template: string;
+            auto_card: boolean;
+            /** Format: int64 */
+            dice_sides: number;
+            /** Format: int64 */
+            mute_probability: number;
+            /** Format: int64 */
+            mute_seconds: number;
+            /** Format: int64 */
+            cooldown_seconds: number;
+            /** Format: int64 */
+            pity: number;
+            keywords: string[];
+            /** Format: int64 */
+            repeat_threshold: number;
+            auto_actions: ("warn" | "recall" | "mute" | "kick" | "blacklist")[];
+            welcome: string;
+            rules_template: string;
+            check_card: boolean;
+            remind_card: boolean;
+            block_links: boolean;
+            /** Format: int64 */
+            frequency_seconds: number;
+            /** Format: int64 */
+            frequency_limit: number;
+            /** Format: int64 */
+            warning_limit: number;
+            name: string;
+            bot_enabled: boolean;
+            /** @description Optional real group number for create/update; omitted preserves the stored masked number. */
+            number?: string;
+            /**
+             * Format: int64
+             * @description 0 creates a group; otherwise must equal the current revision. A successful update increments revision by one.
+             */
+            expected_revision: number;
+            /** @description Omitted preserves password; empty clears it (not allowed in password mode). Never returned or saved as plaintext. */
+            password?: string;
         };
-        Record: components["schemas"]["Config"] | components["schemas"]["Member"] | components["schemas"]["Action"] | components["schemas"]["Message"] | components["schemas"]["Report"] | components["schemas"]["Hit"] | components["schemas"]["Subscription"] | components["schemas"]["Blacklist"] | components["schemas"]["Warnings"] | components["schemas"]["Watch"] | components["schemas"]["Delivery"];
-        Page: {
-            items: components["schemas"]["Record"][];
+        GroupSummary: {
+            id: string;
+            school: string;
+            name: string;
+            /** @description Masked QQ group number, same as GroupConfig.number. */
+            number: string;
+            /**
+             * Format: int64
+             * @description Number of members whose joined fact is currently true.
+             */
+            member_count: number;
+            bot_enabled: boolean;
+            require_student: boolean;
+            /**
+             * Format: int64
+             * @description Sum of unresolved eligibility records (requested, awaiting_verification, grace, extended, removal_pending) and actions in pending/executing/unknown. One member can contribute to both counts.
+             */
+            pending_count: number;
+            /** Format: int64 */
+            revision: number;
+        };
+        Actor: {
+            issuer: string;
+            subject: string;
+        };
+        GroupSummaryPage: {
+            items: components["schemas"]["GroupSummary"][];
+            /** @description Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor. */
             next_cursor: string;
         };
-        Problem: {
-            code: string;
+        MemberPage: {
+            items: components["schemas"]["Member"][];
+            /** @description Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor. */
+            next_cursor: string;
         };
-        Bulk: {
-            targets: string[];
-            command: components["schemas"]["Command"];
-            preview: boolean;
+        ActionPage: {
+            items: components["schemas"]["Action"][];
+            /** @description Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor. */
+            next_cursor: string;
         };
-        BulkResult: {
-            items: {
-                target: string;
-                result: components["schemas"]["Result"];
-            }[];
+        ReportPage: {
+            items: components["schemas"]["Report"][];
+            /** @description Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor. */
+            next_cursor: string;
         };
-        BlacklistInput: {
-            groups: string[];
+        HitPage: {
+            items: components["schemas"]["Hit"][];
+            /** @description Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor. */
+            next_cursor: string;
+        };
+        MessagePage: {
+            items: components["schemas"]["Message"][];
+            /** @description Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor. */
+            next_cursor: string;
+        };
+        SubscriptionPage: {
+            items: components["schemas"]["Subscription"][];
+            /** @description Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor. */
+            next_cursor: string;
+        };
+        BlacklistPage: {
+            items: components["schemas"]["Blacklist"][];
+            /** @description Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor. */
+            next_cursor: string;
+        };
+        WarningsPage: {
+            items: components["schemas"]["Warnings"][];
+            /** @description Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor. */
+            next_cursor: string;
+        };
+        WatchPage: {
+            items: components["schemas"]["Watch"][];
+            /** @description Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor. */
+            next_cursor: string;
+        };
+        DeliveryPage: {
+            items: components["schemas"]["Delivery"][];
+            /** @description Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor. */
+            next_cursor: string;
+        };
+        /** @description User command; caller only. */
+        ApplyCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "apply";
+        };
+        /** @description User command; caller only. */
+        PasswordCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "password";
+            text: string;
+        };
+        /** @description User command; caller only. */
+        DiceCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "dice";
+        };
+        /** @description User command; caller only. */
+        SelfMuteCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "self_mute";
+        };
+        /** @description User command; caller only. */
+        ReportCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "report";
+            message: string;
+            text: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        RecheckCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "recheck";
             target: string;
-            reason: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        ExtendCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "extend";
+            target: string;
+            text: string;
             /** Format: int64 */
             seconds: number;
-            remove: boolean;
         };
-        Member: {
-            owner: string;
-            state: string;
-            /** Format: date-time */
-            deadline: string;
-            /** Format: date-time */
-            reminder: string;
-            password: boolean;
-            exempt: boolean;
-            extended: boolean;
+        /** @description Management command; requires current group-scoped capability. */
+        ExemptCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "exempt";
+            target: string;
+            text: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        WarnCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "warn";
+            target: string;
+            text: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        MuteCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "mute";
+            target: string;
             /** Format: int64 */
-            failures: number;
-            /** Format: date-time */
-            last_play: string;
-            /** Format: date-time */
-            muted_until: string;
-            id?: string;
-            joined: boolean;
-        };
-        Action: {
-            id: string;
-            group: string;
-            actor: {
-                Issuer: string;
-                Subject: string;
-            };
-            capability: string;
-            command: components["schemas"]["ActionCommand"];
-            /** @enum {string} */
-            state: "pending" | "executing" | "unknown" | "succeeded" | "failed" | "cancelled";
-            result: string;
-            /** Format: date-time */
-            created: string;
-        };
-        Message: {
-            id: string;
-            owner: string;
-            body: string;
-            recalled: boolean;
-            /** Format: date-time */
-            expires: string;
-            /** @description Opaque media references. Backend proxy enforces current group access and the same expiry. */
-            attachments: string[];
-        };
-        Report: {
-            reporter: string;
-            message: string;
-            reason: string;
-            state: string;
-            analysis?: string;
-            suggestions?: string[];
-            feedback?: string;
-            id?: string;
-        };
-        Hit: {
-            owner: string;
-            message: string;
-            rules: string[];
-            state: string;
-            id?: string;
-        };
-        Subscription: {
-            receiver: string;
-            enabled: boolean;
-            actor: {
-                Issuer: string;
-                Subject: string;
-            };
-            id?: string;
-        };
-        ActionCommand: {
-            /** @enum {string} */
-            kind: "apply" | "recheck" | "extend" | "exempt" | "password" | "warn" | "mute" | "unmute" | "kick" | "blacklist" | "unblacklist" | "send" | "forward" | "recall" | "card" | "dice" | "self_mute" | "report" | "analyze" | "preview" | "rule" | "subscribe" | "feedback" | "watch" | "ai_execute" | "approve" | "remind" | "welcome";
-            target?: string;
+            seconds: number;
             text?: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        UnmuteCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "unmute";
+            target: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        KickCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "kick";
+            target: string;
+            text?: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        BlacklistCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "blacklist";
+            target: string;
+            text: string;
             /** Format: int64 */
             seconds?: number;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        UnblacklistCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "unblacklist";
+            target: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        SendCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "send";
+            text: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        ForwardCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "forward";
+            message: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        RecallCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "recall";
+            message: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        CardCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "card";
+            target: string;
+            text: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        AnalyzeCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "analyze";
+            target: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        PreviewCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "preview";
+            target: string;
+            text: string;
             message?: string;
-            receiver?: string;
-            enabled?: boolean;
         };
-        Blacklist: {
-            Reason: string;
-            /** Format: date-time */
-            Until: string;
-            Permanent: boolean;
-            id: string;
+        /** @description Management command; requires current group-scoped capability. */
+        RuleCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "rule";
+            target: string;
+            text: string;
+            message: string;
         };
-        Warnings: {
-            /** Format: int64 */
-            Count: number;
-            id: string;
-        };
-        Watch: {
-            enabled: boolean;
-            reason: string;
-            id: string;
-        };
-        Delivery: {
+        /** @description Management command; requires current group-scoped capability. */
+        SubscribeCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "subscribe";
             receiver: string;
-            action: string;
-            state: string;
-            id: string;
+            enabled: boolean;
         };
+        /** @description Management command; requires current group-scoped capability. */
+        FeedbackCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "feedback";
+            target: string;
+            text: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        WatchCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "watch";
+            target: string;
+            enabled: boolean;
+            text?: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        AiExecuteCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "ai_execute";
+            target: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        WarnBatchCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "warn";
+            text: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        MuteBatchCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "mute";
+            /** Format: int64 */
+            seconds: number;
+            text?: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        UnmuteBatchCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "unmute";
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        KickBatchCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "kick";
+            text?: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        RecheckBatchCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "recheck";
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        ExtendBatchCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "extend";
+            text: string;
+            /** Format: int64 */
+            seconds: number;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        ExemptBatchCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "exempt";
+            text: string;
+        };
+        /** @description Management command; requires current group-scoped capability. */
+        CardBatchCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "card";
+            text: string;
+        };
+        BatchCommand: components["schemas"]["WarnBatchCommand"] | components["schemas"]["MuteBatchCommand"] | components["schemas"]["UnmuteBatchCommand"] | components["schemas"]["KickBatchCommand"] | components["schemas"]["RecheckBatchCommand"] | components["schemas"]["ExtendBatchCommand"] | components["schemas"]["ExemptBatchCommand"] | components["schemas"]["CardBatchCommand"];
     };
     responses: never;
     parameters: never;
@@ -339,11 +952,47 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Config"];
+                    "application/json": components["schemas"]["GroupConfig"];
                 };
             };
-            /** @description Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown. */
-            default: {
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Current identity cannot perform this operation. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_not_found: Requested group, member, message or related object does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -366,7 +1015,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Config"];
+                "application/json": components["schemas"]["GroupConfigInput"];
             };
         };
         responses: {
@@ -376,11 +1025,65 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Config"];
+                    "application/json": components["schemas"]["GroupConfig"];
                 };
             };
-            /** @description Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown. */
-            default: {
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Current identity cannot perform this operation. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_not_found: Requested group, member, message or related object does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_cooldown: Cooldown or pending action capacity prevents this operation. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -416,8 +1119,8 @@ export interface operations {
                     "application/json": components["schemas"]["Result"];
                 };
             };
-            /** @description Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown. */
-            default: {
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -425,34 +1128,53 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-        };
-    };
-    listRecords: {
-        parameters: {
-            query?: {
-                cursor?: string;
-                limit?: number;
-            };
-            header?: never;
-            path: {
-                group: string;
-                collection: "members" | "actions" | "reports" | "hits" | "messages" | "subscriptions" | "blacklist" | "warnings" | "watch" | "deliveries";
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Current result. Pending is not executed; unknown requires lookup. */
-            200: {
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Page"];
+                    "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown. */
-            default: {
+            /** @description groups_forbidden: Current identity cannot perform this operation. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_not_found: Requested group, member, message or related object does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_cooldown: Cooldown or pending action capacity prevents this operation. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -488,8 +1210,62 @@ export interface operations {
                     "application/json": components["schemas"]["BulkResult"];
                 };
             };
-            /** @description Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown. */
-            default: {
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Current identity cannot perform this operation. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_not_found: Requested group, member, message or related object does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_cooldown: Cooldown or pending action capacity prevents this operation. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -523,8 +1299,62 @@ export interface operations {
                     "application/json": components["schemas"]["Result"];
                 };
             };
-            /** @description Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown. */
-            default: {
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Current identity cannot perform this operation. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_not_found: Requested group, member, message or related object does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_cooldown: Cooldown or pending action capacity prevents this operation. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -552,11 +1382,38 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Page"];
+                    "application/json": components["schemas"]["GroupSummaryPage"];
                 };
             };
-            /** @description Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown. */
-            default: {
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Current identity cannot perform this operation. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -583,11 +1440,747 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Record"];
+                    "application/json": components["schemas"]["Member"];
                 };
             };
-            /** @description Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown. */
-            default: {
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Current identity cannot perform this operation. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_not_found: Requested group, member, message or related object does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listMembers: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result. Pending is not executed; unknown requires lookup. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberPage"];
+                };
+            };
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Current identity cannot perform this operation. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_not_found: Requested group, member, message or related object does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listActions: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result. Pending is not executed; unknown requires lookup. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionPage"];
+                };
+            };
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Current identity cannot perform this operation. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_not_found: Requested group, member, message or related object does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listReports: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result. Pending is not executed; unknown requires lookup. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportPage"];
+                };
+            };
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Current identity cannot perform this operation. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_not_found: Requested group, member, message or related object does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listHits: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result. Pending is not executed; unknown requires lookup. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HitPage"];
+                };
+            };
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Current identity cannot perform this operation. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_not_found: Requested group, member, message or related object does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listMessages: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result. Pending is not executed; unknown requires lookup. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessagePage"];
+                };
+            };
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Current identity cannot perform this operation. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_not_found: Requested group, member, message or related object does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listSubscriptions: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result. Pending is not executed; unknown requires lookup. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionPage"];
+                };
+            };
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Current identity cannot perform this operation. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_not_found: Requested group, member, message or related object does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listBlacklist: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result. Pending is not executed; unknown requires lookup. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlacklistPage"];
+                };
+            };
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Current identity cannot perform this operation. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_not_found: Requested group, member, message or related object does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listWarnings: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result. Pending is not executed; unknown requires lookup. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarningsPage"];
+                };
+            };
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Current identity cannot perform this operation. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_not_found: Requested group, member, message or related object does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listWatch: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result. Pending is not executed; unknown requires lookup. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WatchPage"];
+                };
+            };
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Current identity cannot perform this operation. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_not_found: Requested group, member, message or related object does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listDeliverys: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result. Pending is not executed; unknown requires lookup. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryPage"];
+                };
+            };
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Current identity cannot perform this operation. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_not_found: Requested group, member, message or related object does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };

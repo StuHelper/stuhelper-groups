@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -143,177 +144,630 @@ func (e ActionCommandKind) Valid() bool {
 	}
 }
 
-// Defines values for CommandKind.
+// Defines values for AiExecuteCommandKind.
 const (
-	CommandKindAiExecute   CommandKind = "ai_execute"
-	CommandKindAnalyze     CommandKind = "analyze"
-	CommandKindApply       CommandKind = "apply"
-	CommandKindBlacklist   CommandKind = "blacklist"
-	CommandKindCard        CommandKind = "card"
-	CommandKindDice        CommandKind = "dice"
-	CommandKindExempt      CommandKind = "exempt"
-	CommandKindExtend      CommandKind = "extend"
-	CommandKindFeedback    CommandKind = "feedback"
-	CommandKindForward     CommandKind = "forward"
-	CommandKindKick        CommandKind = "kick"
-	CommandKindMute        CommandKind = "mute"
-	CommandKindPassword    CommandKind = "password"
-	CommandKindPreview     CommandKind = "preview"
-	CommandKindRecall      CommandKind = "recall"
-	CommandKindRecheck     CommandKind = "recheck"
-	CommandKindReport      CommandKind = "report"
-	CommandKindRule        CommandKind = "rule"
-	CommandKindSelfMute    CommandKind = "self_mute"
-	CommandKindSend        CommandKind = "send"
-	CommandKindSubscribe   CommandKind = "subscribe"
-	CommandKindUnblacklist CommandKind = "unblacklist"
-	CommandKindUnmute      CommandKind = "unmute"
-	CommandKindWarn        CommandKind = "warn"
-	CommandKindWatch       CommandKind = "watch"
+	AiExecuteCommandKindAiExecute AiExecuteCommandKind = "ai_execute"
 )
 
-// Valid indicates whether the value is a known member of the CommandKind enum.
-func (e CommandKind) Valid() bool {
+// Valid indicates whether the value is a known member of the AiExecuteCommandKind enum.
+func (e AiExecuteCommandKind) Valid() bool {
 	switch e {
-	case CommandKindAiExecute:
-		return true
-	case CommandKindAnalyze:
-		return true
-	case CommandKindApply:
-		return true
-	case CommandKindBlacklist:
-		return true
-	case CommandKindCard:
-		return true
-	case CommandKindDice:
-		return true
-	case CommandKindExempt:
-		return true
-	case CommandKindExtend:
-		return true
-	case CommandKindFeedback:
-		return true
-	case CommandKindForward:
-		return true
-	case CommandKindKick:
-		return true
-	case CommandKindMute:
-		return true
-	case CommandKindPassword:
-		return true
-	case CommandKindPreview:
-		return true
-	case CommandKindRecall:
-		return true
-	case CommandKindRecheck:
-		return true
-	case CommandKindReport:
-		return true
-	case CommandKindRule:
-		return true
-	case CommandKindSelfMute:
-		return true
-	case CommandKindSend:
-		return true
-	case CommandKindSubscribe:
-		return true
-	case CommandKindUnblacklist:
-		return true
-	case CommandKindUnmute:
-		return true
-	case CommandKindWarn:
-		return true
-	case CommandKindWatch:
+	case AiExecuteCommandKindAiExecute:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for ConfigAutoActions.
+// Defines values for AnalyzeCommandKind.
 const (
-	ConfigAutoActionsBlacklist ConfigAutoActions = "blacklist"
-	ConfigAutoActionsKick      ConfigAutoActions = "kick"
-	ConfigAutoActionsMute      ConfigAutoActions = "mute"
-	ConfigAutoActionsRecall    ConfigAutoActions = "recall"
-	ConfigAutoActionsWarn      ConfigAutoActions = "warn"
+	AnalyzeCommandKindAnalyze AnalyzeCommandKind = "analyze"
 )
 
-// Valid indicates whether the value is a known member of the ConfigAutoActions enum.
-func (e ConfigAutoActions) Valid() bool {
+// Valid indicates whether the value is a known member of the AnalyzeCommandKind enum.
+func (e AnalyzeCommandKind) Valid() bool {
 	switch e {
-	case ConfigAutoActionsBlacklist:
-		return true
-	case ConfigAutoActionsKick:
-		return true
-	case ConfigAutoActionsMute:
-		return true
-	case ConfigAutoActionsRecall:
-		return true
-	case ConfigAutoActionsWarn:
+	case AnalyzeCommandKindAnalyze:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for ConfigMode.
+// Defines values for ApplyCommandKind.
 const (
-	ConfigModeBefore   ConfigMode = "before"
-	ConfigModeMuted    ConfigMode = "muted"
-	ConfigModePassword ConfigMode = "password"
+	ApplyCommandKindApply ApplyCommandKind = "apply"
 )
 
-// Valid indicates whether the value is a known member of the ConfigMode enum.
-func (e ConfigMode) Valid() bool {
+// Valid indicates whether the value is a known member of the ApplyCommandKind enum.
+func (e ApplyCommandKind) Valid() bool {
 	switch e {
-	case ConfigModeBefore:
-		return true
-	case ConfigModeMuted:
-		return true
-	case ConfigModePassword:
+	case ApplyCommandKindApply:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for ListRecordsParamsCollection.
+// Defines values for BlacklistCommandKind.
 const (
-	ListRecordsParamsCollectionActions       ListRecordsParamsCollection = "actions"
-	ListRecordsParamsCollectionBlacklist     ListRecordsParamsCollection = "blacklist"
-	ListRecordsParamsCollectionDeliveries    ListRecordsParamsCollection = "deliveries"
-	ListRecordsParamsCollectionHits          ListRecordsParamsCollection = "hits"
-	ListRecordsParamsCollectionMembers       ListRecordsParamsCollection = "members"
-	ListRecordsParamsCollectionMessages      ListRecordsParamsCollection = "messages"
-	ListRecordsParamsCollectionReports       ListRecordsParamsCollection = "reports"
-	ListRecordsParamsCollectionSubscriptions ListRecordsParamsCollection = "subscriptions"
-	ListRecordsParamsCollectionWarnings      ListRecordsParamsCollection = "warnings"
-	ListRecordsParamsCollectionWatch         ListRecordsParamsCollection = "watch"
+	BlacklistCommandKindBlacklist BlacklistCommandKind = "blacklist"
 )
 
-// Valid indicates whether the value is a known member of the ListRecordsParamsCollection enum.
-func (e ListRecordsParamsCollection) Valid() bool {
+// Valid indicates whether the value is a known member of the BlacklistCommandKind enum.
+func (e BlacklistCommandKind) Valid() bool {
 	switch e {
-	case ListRecordsParamsCollectionActions:
+	case BlacklistCommandKindBlacklist:
 		return true
-	case ListRecordsParamsCollectionBlacklist:
+	default:
+		return false
+	}
+}
+
+// Defines values for CardBatchCommandKind.
+const (
+	CardBatchCommandKindCard CardBatchCommandKind = "card"
+)
+
+// Valid indicates whether the value is a known member of the CardBatchCommandKind enum.
+func (e CardBatchCommandKind) Valid() bool {
+	switch e {
+	case CardBatchCommandKindCard:
 		return true
-	case ListRecordsParamsCollectionDeliveries:
+	default:
+		return false
+	}
+}
+
+// Defines values for CardCommandKind.
+const (
+	CardCommandKindCard CardCommandKind = "card"
+)
+
+// Valid indicates whether the value is a known member of the CardCommandKind enum.
+func (e CardCommandKind) Valid() bool {
+	switch e {
+	case CardCommandKindCard:
 		return true
-	case ListRecordsParamsCollectionHits:
+	default:
+		return false
+	}
+}
+
+// Defines values for DiceCommandKind.
+const (
+	DiceCommandKindDice DiceCommandKind = "dice"
+)
+
+// Valid indicates whether the value is a known member of the DiceCommandKind enum.
+func (e DiceCommandKind) Valid() bool {
+	switch e {
+	case DiceCommandKindDice:
 		return true
-	case ListRecordsParamsCollectionMembers:
+	default:
+		return false
+	}
+}
+
+// Defines values for ExemptBatchCommandKind.
+const (
+	ExemptBatchCommandKindExempt ExemptBatchCommandKind = "exempt"
+)
+
+// Valid indicates whether the value is a known member of the ExemptBatchCommandKind enum.
+func (e ExemptBatchCommandKind) Valid() bool {
+	switch e {
+	case ExemptBatchCommandKindExempt:
 		return true
-	case ListRecordsParamsCollectionMessages:
+	default:
+		return false
+	}
+}
+
+// Defines values for ExemptCommandKind.
+const (
+	ExemptCommandKindExempt ExemptCommandKind = "exempt"
+)
+
+// Valid indicates whether the value is a known member of the ExemptCommandKind enum.
+func (e ExemptCommandKind) Valid() bool {
+	switch e {
+	case ExemptCommandKindExempt:
 		return true
-	case ListRecordsParamsCollectionReports:
+	default:
+		return false
+	}
+}
+
+// Defines values for ExtendBatchCommandKind.
+const (
+	ExtendBatchCommandKindExtend ExtendBatchCommandKind = "extend"
+)
+
+// Valid indicates whether the value is a known member of the ExtendBatchCommandKind enum.
+func (e ExtendBatchCommandKind) Valid() bool {
+	switch e {
+	case ExtendBatchCommandKindExtend:
 		return true
-	case ListRecordsParamsCollectionSubscriptions:
+	default:
+		return false
+	}
+}
+
+// Defines values for ExtendCommandKind.
+const (
+	ExtendCommandKindExtend ExtendCommandKind = "extend"
+)
+
+// Valid indicates whether the value is a known member of the ExtendCommandKind enum.
+func (e ExtendCommandKind) Valid() bool {
+	switch e {
+	case ExtendCommandKindExtend:
 		return true
-	case ListRecordsParamsCollectionWarnings:
+	default:
+		return false
+	}
+}
+
+// Defines values for FeedbackCommandKind.
+const (
+	FeedbackCommandKindFeedback FeedbackCommandKind = "feedback"
+)
+
+// Valid indicates whether the value is a known member of the FeedbackCommandKind enum.
+func (e FeedbackCommandKind) Valid() bool {
+	switch e {
+	case FeedbackCommandKindFeedback:
 		return true
-	case ListRecordsParamsCollectionWatch:
+	default:
+		return false
+	}
+}
+
+// Defines values for ForwardCommandKind.
+const (
+	ForwardCommandKindForward ForwardCommandKind = "forward"
+)
+
+// Valid indicates whether the value is a known member of the ForwardCommandKind enum.
+func (e ForwardCommandKind) Valid() bool {
+	switch e {
+	case ForwardCommandKindForward:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GroupConfigAutoActions.
+const (
+	GroupConfigAutoActionsBlacklist GroupConfigAutoActions = "blacklist"
+	GroupConfigAutoActionsKick      GroupConfigAutoActions = "kick"
+	GroupConfigAutoActionsMute      GroupConfigAutoActions = "mute"
+	GroupConfigAutoActionsRecall    GroupConfigAutoActions = "recall"
+	GroupConfigAutoActionsWarn      GroupConfigAutoActions = "warn"
+)
+
+// Valid indicates whether the value is a known member of the GroupConfigAutoActions enum.
+func (e GroupConfigAutoActions) Valid() bool {
+	switch e {
+	case GroupConfigAutoActionsBlacklist:
+		return true
+	case GroupConfigAutoActionsKick:
+		return true
+	case GroupConfigAutoActionsMute:
+		return true
+	case GroupConfigAutoActionsRecall:
+		return true
+	case GroupConfigAutoActionsWarn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GroupConfigMode.
+const (
+	GroupConfigModeBefore   GroupConfigMode = "before"
+	GroupConfigModeMuted    GroupConfigMode = "muted"
+	GroupConfigModePassword GroupConfigMode = "password"
+)
+
+// Valid indicates whether the value is a known member of the GroupConfigMode enum.
+func (e GroupConfigMode) Valid() bool {
+	switch e {
+	case GroupConfigModeBefore:
+		return true
+	case GroupConfigModeMuted:
+		return true
+	case GroupConfigModePassword:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GroupConfigInputAutoActions.
+const (
+	GroupConfigInputAutoActionsBlacklist GroupConfigInputAutoActions = "blacklist"
+	GroupConfigInputAutoActionsKick      GroupConfigInputAutoActions = "kick"
+	GroupConfigInputAutoActionsMute      GroupConfigInputAutoActions = "mute"
+	GroupConfigInputAutoActionsRecall    GroupConfigInputAutoActions = "recall"
+	GroupConfigInputAutoActionsWarn      GroupConfigInputAutoActions = "warn"
+)
+
+// Valid indicates whether the value is a known member of the GroupConfigInputAutoActions enum.
+func (e GroupConfigInputAutoActions) Valid() bool {
+	switch e {
+	case GroupConfigInputAutoActionsBlacklist:
+		return true
+	case GroupConfigInputAutoActionsKick:
+		return true
+	case GroupConfigInputAutoActionsMute:
+		return true
+	case GroupConfigInputAutoActionsRecall:
+		return true
+	case GroupConfigInputAutoActionsWarn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GroupConfigInputMode.
+const (
+	GroupConfigInputModeBefore   GroupConfigInputMode = "before"
+	GroupConfigInputModeMuted    GroupConfigInputMode = "muted"
+	GroupConfigInputModePassword GroupConfigInputMode = "password"
+)
+
+// Valid indicates whether the value is a known member of the GroupConfigInputMode enum.
+func (e GroupConfigInputMode) Valid() bool {
+	switch e {
+	case GroupConfigInputModeBefore:
+		return true
+	case GroupConfigInputModeMuted:
+		return true
+	case GroupConfigInputModePassword:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for KickBatchCommandKind.
+const (
+	KickBatchCommandKindKick KickBatchCommandKind = "kick"
+)
+
+// Valid indicates whether the value is a known member of the KickBatchCommandKind enum.
+func (e KickBatchCommandKind) Valid() bool {
+	switch e {
+	case KickBatchCommandKindKick:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for KickCommandKind.
+const (
+	KickCommandKindKick KickCommandKind = "kick"
+)
+
+// Valid indicates whether the value is a known member of the KickCommandKind enum.
+func (e KickCommandKind) Valid() bool {
+	switch e {
+	case KickCommandKindKick:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MuteBatchCommandKind.
+const (
+	MuteBatchCommandKindMute MuteBatchCommandKind = "mute"
+)
+
+// Valid indicates whether the value is a known member of the MuteBatchCommandKind enum.
+func (e MuteBatchCommandKind) Valid() bool {
+	switch e {
+	case MuteBatchCommandKindMute:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MuteCommandKind.
+const (
+	MuteCommandKindMute MuteCommandKind = "mute"
+)
+
+// Valid indicates whether the value is a known member of the MuteCommandKind enum.
+func (e MuteCommandKind) Valid() bool {
+	switch e {
+	case MuteCommandKindMute:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PasswordCommandKind.
+const (
+	PasswordCommandKindPassword PasswordCommandKind = "password"
+)
+
+// Valid indicates whether the value is a known member of the PasswordCommandKind enum.
+func (e PasswordCommandKind) Valid() bool {
+	switch e {
+	case PasswordCommandKindPassword:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PreviewCommandKind.
+const (
+	PreviewCommandKindPreview PreviewCommandKind = "preview"
+)
+
+// Valid indicates whether the value is a known member of the PreviewCommandKind enum.
+func (e PreviewCommandKind) Valid() bool {
+	switch e {
+	case PreviewCommandKindPreview:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ProblemCode.
+const (
+	GroupsConflict        ProblemCode = "groups_conflict"
+	GroupsCooldown        ProblemCode = "groups_cooldown"
+	GroupsDisabled        ProblemCode = "groups_disabled"
+	GroupsForbidden       ProblemCode = "groups_forbidden"
+	GroupsInvalidRequest  ProblemCode = "groups_invalid_request"
+	GroupsNotFound        ProblemCode = "groups_not_found"
+	GroupsUnauthenticated ProblemCode = "groups_unauthenticated"
+	GroupsUnavailable     ProblemCode = "groups_unavailable"
+	GroupsUnprocessable   ProblemCode = "groups_unprocessable"
+)
+
+// Valid indicates whether the value is a known member of the ProblemCode enum.
+func (e ProblemCode) Valid() bool {
+	switch e {
+	case GroupsConflict:
+		return true
+	case GroupsCooldown:
+		return true
+	case GroupsDisabled:
+		return true
+	case GroupsForbidden:
+		return true
+	case GroupsInvalidRequest:
+		return true
+	case GroupsNotFound:
+		return true
+	case GroupsUnauthenticated:
+		return true
+	case GroupsUnavailable:
+		return true
+	case GroupsUnprocessable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RecallCommandKind.
+const (
+	RecallCommandKindRecall RecallCommandKind = "recall"
+)
+
+// Valid indicates whether the value is a known member of the RecallCommandKind enum.
+func (e RecallCommandKind) Valid() bool {
+	switch e {
+	case RecallCommandKindRecall:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RecheckBatchCommandKind.
+const (
+	RecheckBatchCommandKindRecheck RecheckBatchCommandKind = "recheck"
+)
+
+// Valid indicates whether the value is a known member of the RecheckBatchCommandKind enum.
+func (e RecheckBatchCommandKind) Valid() bool {
+	switch e {
+	case RecheckBatchCommandKindRecheck:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RecheckCommandKind.
+const (
+	RecheckCommandKindRecheck RecheckCommandKind = "recheck"
+)
+
+// Valid indicates whether the value is a known member of the RecheckCommandKind enum.
+func (e RecheckCommandKind) Valid() bool {
+	switch e {
+	case RecheckCommandKindRecheck:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ReportCommandKind.
+const (
+	ReportCommandKindReport ReportCommandKind = "report"
+)
+
+// Valid indicates whether the value is a known member of the ReportCommandKind enum.
+func (e ReportCommandKind) Valid() bool {
+	switch e {
+	case ReportCommandKindReport:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RuleCommandKind.
+const (
+	RuleCommandKindRule RuleCommandKind = "rule"
+)
+
+// Valid indicates whether the value is a known member of the RuleCommandKind enum.
+func (e RuleCommandKind) Valid() bool {
+	switch e {
+	case RuleCommandKindRule:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SelfMuteCommandKind.
+const (
+	SelfMuteCommandKindSelfMute SelfMuteCommandKind = "self_mute"
+)
+
+// Valid indicates whether the value is a known member of the SelfMuteCommandKind enum.
+func (e SelfMuteCommandKind) Valid() bool {
+	switch e {
+	case SelfMuteCommandKindSelfMute:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SendCommandKind.
+const (
+	SendCommandKindSend SendCommandKind = "send"
+)
+
+// Valid indicates whether the value is a known member of the SendCommandKind enum.
+func (e SendCommandKind) Valid() bool {
+	switch e {
+	case SendCommandKindSend:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SubscribeCommandKind.
+const (
+	SubscribeCommandKindSubscribe SubscribeCommandKind = "subscribe"
+)
+
+// Valid indicates whether the value is a known member of the SubscribeCommandKind enum.
+func (e SubscribeCommandKind) Valid() bool {
+	switch e {
+	case SubscribeCommandKindSubscribe:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UnblacklistCommandKind.
+const (
+	UnblacklistCommandKindUnblacklist UnblacklistCommandKind = "unblacklist"
+)
+
+// Valid indicates whether the value is a known member of the UnblacklistCommandKind enum.
+func (e UnblacklistCommandKind) Valid() bool {
+	switch e {
+	case UnblacklistCommandKindUnblacklist:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UnmuteBatchCommandKind.
+const (
+	UnmuteBatchCommandKindUnmute UnmuteBatchCommandKind = "unmute"
+)
+
+// Valid indicates whether the value is a known member of the UnmuteBatchCommandKind enum.
+func (e UnmuteBatchCommandKind) Valid() bool {
+	switch e {
+	case UnmuteBatchCommandKindUnmute:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UnmuteCommandKind.
+const (
+	UnmuteCommandKindUnmute UnmuteCommandKind = "unmute"
+)
+
+// Valid indicates whether the value is a known member of the UnmuteCommandKind enum.
+func (e UnmuteCommandKind) Valid() bool {
+	switch e {
+	case UnmuteCommandKindUnmute:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WarnBatchCommandKind.
+const (
+	WarnBatchCommandKindWarn WarnBatchCommandKind = "warn"
+)
+
+// Valid indicates whether the value is a known member of the WarnBatchCommandKind enum.
+func (e WarnBatchCommandKind) Valid() bool {
+	switch e {
+	case WarnBatchCommandKindWarn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WarnCommandKind.
+const (
+	WarnCommandKindWarn WarnCommandKind = "warn"
+)
+
+// Valid indicates whether the value is a known member of the WarnCommandKind enum.
+func (e WarnCommandKind) Valid() bool {
+	switch e {
+	case WarnCommandKindWarn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WatchCommandKind.
+const (
+	WatchCommandKindWatch WatchCommandKind = "watch"
+)
+
+// Valid indicates whether the value is a known member of the WatchCommandKind enum.
+func (e WatchCommandKind) Valid() bool {
+	switch e {
+	case WatchCommandKindWatch:
 		return true
 	default:
 		return false
@@ -322,17 +776,17 @@ func (e ListRecordsParamsCollection) Valid() bool {
 
 // Action defines model for Action.
 type Action struct {
-	Actor struct {
-		Issuer  string `json:"Issuer"`
-		Subject string `json:"Subject"`
-	} `json:"actor"`
+	Actor      Actor         `json:"actor"`
 	Capability string        `json:"capability"`
 	Command    ActionCommand `json:"command"`
 	Created    time.Time     `json:"created"`
 	Group      string        `json:"group"`
 	Id         string        `json:"id"`
-	Result     string        `json:"result"`
-	State      ActionState   `json:"state"`
+
+	// LeaseUntil Execution lease deadline; present only while executing.
+	LeaseUntil *time.Time  `json:"lease_until,omitempty"`
+	Result     string      `json:"result"`
+	State      ActionState `json:"state"`
 }
 
 // ActionState defines model for Action.State.
@@ -352,13 +806,69 @@ type ActionCommand struct {
 // ActionCommandKind defines model for ActionCommand.Kind.
 type ActionCommandKind string
 
+// ActionPage defines model for ActionPage.
+type ActionPage struct {
+	Items []Action `json:"items"`
+
+	// NextCursor Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor.
+	NextCursor string `json:"next_cursor"`
+}
+
+// Actor defines model for Actor.
+type Actor struct {
+	Issuer  string `json:"issuer"`
+	Subject string `json:"subject"`
+}
+
+// AiExecuteCommand Management command; requires current group-scoped capability.
+type AiExecuteCommand struct {
+	Kind   AiExecuteCommandKind `json:"kind"`
+	Target string               `json:"target"`
+}
+
+// AiExecuteCommandKind defines model for AiExecuteCommand.Kind.
+type AiExecuteCommandKind string
+
+// AnalyzeCommand Management command; requires current group-scoped capability.
+type AnalyzeCommand struct {
+	Kind   AnalyzeCommandKind `json:"kind"`
+	Target string             `json:"target"`
+}
+
+// AnalyzeCommandKind defines model for AnalyzeCommand.Kind.
+type AnalyzeCommandKind string
+
+// ApplyCommand User command; caller only.
+type ApplyCommand struct {
+	Kind ApplyCommandKind `json:"kind"`
+}
+
+// ApplyCommandKind defines model for ApplyCommand.Kind.
+type ApplyCommandKind string
+
+// BatchCommand defines model for BatchCommand.
+type BatchCommand struct {
+	union json.RawMessage
+}
+
 // Blacklist defines model for Blacklist.
 type Blacklist struct {
-	Permanent bool      `json:"Permanent"`
-	Reason    string    `json:"Reason"`
-	Until     time.Time `json:"Until"`
 	Id        string    `json:"id"`
+	Permanent bool      `json:"permanent"`
+	Reason    string    `json:"reason"`
+	Until     time.Time `json:"until"`
 }
+
+// BlacklistCommand Management command; requires current group-scoped capability.
+type BlacklistCommand struct {
+	Kind    BlacklistCommandKind `json:"kind"`
+	Seconds *int64               `json:"seconds,omitempty"`
+	Target  string               `json:"target"`
+	Text    string               `json:"text"`
+}
+
+// BlacklistCommandKind defines model for BlacklistCommand.Kind.
+type BlacklistCommandKind string
 
 // BlacklistInput defines model for BlacklistInput.
 type BlacklistInput struct {
@@ -369,11 +879,19 @@ type BlacklistInput struct {
 	Target  string   `json:"target"`
 }
 
+// BlacklistPage defines model for BlacklistPage.
+type BlacklistPage struct {
+	Items []Blacklist `json:"items"`
+
+	// NextCursor Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor.
+	NextCursor string `json:"next_cursor"`
+}
+
 // Bulk defines model for Bulk.
 type Bulk struct {
-	Command Command  `json:"command"`
-	Preview bool     `json:"preview"`
-	Targets []string `json:"targets"`
+	Command BatchCommand `json:"command"`
+	Preview bool         `json:"preview"`
+	Targets []string     `json:"targets"`
 }
 
 // BulkResult defines model for BulkResult.
@@ -384,57 +902,29 @@ type BulkResult struct {
 	} `json:"items"`
 }
 
+// CardBatchCommand Management command; requires current group-scoped capability.
+type CardBatchCommand struct {
+	Kind CardBatchCommandKind `json:"kind"`
+	Text string               `json:"text"`
+}
+
+// CardBatchCommandKind defines model for CardBatchCommand.Kind.
+type CardBatchCommandKind string
+
+// CardCommand Management command; requires current group-scoped capability.
+type CardCommand struct {
+	Kind   CardCommandKind `json:"kind"`
+	Target string          `json:"target"`
+	Text   string          `json:"text"`
+}
+
+// CardCommandKind defines model for CardCommand.Kind.
+type CardCommandKind string
+
 // Command defines model for Command.
 type Command struct {
-	Enabled  *bool       `json:"enabled,omitempty"`
-	Kind     CommandKind `json:"kind"`
-	Message  *string     `json:"message,omitempty"`
-	Receiver *string     `json:"receiver,omitempty"`
-	Seconds  *int64      `json:"seconds,omitempty"`
-	Target   *string     `json:"target,omitempty"`
-	Text     *string     `json:"text,omitempty"`
+	union json.RawMessage
 }
-
-// CommandKind defines model for Command.Kind.
-type CommandKind string
-
-// Config defines model for Config.
-type Config struct {
-	AcceptAlumni     bool                `json:"accept_alumni"`
-	AcceptTemporary  bool                `json:"accept_temporary"`
-	AutoActions      []ConfigAutoActions `json:"auto_actions"`
-	AutoCard         bool                `json:"auto_card"`
-	BlockLinks       bool                `json:"block_links"`
-	CardTemplate     string              `json:"card_template"`
-	CheckCard        bool                `json:"check_card"`
-	CooldownSeconds  int64               `json:"cooldown_seconds"`
-	DiceSides        int64               `json:"dice_sides"`
-	FrequencyLimit   int64               `json:"frequency_limit"`
-	FrequencySeconds int64               `json:"frequency_seconds"`
-	GraceSeconds     int64               `json:"grace_seconds"`
-	Id               string              `json:"id"`
-	Keywords         []string            `json:"keywords"`
-	Mode             ConfigMode          `json:"mode"`
-	MuteProbability  int64               `json:"mute_probability"`
-	MuteSeconds      int64               `json:"mute_seconds"`
-	PasswordHash     *string             `json:"password_hash,omitempty"`
-	Pity             int64               `json:"pity"`
-	RemindCard       bool                `json:"remind_card"`
-	ReminderSeconds  int64               `json:"reminder_seconds"`
-	RepeatThreshold  int64               `json:"repeat_threshold"`
-	RequireStudent   bool                `json:"require_student"`
-	RetentionSeconds int64               `json:"retention_seconds"`
-	RulesTemplate    string              `json:"rules_template"`
-	School           string              `json:"school"`
-	WarningLimit     int64               `json:"warning_limit"`
-	Welcome          string              `json:"welcome"`
-}
-
-// ConfigAutoActions defines model for Config.AutoActions.
-type ConfigAutoActions string
-
-// ConfigMode defines model for Config.Mode.
-type ConfigMode string
 
 // Delivery defines model for Delivery.
 type Delivery struct {
@@ -444,29 +934,265 @@ type Delivery struct {
 	State    string `json:"state"`
 }
 
+// DeliveryPage defines model for DeliveryPage.
+type DeliveryPage struct {
+	Items []Delivery `json:"items"`
+
+	// NextCursor Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor.
+	NextCursor string `json:"next_cursor"`
+}
+
+// DiceCommand User command; caller only.
+type DiceCommand struct {
+	Kind DiceCommandKind `json:"kind"`
+}
+
+// DiceCommandKind defines model for DiceCommand.Kind.
+type DiceCommandKind string
+
+// ExemptBatchCommand Management command; requires current group-scoped capability.
+type ExemptBatchCommand struct {
+	Kind ExemptBatchCommandKind `json:"kind"`
+	Text string                 `json:"text"`
+}
+
+// ExemptBatchCommandKind defines model for ExemptBatchCommand.Kind.
+type ExemptBatchCommandKind string
+
+// ExemptCommand Management command; requires current group-scoped capability.
+type ExemptCommand struct {
+	Kind   ExemptCommandKind `json:"kind"`
+	Target string            `json:"target"`
+	Text   string            `json:"text"`
+}
+
+// ExemptCommandKind defines model for ExemptCommand.Kind.
+type ExemptCommandKind string
+
+// ExtendBatchCommand Management command; requires current group-scoped capability.
+type ExtendBatchCommand struct {
+	Kind    ExtendBatchCommandKind `json:"kind"`
+	Seconds int64                  `json:"seconds"`
+	Text    string                 `json:"text"`
+}
+
+// ExtendBatchCommandKind defines model for ExtendBatchCommand.Kind.
+type ExtendBatchCommandKind string
+
+// ExtendCommand Management command; requires current group-scoped capability.
+type ExtendCommand struct {
+	Kind    ExtendCommandKind `json:"kind"`
+	Seconds int64             `json:"seconds"`
+	Target  string            `json:"target"`
+	Text    string            `json:"text"`
+}
+
+// ExtendCommandKind defines model for ExtendCommand.Kind.
+type ExtendCommandKind string
+
+// FeedbackCommand Management command; requires current group-scoped capability.
+type FeedbackCommand struct {
+	Kind   FeedbackCommandKind `json:"kind"`
+	Target string              `json:"target"`
+	Text   string              `json:"text"`
+}
+
+// FeedbackCommandKind defines model for FeedbackCommand.Kind.
+type FeedbackCommandKind string
+
+// ForwardCommand Management command; requires current group-scoped capability.
+type ForwardCommand struct {
+	Kind    ForwardCommandKind `json:"kind"`
+	Message string             `json:"message"`
+}
+
+// ForwardCommandKind defines model for ForwardCommand.Kind.
+type ForwardCommandKind string
+
+// GroupConfig defines model for GroupConfig.
+type GroupConfig struct {
+	AcceptAlumni     bool                     `json:"accept_alumni"`
+	AcceptTemporary  bool                     `json:"accept_temporary"`
+	AutoActions      []GroupConfigAutoActions `json:"auto_actions"`
+	AutoCard         bool                     `json:"auto_card"`
+	BlockLinks       bool                     `json:"block_links"`
+	BotEnabled       bool                     `json:"bot_enabled"`
+	CardTemplate     string                   `json:"card_template"`
+	CheckCard        bool                     `json:"check_card"`
+	CooldownSeconds  int64                    `json:"cooldown_seconds"`
+	DiceSides        int64                    `json:"dice_sides"`
+	FrequencyLimit   int64                    `json:"frequency_limit"`
+	FrequencySeconds int64                    `json:"frequency_seconds"`
+	GraceSeconds     int64                    `json:"grace_seconds"`
+	Id               string                   `json:"id"`
+	Keywords         []string                 `json:"keywords"`
+	Mode             GroupConfigMode          `json:"mode"`
+	MuteProbability  int64                    `json:"mute_probability"`
+	MuteSeconds      int64                    `json:"mute_seconds"`
+	Name             string                   `json:"name"`
+
+	// Number Masked QQ group number; only its final four digits are shown.
+	Number           string `json:"number"`
+	PasswordSet      bool   `json:"password_set"`
+	Pity             int64  `json:"pity"`
+	RemindCard       bool   `json:"remind_card"`
+	ReminderSeconds  int64  `json:"reminder_seconds"`
+	RepeatThreshold  int64  `json:"repeat_threshold"`
+	RequireStudent   bool   `json:"require_student"`
+	RetentionSeconds int64  `json:"retention_seconds"`
+	Revision         int64  `json:"revision"`
+	RulesTemplate    string `json:"rules_template"`
+	School           string `json:"school"`
+	WarningLimit     int64  `json:"warning_limit"`
+	Welcome          string `json:"welcome"`
+}
+
+// GroupConfigAutoActions defines model for GroupConfig.AutoActions.
+type GroupConfigAutoActions string
+
+// GroupConfigMode defines model for GroupConfig.Mode.
+type GroupConfigMode string
+
+// GroupConfigInput defines model for GroupConfigInput.
+type GroupConfigInput struct {
+	AcceptAlumni    bool                          `json:"accept_alumni"`
+	AcceptTemporary bool                          `json:"accept_temporary"`
+	AutoActions     []GroupConfigInputAutoActions `json:"auto_actions"`
+	AutoCard        bool                          `json:"auto_card"`
+	BlockLinks      bool                          `json:"block_links"`
+	BotEnabled      bool                          `json:"bot_enabled"`
+	CardTemplate    string                        `json:"card_template"`
+	CheckCard       bool                          `json:"check_card"`
+	CooldownSeconds int64                         `json:"cooldown_seconds"`
+	DiceSides       int64                         `json:"dice_sides"`
+
+	// ExpectedRevision 0 creates a group; otherwise must equal the current revision. A successful update increments revision by one.
+	ExpectedRevision int64                `json:"expected_revision"`
+	FrequencyLimit   int64                `json:"frequency_limit"`
+	FrequencySeconds int64                `json:"frequency_seconds"`
+	GraceSeconds     int64                `json:"grace_seconds"`
+	Id               string               `json:"id"`
+	Keywords         []string             `json:"keywords"`
+	Mode             GroupConfigInputMode `json:"mode"`
+	MuteProbability  int64                `json:"mute_probability"`
+	MuteSeconds      int64                `json:"mute_seconds"`
+	Name             string               `json:"name"`
+
+	// Number Optional real group number for create/update; omitted preserves the stored masked number.
+	Number *string `json:"number,omitempty"`
+
+	// Password Omitted preserves password; empty clears it (not allowed in password mode). Never returned or saved as plaintext.
+	Password         *string `json:"password,omitempty"`
+	Pity             int64   `json:"pity"`
+	RemindCard       bool    `json:"remind_card"`
+	ReminderSeconds  int64   `json:"reminder_seconds"`
+	RepeatThreshold  int64   `json:"repeat_threshold"`
+	RequireStudent   bool    `json:"require_student"`
+	RetentionSeconds int64   `json:"retention_seconds"`
+	RulesTemplate    string  `json:"rules_template"`
+	School           string  `json:"school"`
+	WarningLimit     int64   `json:"warning_limit"`
+	Welcome          string  `json:"welcome"`
+}
+
+// GroupConfigInputAutoActions defines model for GroupConfigInput.AutoActions.
+type GroupConfigInputAutoActions string
+
+// GroupConfigInputMode defines model for GroupConfigInput.Mode.
+type GroupConfigInputMode string
+
+// GroupSummary defines model for GroupSummary.
+type GroupSummary struct {
+	BotEnabled bool   `json:"bot_enabled"`
+	Id         string `json:"id"`
+
+	// MemberCount Number of members whose joined fact is currently true.
+	MemberCount int64  `json:"member_count"`
+	Name        string `json:"name"`
+
+	// Number Masked QQ group number, same as GroupConfig.number.
+	Number string `json:"number"`
+
+	// PendingCount Sum of unresolved eligibility records (requested, awaiting_verification, grace, extended, removal_pending) and actions in pending/executing/unknown. One member can contribute to both counts.
+	PendingCount   int64  `json:"pending_count"`
+	RequireStudent bool   `json:"require_student"`
+	Revision       int64  `json:"revision"`
+	School         string `json:"school"`
+}
+
+// GroupSummaryPage defines model for GroupSummaryPage.
+type GroupSummaryPage struct {
+	Items []GroupSummary `json:"items"`
+
+	// NextCursor Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor.
+	NextCursor string `json:"next_cursor"`
+}
+
 // Hit defines model for Hit.
 type Hit struct {
-	Id      *string  `json:"id,omitempty"`
+	Id      string   `json:"id"`
 	Message string   `json:"message"`
 	Owner   string   `json:"owner"`
 	Rules   []string `json:"rules"`
 	State   string   `json:"state"`
 }
 
+// HitPage defines model for HitPage.
+type HitPage struct {
+	Items []Hit `json:"items"`
+
+	// NextCursor Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor.
+	NextCursor string `json:"next_cursor"`
+}
+
+// KickBatchCommand Management command; requires current group-scoped capability.
+type KickBatchCommand struct {
+	Kind KickBatchCommandKind `json:"kind"`
+	Text *string              `json:"text,omitempty"`
+}
+
+// KickBatchCommandKind defines model for KickBatchCommand.Kind.
+type KickBatchCommandKind string
+
+// KickCommand Management command; requires current group-scoped capability.
+type KickCommand struct {
+	Kind   KickCommandKind `json:"kind"`
+	Target string          `json:"target"`
+	Text   *string         `json:"text,omitempty"`
+}
+
+// KickCommandKind defines model for KickCommand.Kind.
+type KickCommandKind string
+
 // Member defines model for Member.
 type Member struct {
-	Deadline   time.Time `json:"deadline"`
-	Exempt     bool      `json:"exempt"`
-	Extended   bool      `json:"extended"`
-	Failures   int64     `json:"failures"`
-	Id         *string   `json:"id,omitempty"`
-	Joined     bool      `json:"joined"`
-	LastPlay   time.Time `json:"last_play"`
+	// Deadline UTC timestamp. 0001-01-01T00:00:00Z means no deadline/event is currently set.
+	Deadline time.Time `json:"deadline"`
+	Exempt   bool      `json:"exempt"`
+	Extended bool      `json:"extended"`
+	Failures int64     `json:"failures"`
+	Id       string    `json:"id"`
+	Joined   bool      `json:"joined"`
+
+	// LastPlay UTC timestamp. 0001-01-01T00:00:00Z means no deadline/event is currently set.
+	LastPlay time.Time `json:"last_play"`
+
+	// MutedUntil UTC timestamp. 0001-01-01T00:00:00Z means no deadline/event is currently set.
 	MutedUntil time.Time `json:"muted_until"`
 	Owner      string    `json:"owner"`
 	Password   bool      `json:"password"`
-	Reminder   time.Time `json:"reminder"`
-	State      string    `json:"state"`
+
+	// Reminder UTC timestamp. 0001-01-01T00:00:00Z means no deadline/event is currently set.
+	Reminder time.Time `json:"reminder"`
+	State    string    `json:"state"`
+}
+
+// MemberPage defines model for MemberPage.
+type MemberPage struct {
+	Items []Member `json:"items"`
+
+	// NextCursor Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor.
+	NextCursor string `json:"next_cursor"`
 }
 
 // Message defines model for Message.
@@ -480,32 +1206,118 @@ type Message struct {
 	Recalled    bool      `json:"recalled"`
 }
 
-// Page defines model for Page.
-type Page struct {
-	Items      []Record `json:"items"`
-	NextCursor string   `json:"next_cursor"`
+// MessagePage defines model for MessagePage.
+type MessagePage struct {
+	Items []Message `json:"items"`
+
+	// NextCursor Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor.
+	NextCursor string `json:"next_cursor"`
 }
+
+// MuteBatchCommand Management command; requires current group-scoped capability.
+type MuteBatchCommand struct {
+	Kind    MuteBatchCommandKind `json:"kind"`
+	Seconds int64                `json:"seconds"`
+	Text    *string              `json:"text,omitempty"`
+}
+
+// MuteBatchCommandKind defines model for MuteBatchCommand.Kind.
+type MuteBatchCommandKind string
+
+// MuteCommand Management command; requires current group-scoped capability.
+type MuteCommand struct {
+	Kind    MuteCommandKind `json:"kind"`
+	Seconds int64           `json:"seconds"`
+	Target  string          `json:"target"`
+	Text    *string         `json:"text,omitempty"`
+}
+
+// MuteCommandKind defines model for MuteCommand.Kind.
+type MuteCommandKind string
+
+// PasswordCommand User command; caller only.
+type PasswordCommand struct {
+	Kind PasswordCommandKind `json:"kind"`
+	Text string              `json:"text"`
+}
+
+// PasswordCommandKind defines model for PasswordCommand.Kind.
+type PasswordCommandKind string
+
+// PreviewCommand Management command; requires current group-scoped capability.
+type PreviewCommand struct {
+	Kind    PreviewCommandKind `json:"kind"`
+	Message *string            `json:"message,omitempty"`
+	Target  string             `json:"target"`
+	Text    string             `json:"text"`
+}
+
+// PreviewCommandKind defines model for PreviewCommand.Kind.
+type PreviewCommandKind string
 
 // Problem defines model for Problem.
 type Problem struct {
-	Code string `json:"code"`
+	// Code groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. groups_unauthenticated: Missing or invalid authenticated identity. groups_forbidden: Current identity cannot perform this operation. groups_not_found: Requested group, member, message or related object does not exist. groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled. groups_cooldown: Cooldown or pending action capacity prevents this operation. groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.
+	Code ProblemCode `json:"code"`
 }
 
-// Record defines model for Record.
-type Record struct {
-	union json.RawMessage
+// ProblemCode groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. groups_unauthenticated: Missing or invalid authenticated identity. groups_forbidden: Current identity cannot perform this operation. groups_not_found: Requested group, member, message or related object does not exist. groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled. groups_cooldown: Cooldown or pending action capacity prevents this operation. groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.
+type ProblemCode string
+
+// RecallCommand Management command; requires current group-scoped capability.
+type RecallCommand struct {
+	Kind    RecallCommandKind `json:"kind"`
+	Message string            `json:"message"`
 }
+
+// RecallCommandKind defines model for RecallCommand.Kind.
+type RecallCommandKind string
+
+// RecheckBatchCommand Management command; requires current group-scoped capability.
+type RecheckBatchCommand struct {
+	Kind RecheckBatchCommandKind `json:"kind"`
+}
+
+// RecheckBatchCommandKind defines model for RecheckBatchCommand.Kind.
+type RecheckBatchCommandKind string
+
+// RecheckCommand Management command; requires current group-scoped capability.
+type RecheckCommand struct {
+	Kind   RecheckCommandKind `json:"kind"`
+	Target string             `json:"target"`
+}
+
+// RecheckCommandKind defines model for RecheckCommand.Kind.
+type RecheckCommandKind string
 
 // Report defines model for Report.
 type Report struct {
 	Analysis    *string   `json:"analysis,omitempty"`
 	Feedback    *string   `json:"feedback,omitempty"`
-	Id          *string   `json:"id,omitempty"`
+	Id          string    `json:"id"`
 	Message     string    `json:"message"`
 	Reason      string    `json:"reason"`
 	Reporter    string    `json:"reporter"`
 	State       string    `json:"state"`
 	Suggestions *[]string `json:"suggestions,omitempty"`
+}
+
+// ReportCommand User command; caller only.
+type ReportCommand struct {
+	Kind    ReportCommandKind `json:"kind"`
+	Message string            `json:"message"`
+	Text    string            `json:"text"`
+}
+
+// ReportCommandKind defines model for ReportCommand.Kind.
+type ReportCommandKind string
+
+// ReportPage defines model for ReportPage.
+type ReportPage struct {
+	Items []Report `json:"items"`
+
+	// NextCursor Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor.
+	NextCursor string `json:"next_cursor"`
 }
 
 // Result defines model for Result.
@@ -517,21 +1329,117 @@ type Result struct {
 	Value  int64  `json:"value"`
 }
 
+// RuleCommand Management command; requires current group-scoped capability.
+type RuleCommand struct {
+	Kind    RuleCommandKind `json:"kind"`
+	Message string          `json:"message"`
+	Target  string          `json:"target"`
+	Text    string          `json:"text"`
+}
+
+// RuleCommandKind defines model for RuleCommand.Kind.
+type RuleCommandKind string
+
+// SelfMuteCommand User command; caller only.
+type SelfMuteCommand struct {
+	Kind SelfMuteCommandKind `json:"kind"`
+}
+
+// SelfMuteCommandKind defines model for SelfMuteCommand.Kind.
+type SelfMuteCommandKind string
+
+// SendCommand Management command; requires current group-scoped capability.
+type SendCommand struct {
+	Kind SendCommandKind `json:"kind"`
+	Text string          `json:"text"`
+}
+
+// SendCommandKind defines model for SendCommand.Kind.
+type SendCommandKind string
+
+// SubscribeCommand Management command; requires current group-scoped capability.
+type SubscribeCommand struct {
+	Enabled  bool                 `json:"enabled"`
+	Kind     SubscribeCommandKind `json:"kind"`
+	Receiver string               `json:"receiver"`
+}
+
+// SubscribeCommandKind defines model for SubscribeCommand.Kind.
+type SubscribeCommandKind string
+
 // Subscription defines model for Subscription.
 type Subscription struct {
-	Actor struct {
-		Issuer  string `json:"Issuer"`
-		Subject string `json:"Subject"`
-	} `json:"actor"`
-	Enabled  bool    `json:"enabled"`
-	Id       *string `json:"id,omitempty"`
-	Receiver string  `json:"receiver"`
+	Actor    Actor  `json:"actor"`
+	Enabled  bool   `json:"enabled"`
+	Id       string `json:"id"`
+	Receiver string `json:"receiver"`
 }
+
+// SubscriptionPage defines model for SubscriptionPage.
+type SubscriptionPage struct {
+	Items []Subscription `json:"items"`
+
+	// NextCursor Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor.
+	NextCursor string `json:"next_cursor"`
+}
+
+// UnblacklistCommand Management command; requires current group-scoped capability.
+type UnblacklistCommand struct {
+	Kind   UnblacklistCommandKind `json:"kind"`
+	Target string                 `json:"target"`
+}
+
+// UnblacklistCommandKind defines model for UnblacklistCommand.Kind.
+type UnblacklistCommandKind string
+
+// UnmuteBatchCommand Management command; requires current group-scoped capability.
+type UnmuteBatchCommand struct {
+	Kind UnmuteBatchCommandKind `json:"kind"`
+}
+
+// UnmuteBatchCommandKind defines model for UnmuteBatchCommand.Kind.
+type UnmuteBatchCommandKind string
+
+// UnmuteCommand Management command; requires current group-scoped capability.
+type UnmuteCommand struct {
+	Kind   UnmuteCommandKind `json:"kind"`
+	Target string            `json:"target"`
+}
+
+// UnmuteCommandKind defines model for UnmuteCommand.Kind.
+type UnmuteCommandKind string
+
+// WarnBatchCommand Management command; requires current group-scoped capability.
+type WarnBatchCommand struct {
+	Kind WarnBatchCommandKind `json:"kind"`
+	Text string               `json:"text"`
+}
+
+// WarnBatchCommandKind defines model for WarnBatchCommand.Kind.
+type WarnBatchCommandKind string
+
+// WarnCommand Management command; requires current group-scoped capability.
+type WarnCommand struct {
+	Kind   WarnCommandKind `json:"kind"`
+	Target string          `json:"target"`
+	Text   string          `json:"text"`
+}
+
+// WarnCommandKind defines model for WarnCommand.Kind.
+type WarnCommandKind string
 
 // Warnings defines model for Warnings.
 type Warnings struct {
-	Count int64  `json:"Count"`
+	Count int64  `json:"count"`
 	Id    string `json:"id"`
+}
+
+// WarningsPage defines model for WarningsPage.
+type WarningsPage struct {
+	Items []Warnings `json:"items"`
+
+	// NextCursor Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor.
+	NextCursor string `json:"next_cursor"`
 }
 
 // Watch defines model for Watch.
@@ -539,6 +1447,25 @@ type Watch struct {
 	Enabled bool   `json:"enabled"`
 	Id      string `json:"id"`
 	Reason  string `json:"reason"`
+}
+
+// WatchCommand Management command; requires current group-scoped capability.
+type WatchCommand struct {
+	Enabled bool             `json:"enabled"`
+	Kind    WatchCommandKind `json:"kind"`
+	Target  string           `json:"target"`
+	Text    *string          `json:"text,omitempty"`
+}
+
+// WatchCommandKind defines model for WatchCommand.Kind.
+type WatchCommandKind string
+
+// WatchPage defines model for WatchPage.
+type WatchPage struct {
+	Items []Watch `json:"items"`
+
+	// NextCursor Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor.
+	NextCursor string `json:"next_cursor"`
 }
 
 // ListGroupsParams defines parameters for ListGroups.
@@ -557,9 +1484,21 @@ type ConfigureGroupParams struct {
 	IdempotencyKey string `json:"Idempotency-Key"`
 }
 
+// ListActionsParams defines parameters for ListActions.
+type ListActionsParams struct {
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // BatchParams defines parameters for Batch.
 type BatchParams struct {
 	IdempotencyKey string `json:"Idempotency-Key"`
+}
+
+// ListBlacklistParams defines parameters for ListBlacklist.
+type ListBlacklistParams struct {
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // CommandParams defines parameters for Command.
@@ -567,20 +1506,59 @@ type CommandParams struct {
 	IdempotencyKey string `json:"Idempotency-Key"`
 }
 
-// ListRecordsParams defines parameters for ListRecords.
-type ListRecordsParams struct {
+// ListDeliverysParams defines parameters for ListDeliverys.
+type ListDeliverysParams struct {
 	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
 	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
-// ListRecordsParamsCollection defines parameters for ListRecords.
-type ListRecordsParamsCollection string
+// ListHitsParams defines parameters for ListHits.
+type ListHitsParams struct {
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListMembersParams defines parameters for ListMembers.
+type ListMembersParams struct {
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListMessagesParams defines parameters for ListMessages.
+type ListMessagesParams struct {
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListReportsParams defines parameters for ListReports.
+type ListReportsParams struct {
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListSubscriptionsParams defines parameters for ListSubscriptions.
+type ListSubscriptionsParams struct {
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListWarningsParams defines parameters for ListWarnings.
+type ListWarningsParams struct {
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListWatchParams defines parameters for ListWatch.
+type ListWatchParams struct {
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+}
 
 // BlacklistsJSONRequestBody defines body for Blacklists for application/json ContentType.
 type BlacklistsJSONRequestBody = BlacklistInput
 
 // ConfigureGroupJSONRequestBody defines body for ConfigureGroup for application/json ContentType.
-type ConfigureGroupJSONRequestBody = Config
+type ConfigureGroupJSONRequestBody = GroupConfigInput
 
 // BatchJSONRequestBody defines body for Batch for application/json ContentType.
 type BatchJSONRequestBody = Bulk
@@ -588,23 +1566,31 @@ type BatchJSONRequestBody = Bulk
 // CommandJSONRequestBody defines body for Command for application/json ContentType.
 type CommandJSONRequestBody = Command
 
-// AsConfig returns the union data inside the Record as a Config
-func (t Record) AsConfig() (Config, error) {
-	var body Config
+// AsWarnBatchCommand returns the union data inside the BatchCommand as a WarnBatchCommand
+func (t BatchCommand) AsWarnBatchCommand() (WarnBatchCommand, error) {
+	var body WarnBatchCommand
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromConfig overwrites any union data inside the Record as the provided Config
-func (t *Record) FromConfig(v Config) error {
+// FromWarnBatchCommand overwrites any union data inside the BatchCommand as the provided WarnBatchCommand
+func (t *BatchCommand) FromWarnBatchCommand(v WarnBatchCommand) error {
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"warn"}`))
 	t.union = b
 	return err
 }
 
-// MergeConfig performs a merge with any union data inside the Record, using the provided Config
-func (t *Record) MergeConfig(v Config) error {
+// MergeWarnBatchCommand performs a merge with any union data inside the BatchCommand, using the provided WarnBatchCommand
+func (t *BatchCommand) MergeWarnBatchCommand(v WarnBatchCommand) error {
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"warn"}`))
 	if err != nil {
 		return err
 	}
@@ -614,23 +1600,31 @@ func (t *Record) MergeConfig(v Config) error {
 	return err
 }
 
-// AsMember returns the union data inside the Record as a Member
-func (t Record) AsMember() (Member, error) {
-	var body Member
+// AsMuteBatchCommand returns the union data inside the BatchCommand as a MuteBatchCommand
+func (t BatchCommand) AsMuteBatchCommand() (MuteBatchCommand, error) {
+	var body MuteBatchCommand
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromMember overwrites any union data inside the Record as the provided Member
-func (t *Record) FromMember(v Member) error {
+// FromMuteBatchCommand overwrites any union data inside the BatchCommand as the provided MuteBatchCommand
+func (t *BatchCommand) FromMuteBatchCommand(v MuteBatchCommand) error {
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"mute"}`))
 	t.union = b
 	return err
 }
 
-// MergeMember performs a merge with any union data inside the Record, using the provided Member
-func (t *Record) MergeMember(v Member) error {
+// MergeMuteBatchCommand performs a merge with any union data inside the BatchCommand, using the provided MuteBatchCommand
+func (t *BatchCommand) MergeMuteBatchCommand(v MuteBatchCommand) error {
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"mute"}`))
 	if err != nil {
 		return err
 	}
@@ -640,23 +1634,31 @@ func (t *Record) MergeMember(v Member) error {
 	return err
 }
 
-// AsAction returns the union data inside the Record as a Action
-func (t Record) AsAction() (Action, error) {
-	var body Action
+// AsUnmuteBatchCommand returns the union data inside the BatchCommand as a UnmuteBatchCommand
+func (t BatchCommand) AsUnmuteBatchCommand() (UnmuteBatchCommand, error) {
+	var body UnmuteBatchCommand
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromAction overwrites any union data inside the Record as the provided Action
-func (t *Record) FromAction(v Action) error {
+// FromUnmuteBatchCommand overwrites any union data inside the BatchCommand as the provided UnmuteBatchCommand
+func (t *BatchCommand) FromUnmuteBatchCommand(v UnmuteBatchCommand) error {
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"unmute"}`))
 	t.union = b
 	return err
 }
 
-// MergeAction performs a merge with any union data inside the Record, using the provided Action
-func (t *Record) MergeAction(v Action) error {
+// MergeUnmuteBatchCommand performs a merge with any union data inside the BatchCommand, using the provided UnmuteBatchCommand
+func (t *BatchCommand) MergeUnmuteBatchCommand(v UnmuteBatchCommand) error {
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"unmute"}`))
 	if err != nil {
 		return err
 	}
@@ -666,23 +1668,31 @@ func (t *Record) MergeAction(v Action) error {
 	return err
 }
 
-// AsMessage returns the union data inside the Record as a Message
-func (t Record) AsMessage() (Message, error) {
-	var body Message
+// AsKickBatchCommand returns the union data inside the BatchCommand as a KickBatchCommand
+func (t BatchCommand) AsKickBatchCommand() (KickBatchCommand, error) {
+	var body KickBatchCommand
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromMessage overwrites any union data inside the Record as the provided Message
-func (t *Record) FromMessage(v Message) error {
+// FromKickBatchCommand overwrites any union data inside the BatchCommand as the provided KickBatchCommand
+func (t *BatchCommand) FromKickBatchCommand(v KickBatchCommand) error {
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"kick"}`))
 	t.union = b
 	return err
 }
 
-// MergeMessage performs a merge with any union data inside the Record, using the provided Message
-func (t *Record) MergeMessage(v Message) error {
+// MergeKickBatchCommand performs a merge with any union data inside the BatchCommand, using the provided KickBatchCommand
+func (t *BatchCommand) MergeKickBatchCommand(v KickBatchCommand) error {
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"kick"}`))
 	if err != nil {
 		return err
 	}
@@ -692,23 +1702,31 @@ func (t *Record) MergeMessage(v Message) error {
 	return err
 }
 
-// AsReport returns the union data inside the Record as a Report
-func (t Record) AsReport() (Report, error) {
-	var body Report
+// AsRecheckBatchCommand returns the union data inside the BatchCommand as a RecheckBatchCommand
+func (t BatchCommand) AsRecheckBatchCommand() (RecheckBatchCommand, error) {
+	var body RecheckBatchCommand
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromReport overwrites any union data inside the Record as the provided Report
-func (t *Record) FromReport(v Report) error {
+// FromRecheckBatchCommand overwrites any union data inside the BatchCommand as the provided RecheckBatchCommand
+func (t *BatchCommand) FromRecheckBatchCommand(v RecheckBatchCommand) error {
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"recheck"}`))
 	t.union = b
 	return err
 }
 
-// MergeReport performs a merge with any union data inside the Record, using the provided Report
-func (t *Record) MergeReport(v Report) error {
+// MergeRecheckBatchCommand performs a merge with any union data inside the BatchCommand, using the provided RecheckBatchCommand
+func (t *BatchCommand) MergeRecheckBatchCommand(v RecheckBatchCommand) error {
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"recheck"}`))
 	if err != nil {
 		return err
 	}
@@ -718,23 +1736,31 @@ func (t *Record) MergeReport(v Report) error {
 	return err
 }
 
-// AsHit returns the union data inside the Record as a Hit
-func (t Record) AsHit() (Hit, error) {
-	var body Hit
+// AsExtendBatchCommand returns the union data inside the BatchCommand as a ExtendBatchCommand
+func (t BatchCommand) AsExtendBatchCommand() (ExtendBatchCommand, error) {
+	var body ExtendBatchCommand
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromHit overwrites any union data inside the Record as the provided Hit
-func (t *Record) FromHit(v Hit) error {
+// FromExtendBatchCommand overwrites any union data inside the BatchCommand as the provided ExtendBatchCommand
+func (t *BatchCommand) FromExtendBatchCommand(v ExtendBatchCommand) error {
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"extend"}`))
 	t.union = b
 	return err
 }
 
-// MergeHit performs a merge with any union data inside the Record, using the provided Hit
-func (t *Record) MergeHit(v Hit) error {
+// MergeExtendBatchCommand performs a merge with any union data inside the BatchCommand, using the provided ExtendBatchCommand
+func (t *BatchCommand) MergeExtendBatchCommand(v ExtendBatchCommand) error {
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"extend"}`))
 	if err != nil {
 		return err
 	}
@@ -744,23 +1770,31 @@ func (t *Record) MergeHit(v Hit) error {
 	return err
 }
 
-// AsSubscription returns the union data inside the Record as a Subscription
-func (t Record) AsSubscription() (Subscription, error) {
-	var body Subscription
+// AsExemptBatchCommand returns the union data inside the BatchCommand as a ExemptBatchCommand
+func (t BatchCommand) AsExemptBatchCommand() (ExemptBatchCommand, error) {
+	var body ExemptBatchCommand
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromSubscription overwrites any union data inside the Record as the provided Subscription
-func (t *Record) FromSubscription(v Subscription) error {
+// FromExemptBatchCommand overwrites any union data inside the BatchCommand as the provided ExemptBatchCommand
+func (t *BatchCommand) FromExemptBatchCommand(v ExemptBatchCommand) error {
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"exempt"}`))
 	t.union = b
 	return err
 }
 
-// MergeSubscription performs a merge with any union data inside the Record, using the provided Subscription
-func (t *Record) MergeSubscription(v Subscription) error {
+// MergeExemptBatchCommand performs a merge with any union data inside the BatchCommand, using the provided ExemptBatchCommand
+func (t *BatchCommand) MergeExemptBatchCommand(v ExemptBatchCommand) error {
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"exempt"}`))
 	if err != nil {
 		return err
 	}
@@ -770,23 +1804,31 @@ func (t *Record) MergeSubscription(v Subscription) error {
 	return err
 }
 
-// AsBlacklist returns the union data inside the Record as a Blacklist
-func (t Record) AsBlacklist() (Blacklist, error) {
-	var body Blacklist
+// AsCardBatchCommand returns the union data inside the BatchCommand as a CardBatchCommand
+func (t BatchCommand) AsCardBatchCommand() (CardBatchCommand, error) {
+	var body CardBatchCommand
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromBlacklist overwrites any union data inside the Record as the provided Blacklist
-func (t *Record) FromBlacklist(v Blacklist) error {
+// FromCardBatchCommand overwrites any union data inside the BatchCommand as the provided CardBatchCommand
+func (t *BatchCommand) FromCardBatchCommand(v CardBatchCommand) error {
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"card"}`))
 	t.union = b
 	return err
 }
 
-// MergeBlacklist performs a merge with any union data inside the Record, using the provided Blacklist
-func (t *Record) MergeBlacklist(v Blacklist) error {
+// MergeCardBatchCommand performs a merge with any union data inside the BatchCommand, using the provided CardBatchCommand
+func (t *BatchCommand) MergeCardBatchCommand(v CardBatchCommand) error {
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"card"}`))
 	if err != nil {
 		return err
 	}
@@ -796,90 +1838,976 @@ func (t *Record) MergeBlacklist(v Blacklist) error {
 	return err
 }
 
-// AsWarnings returns the union data inside the Record as a Warnings
-func (t Record) AsWarnings() (Warnings, error) {
-	var body Warnings
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromWarnings overwrites any union data inside the Record as the provided Warnings
-func (t *Record) FromWarnings(v Warnings) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeWarnings performs a merge with any union data inside the Record, using the provided Warnings
-func (t *Record) MergeWarnings(v Warnings) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
+func (t BatchCommand) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"kind"`
 	}
-
-	merged, err := runtime.JSONMerge(t.union, b)
-	t.union = merged
-	return err
+	err := json.Unmarshal(t.union, &discriminator)
+	return discriminator.Discriminator, err
 }
 
-// AsWatch returns the union data inside the Record as a Watch
-func (t Record) AsWatch() (Watch, error) {
-	var body Watch
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromWatch overwrites any union data inside the Record as the provided Watch
-func (t *Record) FromWatch(v Watch) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeWatch performs a merge with any union data inside the Record, using the provided Watch
-func (t *Record) MergeWatch(v Watch) error {
-	b, err := json.Marshal(v)
+func (t BatchCommand) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	merged, err := runtime.JSONMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-// AsDelivery returns the union data inside the Record as a Delivery
-func (t Record) AsDelivery() (Delivery, error) {
-	var body Delivery
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromDelivery overwrites any union data inside the Record as the provided Delivery
-func (t *Record) FromDelivery(v Delivery) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeDelivery performs a merge with any union data inside the Record, using the provided Delivery
-func (t *Record) MergeDelivery(v Delivery) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
+	switch discriminator {
+	case "card":
+		return t.AsCardBatchCommand()
+	case "exempt":
+		return t.AsExemptBatchCommand()
+	case "extend":
+		return t.AsExtendBatchCommand()
+	case "kick":
+		return t.AsKickBatchCommand()
+	case "mute":
+		return t.AsMuteBatchCommand()
+	case "recheck":
+		return t.AsRecheckBatchCommand()
+	case "unmute":
+		return t.AsUnmuteBatchCommand()
+	case "warn":
+		return t.AsWarnBatchCommand()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
 	}
-
-	merged, err := runtime.JSONMerge(t.union, b)
-	t.union = merged
-	return err
 }
 
-func (t Record) MarshalJSON() ([]byte, error) {
+func (t BatchCommand) MarshalJSON() ([]byte, error) {
 	b, err := t.union.MarshalJSON()
 	return b, err
 }
 
-func (t *Record) UnmarshalJSON(b []byte) error {
+func (t *BatchCommand) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsApplyCommand returns the union data inside the Command as a ApplyCommand
+func (t Command) AsApplyCommand() (ApplyCommand, error) {
+	var body ApplyCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromApplyCommand overwrites any union data inside the Command as the provided ApplyCommand
+func (t *Command) FromApplyCommand(v ApplyCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"apply"}`))
+	t.union = b
+	return err
+}
+
+// MergeApplyCommand performs a merge with any union data inside the Command, using the provided ApplyCommand
+func (t *Command) MergeApplyCommand(v ApplyCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"apply"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsPasswordCommand returns the union data inside the Command as a PasswordCommand
+func (t Command) AsPasswordCommand() (PasswordCommand, error) {
+	var body PasswordCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPasswordCommand overwrites any union data inside the Command as the provided PasswordCommand
+func (t *Command) FromPasswordCommand(v PasswordCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"password"}`))
+	t.union = b
+	return err
+}
+
+// MergePasswordCommand performs a merge with any union data inside the Command, using the provided PasswordCommand
+func (t *Command) MergePasswordCommand(v PasswordCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"password"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDiceCommand returns the union data inside the Command as a DiceCommand
+func (t Command) AsDiceCommand() (DiceCommand, error) {
+	var body DiceCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDiceCommand overwrites any union data inside the Command as the provided DiceCommand
+func (t *Command) FromDiceCommand(v DiceCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"dice"}`))
+	t.union = b
+	return err
+}
+
+// MergeDiceCommand performs a merge with any union data inside the Command, using the provided DiceCommand
+func (t *Command) MergeDiceCommand(v DiceCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"dice"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsSelfMuteCommand returns the union data inside the Command as a SelfMuteCommand
+func (t Command) AsSelfMuteCommand() (SelfMuteCommand, error) {
+	var body SelfMuteCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSelfMuteCommand overwrites any union data inside the Command as the provided SelfMuteCommand
+func (t *Command) FromSelfMuteCommand(v SelfMuteCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"self_mute"}`))
+	t.union = b
+	return err
+}
+
+// MergeSelfMuteCommand performs a merge with any union data inside the Command, using the provided SelfMuteCommand
+func (t *Command) MergeSelfMuteCommand(v SelfMuteCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"self_mute"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsReportCommand returns the union data inside the Command as a ReportCommand
+func (t Command) AsReportCommand() (ReportCommand, error) {
+	var body ReportCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromReportCommand overwrites any union data inside the Command as the provided ReportCommand
+func (t *Command) FromReportCommand(v ReportCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"report"}`))
+	t.union = b
+	return err
+}
+
+// MergeReportCommand performs a merge with any union data inside the Command, using the provided ReportCommand
+func (t *Command) MergeReportCommand(v ReportCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"report"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsRecheckCommand returns the union data inside the Command as a RecheckCommand
+func (t Command) AsRecheckCommand() (RecheckCommand, error) {
+	var body RecheckCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRecheckCommand overwrites any union data inside the Command as the provided RecheckCommand
+func (t *Command) FromRecheckCommand(v RecheckCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"recheck"}`))
+	t.union = b
+	return err
+}
+
+// MergeRecheckCommand performs a merge with any union data inside the Command, using the provided RecheckCommand
+func (t *Command) MergeRecheckCommand(v RecheckCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"recheck"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsExtendCommand returns the union data inside the Command as a ExtendCommand
+func (t Command) AsExtendCommand() (ExtendCommand, error) {
+	var body ExtendCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromExtendCommand overwrites any union data inside the Command as the provided ExtendCommand
+func (t *Command) FromExtendCommand(v ExtendCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"extend"}`))
+	t.union = b
+	return err
+}
+
+// MergeExtendCommand performs a merge with any union data inside the Command, using the provided ExtendCommand
+func (t *Command) MergeExtendCommand(v ExtendCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"extend"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsExemptCommand returns the union data inside the Command as a ExemptCommand
+func (t Command) AsExemptCommand() (ExemptCommand, error) {
+	var body ExemptCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromExemptCommand overwrites any union data inside the Command as the provided ExemptCommand
+func (t *Command) FromExemptCommand(v ExemptCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"exempt"}`))
+	t.union = b
+	return err
+}
+
+// MergeExemptCommand performs a merge with any union data inside the Command, using the provided ExemptCommand
+func (t *Command) MergeExemptCommand(v ExemptCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"exempt"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsWarnCommand returns the union data inside the Command as a WarnCommand
+func (t Command) AsWarnCommand() (WarnCommand, error) {
+	var body WarnCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromWarnCommand overwrites any union data inside the Command as the provided WarnCommand
+func (t *Command) FromWarnCommand(v WarnCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"warn"}`))
+	t.union = b
+	return err
+}
+
+// MergeWarnCommand performs a merge with any union data inside the Command, using the provided WarnCommand
+func (t *Command) MergeWarnCommand(v WarnCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"warn"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsMuteCommand returns the union data inside the Command as a MuteCommand
+func (t Command) AsMuteCommand() (MuteCommand, error) {
+	var body MuteCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromMuteCommand overwrites any union data inside the Command as the provided MuteCommand
+func (t *Command) FromMuteCommand(v MuteCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"mute"}`))
+	t.union = b
+	return err
+}
+
+// MergeMuteCommand performs a merge with any union data inside the Command, using the provided MuteCommand
+func (t *Command) MergeMuteCommand(v MuteCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"mute"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsUnmuteCommand returns the union data inside the Command as a UnmuteCommand
+func (t Command) AsUnmuteCommand() (UnmuteCommand, error) {
+	var body UnmuteCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromUnmuteCommand overwrites any union data inside the Command as the provided UnmuteCommand
+func (t *Command) FromUnmuteCommand(v UnmuteCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"unmute"}`))
+	t.union = b
+	return err
+}
+
+// MergeUnmuteCommand performs a merge with any union data inside the Command, using the provided UnmuteCommand
+func (t *Command) MergeUnmuteCommand(v UnmuteCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"unmute"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsKickCommand returns the union data inside the Command as a KickCommand
+func (t Command) AsKickCommand() (KickCommand, error) {
+	var body KickCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromKickCommand overwrites any union data inside the Command as the provided KickCommand
+func (t *Command) FromKickCommand(v KickCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"kick"}`))
+	t.union = b
+	return err
+}
+
+// MergeKickCommand performs a merge with any union data inside the Command, using the provided KickCommand
+func (t *Command) MergeKickCommand(v KickCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"kick"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsBlacklistCommand returns the union data inside the Command as a BlacklistCommand
+func (t Command) AsBlacklistCommand() (BlacklistCommand, error) {
+	var body BlacklistCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromBlacklistCommand overwrites any union data inside the Command as the provided BlacklistCommand
+func (t *Command) FromBlacklistCommand(v BlacklistCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"blacklist"}`))
+	t.union = b
+	return err
+}
+
+// MergeBlacklistCommand performs a merge with any union data inside the Command, using the provided BlacklistCommand
+func (t *Command) MergeBlacklistCommand(v BlacklistCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"blacklist"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsUnblacklistCommand returns the union data inside the Command as a UnblacklistCommand
+func (t Command) AsUnblacklistCommand() (UnblacklistCommand, error) {
+	var body UnblacklistCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromUnblacklistCommand overwrites any union data inside the Command as the provided UnblacklistCommand
+func (t *Command) FromUnblacklistCommand(v UnblacklistCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"unblacklist"}`))
+	t.union = b
+	return err
+}
+
+// MergeUnblacklistCommand performs a merge with any union data inside the Command, using the provided UnblacklistCommand
+func (t *Command) MergeUnblacklistCommand(v UnblacklistCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"unblacklist"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsSendCommand returns the union data inside the Command as a SendCommand
+func (t Command) AsSendCommand() (SendCommand, error) {
+	var body SendCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSendCommand overwrites any union data inside the Command as the provided SendCommand
+func (t *Command) FromSendCommand(v SendCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"send"}`))
+	t.union = b
+	return err
+}
+
+// MergeSendCommand performs a merge with any union data inside the Command, using the provided SendCommand
+func (t *Command) MergeSendCommand(v SendCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"send"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsForwardCommand returns the union data inside the Command as a ForwardCommand
+func (t Command) AsForwardCommand() (ForwardCommand, error) {
+	var body ForwardCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromForwardCommand overwrites any union data inside the Command as the provided ForwardCommand
+func (t *Command) FromForwardCommand(v ForwardCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"forward"}`))
+	t.union = b
+	return err
+}
+
+// MergeForwardCommand performs a merge with any union data inside the Command, using the provided ForwardCommand
+func (t *Command) MergeForwardCommand(v ForwardCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"forward"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsRecallCommand returns the union data inside the Command as a RecallCommand
+func (t Command) AsRecallCommand() (RecallCommand, error) {
+	var body RecallCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRecallCommand overwrites any union data inside the Command as the provided RecallCommand
+func (t *Command) FromRecallCommand(v RecallCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"recall"}`))
+	t.union = b
+	return err
+}
+
+// MergeRecallCommand performs a merge with any union data inside the Command, using the provided RecallCommand
+func (t *Command) MergeRecallCommand(v RecallCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"recall"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsCardCommand returns the union data inside the Command as a CardCommand
+func (t Command) AsCardCommand() (CardCommand, error) {
+	var body CardCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCardCommand overwrites any union data inside the Command as the provided CardCommand
+func (t *Command) FromCardCommand(v CardCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"card"}`))
+	t.union = b
+	return err
+}
+
+// MergeCardCommand performs a merge with any union data inside the Command, using the provided CardCommand
+func (t *Command) MergeCardCommand(v CardCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"card"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsAnalyzeCommand returns the union data inside the Command as a AnalyzeCommand
+func (t Command) AsAnalyzeCommand() (AnalyzeCommand, error) {
+	var body AnalyzeCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromAnalyzeCommand overwrites any union data inside the Command as the provided AnalyzeCommand
+func (t *Command) FromAnalyzeCommand(v AnalyzeCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"analyze"}`))
+	t.union = b
+	return err
+}
+
+// MergeAnalyzeCommand performs a merge with any union data inside the Command, using the provided AnalyzeCommand
+func (t *Command) MergeAnalyzeCommand(v AnalyzeCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"analyze"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsPreviewCommand returns the union data inside the Command as a PreviewCommand
+func (t Command) AsPreviewCommand() (PreviewCommand, error) {
+	var body PreviewCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPreviewCommand overwrites any union data inside the Command as the provided PreviewCommand
+func (t *Command) FromPreviewCommand(v PreviewCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"preview"}`))
+	t.union = b
+	return err
+}
+
+// MergePreviewCommand performs a merge with any union data inside the Command, using the provided PreviewCommand
+func (t *Command) MergePreviewCommand(v PreviewCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"preview"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsRuleCommand returns the union data inside the Command as a RuleCommand
+func (t Command) AsRuleCommand() (RuleCommand, error) {
+	var body RuleCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRuleCommand overwrites any union data inside the Command as the provided RuleCommand
+func (t *Command) FromRuleCommand(v RuleCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"rule"}`))
+	t.union = b
+	return err
+}
+
+// MergeRuleCommand performs a merge with any union data inside the Command, using the provided RuleCommand
+func (t *Command) MergeRuleCommand(v RuleCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"rule"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsSubscribeCommand returns the union data inside the Command as a SubscribeCommand
+func (t Command) AsSubscribeCommand() (SubscribeCommand, error) {
+	var body SubscribeCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSubscribeCommand overwrites any union data inside the Command as the provided SubscribeCommand
+func (t *Command) FromSubscribeCommand(v SubscribeCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"subscribe"}`))
+	t.union = b
+	return err
+}
+
+// MergeSubscribeCommand performs a merge with any union data inside the Command, using the provided SubscribeCommand
+func (t *Command) MergeSubscribeCommand(v SubscribeCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"subscribe"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsFeedbackCommand returns the union data inside the Command as a FeedbackCommand
+func (t Command) AsFeedbackCommand() (FeedbackCommand, error) {
+	var body FeedbackCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromFeedbackCommand overwrites any union data inside the Command as the provided FeedbackCommand
+func (t *Command) FromFeedbackCommand(v FeedbackCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"feedback"}`))
+	t.union = b
+	return err
+}
+
+// MergeFeedbackCommand performs a merge with any union data inside the Command, using the provided FeedbackCommand
+func (t *Command) MergeFeedbackCommand(v FeedbackCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"feedback"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsWatchCommand returns the union data inside the Command as a WatchCommand
+func (t Command) AsWatchCommand() (WatchCommand, error) {
+	var body WatchCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromWatchCommand overwrites any union data inside the Command as the provided WatchCommand
+func (t *Command) FromWatchCommand(v WatchCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"watch"}`))
+	t.union = b
+	return err
+}
+
+// MergeWatchCommand performs a merge with any union data inside the Command, using the provided WatchCommand
+func (t *Command) MergeWatchCommand(v WatchCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"watch"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsAiExecuteCommand returns the union data inside the Command as a AiExecuteCommand
+func (t Command) AsAiExecuteCommand() (AiExecuteCommand, error) {
+	var body AiExecuteCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromAiExecuteCommand overwrites any union data inside the Command as the provided AiExecuteCommand
+func (t *Command) FromAiExecuteCommand(v AiExecuteCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"ai_execute"}`))
+	t.union = b
+	return err
+}
+
+// MergeAiExecuteCommand performs a merge with any union data inside the Command, using the provided AiExecuteCommand
+func (t *Command) MergeAiExecuteCommand(v AiExecuteCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"ai_execute"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Command) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"kind"`
+	}
+	err := json.Unmarshal(t.union, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t Command) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "ai_execute":
+		return t.AsAiExecuteCommand()
+	case "analyze":
+		return t.AsAnalyzeCommand()
+	case "apply":
+		return t.AsApplyCommand()
+	case "blacklist":
+		return t.AsBlacklistCommand()
+	case "card":
+		return t.AsCardCommand()
+	case "dice":
+		return t.AsDiceCommand()
+	case "exempt":
+		return t.AsExemptCommand()
+	case "extend":
+		return t.AsExtendCommand()
+	case "feedback":
+		return t.AsFeedbackCommand()
+	case "forward":
+		return t.AsForwardCommand()
+	case "kick":
+		return t.AsKickCommand()
+	case "mute":
+		return t.AsMuteCommand()
+	case "password":
+		return t.AsPasswordCommand()
+	case "preview":
+		return t.AsPreviewCommand()
+	case "recall":
+		return t.AsRecallCommand()
+	case "recheck":
+		return t.AsRecheckCommand()
+	case "report":
+		return t.AsReportCommand()
+	case "rule":
+		return t.AsRuleCommand()
+	case "self_mute":
+		return t.AsSelfMuteCommand()
+	case "send":
+		return t.AsSendCommand()
+	case "subscribe":
+		return t.AsSubscribeCommand()
+	case "unblacklist":
+		return t.AsUnblacklistCommand()
+	case "unmute":
+		return t.AsUnmuteCommand()
+	case "warn":
+		return t.AsWarnCommand()
+	case "watch":
+		return t.AsWatchCommand()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
+}
+
+func (t Command) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Command) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -959,6 +2887,8 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 type ClientInterface interface {
 
 	// ListGroups performs a GET /api/v1/groups (the `ListGroups` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
 	ListGroups(ctx context.Context, params *ListGroupsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// BlacklistsWithBody performs a POST /api/v1/groups/blacklists (the `Blacklists` operationId) request,
@@ -980,6 +2910,11 @@ type ClientInterface interface {
 	// Takes a body of the `application/json` content type.
 	ConfigureGroup(ctx context.Context, group string, params *ConfigureGroupParams, body ConfigureGroupJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListActions performs a GET /api/v1/groups/{group}/actions (the `ListActions` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	ListActions(ctx context.Context, group string, params *ListActionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// BatchWithBody performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request,
 	// with any type of body and a specified content type.
 	BatchWithBody(ctx context.Context, group string, params *BatchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -987,6 +2922,11 @@ type ClientInterface interface {
 	// Batch performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request.
 	// Takes a body of the `application/json` content type.
 	Batch(ctx context.Context, group string, params *BatchParams, body BatchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListBlacklist performs a GET /api/v1/groups/{group}/blacklist (the `ListBlacklist` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	ListBlacklist(ctx context.Context, group string, params *ListBlacklistParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CommandWithBody performs a POST /api/v1/groups/{group}/commands (the `Command` operationId) request,
 	// with any type of body and a specified content type.
@@ -996,14 +2936,53 @@ type ClientInterface interface {
 	// Takes a body of the `application/json` content type.
 	Command(ctx context.Context, group string, params *CommandParams, body CommandJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListDeliverys performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	ListDeliverys(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListHits performs a GET /api/v1/groups/{group}/hits (the `ListHits` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	ListHits(ctx context.Context, group string, params *ListHitsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListMembers performs a GET /api/v1/groups/{group}/members (the `ListMembers` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	ListMembers(ctx context.Context, group string, params *ListMembersParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListMessages performs a GET /api/v1/groups/{group}/messages (the `ListMessages` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	ListMessages(ctx context.Context, group string, params *ListMessagesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// OwnProgress performs a GET /api/v1/groups/{group}/progress (the `OwnProgress` operationId) request.
 	OwnProgress(ctx context.Context, group string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ListRecords performs a GET /api/v1/groups/{group}/{collection} (the `ListRecords` operationId) request.
-	ListRecords(ctx context.Context, group string, collection ListRecordsParamsCollection, params *ListRecordsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListReports performs a GET /api/v1/groups/{group}/reports (the `ListReports` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	ListReports(ctx context.Context, group string, params *ListReportsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListSubscriptions performs a GET /api/v1/groups/{group}/subscriptions (the `ListSubscriptions` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	ListSubscriptions(ctx context.Context, group string, params *ListSubscriptionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListWarnings performs a GET /api/v1/groups/{group}/warnings (the `ListWarnings` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	ListWarnings(ctx context.Context, group string, params *ListWarningsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListWatch performs a GET /api/v1/groups/{group}/watch (the `ListWatch` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	ListWatch(ctx context.Context, group string, params *ListWatchParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 // ListGroups performs a GET /api/v1/groups (the `ListGroups` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
 func (c *Client) ListGroups(ctx context.Context, params *ListGroupsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListGroupsRequest(c.Server, params)
 	if err != nil {
@@ -1085,6 +3064,21 @@ func (c *Client) ConfigureGroup(ctx context.Context, group string, params *Confi
 	return c.Client.Do(req)
 }
 
+// ListActions performs a GET /api/v1/groups/{group}/actions (the `ListActions` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+func (c *Client) ListActions(ctx context.Context, group string, params *ListActionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListActionsRequest(c.Server, group, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // BatchWithBody performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request,
 // with any type of body and a specified content type.
 func (c *Client) BatchWithBody(ctx context.Context, group string, params *BatchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -1103,6 +3097,21 @@ func (c *Client) BatchWithBody(ctx context.Context, group string, params *BatchP
 // Takes a body of the `application/json` content type.
 func (c *Client) Batch(ctx context.Context, group string, params *BatchParams, body BatchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewBatchRequest(c.Server, group, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListBlacklist performs a GET /api/v1/groups/{group}/blacklist (the `ListBlacklist` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+func (c *Client) ListBlacklist(ctx context.Context, group string, params *ListBlacklistParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListBlacklistRequest(c.Server, group, params)
 	if err != nil {
 		return nil, err
 	}
@@ -1141,6 +3150,66 @@ func (c *Client) Command(ctx context.Context, group string, params *CommandParam
 	return c.Client.Do(req)
 }
 
+// ListDeliverys performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+func (c *Client) ListDeliverys(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListDeliverysRequest(c.Server, group, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListHits performs a GET /api/v1/groups/{group}/hits (the `ListHits` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+func (c *Client) ListHits(ctx context.Context, group string, params *ListHitsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListHitsRequest(c.Server, group, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListMembers performs a GET /api/v1/groups/{group}/members (the `ListMembers` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+func (c *Client) ListMembers(ctx context.Context, group string, params *ListMembersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListMembersRequest(c.Server, group, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListMessages performs a GET /api/v1/groups/{group}/messages (the `ListMessages` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+func (c *Client) ListMessages(ctx context.Context, group string, params *ListMessagesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListMessagesRequest(c.Server, group, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // OwnProgress performs a GET /api/v1/groups/{group}/progress (the `OwnProgress` operationId) request.
 func (c *Client) OwnProgress(ctx context.Context, group string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewOwnProgressRequest(c.Server, group)
@@ -1154,9 +3223,56 @@ func (c *Client) OwnProgress(ctx context.Context, group string, reqEditors ...Re
 	return c.Client.Do(req)
 }
 
-// ListRecords performs a GET /api/v1/groups/{group}/{collection} (the `ListRecords` operationId) request.
-func (c *Client) ListRecords(ctx context.Context, group string, collection ListRecordsParamsCollection, params *ListRecordsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListRecordsRequest(c.Server, group, collection, params)
+// ListReports performs a GET /api/v1/groups/{group}/reports (the `ListReports` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+func (c *Client) ListReports(ctx context.Context, group string, params *ListReportsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListReportsRequest(c.Server, group, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListSubscriptions performs a GET /api/v1/groups/{group}/subscriptions (the `ListSubscriptions` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+func (c *Client) ListSubscriptions(ctx context.Context, group string, params *ListSubscriptionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListSubscriptionsRequest(c.Server, group, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListWarnings performs a GET /api/v1/groups/{group}/warnings (the `ListWarnings` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+func (c *Client) ListWarnings(ctx context.Context, group string, params *ListWarningsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListWarningsRequest(c.Server, group, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListWatch performs a GET /api/v1/groups/{group}/watch (the `ListWatch` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+func (c *Client) ListWatch(ctx context.Context, group string, params *ListWatchParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListWatchRequest(c.Server, group, params)
 	if err != nil {
 		return nil, err
 	}
@@ -1380,6 +3496,79 @@ func NewConfigureGroupRequestWithBody(server string, group string, params *Confi
 	return req, nil
 }
 
+// NewListActionsRequest constructs an http.Request for the ListActions method
+func NewListActionsRequest(server string, group string, params *ListActionsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "group", group, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/groups/%s/actions", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewBatchRequest calls the generic Batch builder with application/json body
 func NewBatchRequest(server string, group string, params *BatchParams, body BatchJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -1435,6 +3624,79 @@ func NewBatchRequestWithBody(server string, group string, params *BatchParams, c
 
 		req.Header.Set("Idempotency-Key", headerParam0)
 
+	}
+
+	return req, nil
+}
+
+// NewListBlacklistRequest constructs an http.Request for the ListBlacklist method
+func NewListBlacklistRequest(server string, group string, params *ListBlacklistParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "group", group, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/groups/%s/blacklist", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
 	}
 
 	return req, nil
@@ -1500,6 +3762,298 @@ func NewCommandRequestWithBody(server string, group string, params *CommandParam
 	return req, nil
 }
 
+// NewListDeliverysRequest constructs an http.Request for the ListDeliverys method
+func NewListDeliverysRequest(server string, group string, params *ListDeliverysParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "group", group, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/groups/%s/deliveries", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListHitsRequest constructs an http.Request for the ListHits method
+func NewListHitsRequest(server string, group string, params *ListHitsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "group", group, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/groups/%s/hits", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListMembersRequest constructs an http.Request for the ListMembers method
+func NewListMembersRequest(server string, group string, params *ListMembersParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "group", group, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/groups/%s/members", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListMessagesRequest constructs an http.Request for the ListMessages method
+func NewListMessagesRequest(server string, group string, params *ListMessagesParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "group", group, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/groups/%s/messages", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewOwnProgressRequest constructs an http.Request for the OwnProgress method
 func NewOwnProgressRequest(server string, group string) (*http.Request, error) {
 	var err error
@@ -1534,8 +4088,8 @@ func NewOwnProgressRequest(server string, group string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewListRecordsRequest constructs an http.Request for the ListRecords method
-func NewListRecordsRequest(server string, group string, collection ListRecordsParamsCollection, params *ListRecordsParams) (*http.Request, error) {
+// NewListReportsRequest constructs an http.Request for the ListReports method
+func NewListReportsRequest(server string, group string, params *ListReportsParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -1545,9 +4099,75 @@ func NewListRecordsRequest(server string, group string, collection ListRecordsPa
 		return nil, err
 	}
 
-	var pathParam1 string
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "collection", collection, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	operationPath := fmt.Sprintf("/api/v1/groups/%s/reports", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListSubscriptionsRequest constructs an http.Request for the ListSubscriptions method
+func NewListSubscriptionsRequest(server string, group string, params *ListSubscriptionsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "group", group, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
 	if err != nil {
 		return nil, err
 	}
@@ -1557,7 +4177,153 @@ func NewListRecordsRequest(server string, group string, collection ListRecordsPa
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/api/v1/groups/%s/%s", pathParam0, pathParam1)
+	operationPath := fmt.Sprintf("/api/v1/groups/%s/subscriptions", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListWarningsRequest constructs an http.Request for the ListWarnings method
+func NewListWarningsRequest(server string, group string, params *ListWarningsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "group", group, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/groups/%s/warnings", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListWatchRequest constructs an http.Request for the ListWatch method
+func NewListWatchRequest(server string, group string, params *ListWatchParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "group", group, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/groups/%s/watch", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1660,6 +4426,8 @@ type ClientWithResponsesInterface interface {
 
 	// ListGroupsWithResponse performs a GET /api/v1/groups (the `ListGroups` operationId) request.
 	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	//
 	// Returns a wrapper object for the known response body format(s).
 	ListGroupsWithResponse(ctx context.Context, params *ListGroupsParams, reqEditors ...RequestEditorFn) (*ListGroupsResponse, error)
 
@@ -1688,6 +4456,13 @@ type ClientWithResponsesInterface interface {
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	ConfigureGroupWithResponse(ctx context.Context, group string, params *ConfigureGroupParams, body ConfigureGroupJSONRequestBody, reqEditors ...RequestEditorFn) (*ConfigureGroupResponse, error)
 
+	// ListActionsWithResponse performs a GET /api/v1/groups/{group}/actions (the `ListActions` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ListActionsWithResponse(ctx context.Context, group string, params *ListActionsParams, reqEditors ...RequestEditorFn) (*ListActionsResponse, error)
+
 	// BatchWithBodyWithResponse performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request,
 	// with any type of body and a specified content type.
 	//
@@ -1697,6 +4472,13 @@ type ClientWithResponsesInterface interface {
 	// BatchWithResponse performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request.
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	BatchWithResponse(ctx context.Context, group string, params *BatchParams, body BatchJSONRequestBody, reqEditors ...RequestEditorFn) (*BatchResponse, error)
+
+	// ListBlacklistWithResponse performs a GET /api/v1/groups/{group}/blacklist (the `ListBlacklist` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ListBlacklistWithResponse(ctx context.Context, group string, params *ListBlacklistParams, reqEditors ...RequestEditorFn) (*ListBlacklistResponse, error)
 
 	// CommandWithBodyWithResponse performs a POST /api/v1/groups/{group}/commands (the `Command` operationId) request,
 	// with any type of body and a specified content type.
@@ -1708,34 +4490,106 @@ type ClientWithResponsesInterface interface {
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	CommandWithResponse(ctx context.Context, group string, params *CommandParams, body CommandJSONRequestBody, reqEditors ...RequestEditorFn) (*CommandResponse, error)
 
+	// ListDeliverysWithResponse performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ListDeliverysWithResponse(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*ListDeliverysResponse, error)
+
+	// ListHitsWithResponse performs a GET /api/v1/groups/{group}/hits (the `ListHits` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ListHitsWithResponse(ctx context.Context, group string, params *ListHitsParams, reqEditors ...RequestEditorFn) (*ListHitsResponse, error)
+
+	// ListMembersWithResponse performs a GET /api/v1/groups/{group}/members (the `ListMembers` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ListMembersWithResponse(ctx context.Context, group string, params *ListMembersParams, reqEditors ...RequestEditorFn) (*ListMembersResponse, error)
+
+	// ListMessagesWithResponse performs a GET /api/v1/groups/{group}/messages (the `ListMessages` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ListMessagesWithResponse(ctx context.Context, group string, params *ListMessagesParams, reqEditors ...RequestEditorFn) (*ListMessagesResponse, error)
+
 	// OwnProgressWithResponse performs a GET /api/v1/groups/{group}/progress (the `OwnProgress` operationId) request.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	OwnProgressWithResponse(ctx context.Context, group string, reqEditors ...RequestEditorFn) (*OwnProgressResponse, error)
 
-	// ListRecordsWithResponse performs a GET /api/v1/groups/{group}/{collection} (the `ListRecords` operationId) request.
+	// ListReportsWithResponse performs a GET /api/v1/groups/{group}/reports (the `ListReports` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
 	//
 	// Returns a wrapper object for the known response body format(s).
-	ListRecordsWithResponse(ctx context.Context, group string, collection ListRecordsParamsCollection, params *ListRecordsParams, reqEditors ...RequestEditorFn) (*ListRecordsResponse, error)
+	ListReportsWithResponse(ctx context.Context, group string, params *ListReportsParams, reqEditors ...RequestEditorFn) (*ListReportsResponse, error)
+
+	// ListSubscriptionsWithResponse performs a GET /api/v1/groups/{group}/subscriptions (the `ListSubscriptions` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ListSubscriptionsWithResponse(ctx context.Context, group string, params *ListSubscriptionsParams, reqEditors ...RequestEditorFn) (*ListSubscriptionsResponse, error)
+
+	// ListWarningsWithResponse performs a GET /api/v1/groups/{group}/warnings (the `ListWarnings` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ListWarningsWithResponse(ctx context.Context, group string, params *ListWarningsParams, reqEditors ...RequestEditorFn) (*ListWarningsResponse, error)
+
+	// ListWatchWithResponse performs a GET /api/v1/groups/{group}/watch (the `ListWatch` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ListWatchWithResponse(ctx context.Context, group string, params *ListWatchParams, reqEditors ...RequestEditorFn) (*ListWatchResponse, error)
 }
 
 type ListGroupsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *Page
-	// JSONDefault the response for an HTTP default `application/json` response
-	JSONDefault *Problem
+	JSON200 *GroupSummaryPage
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r ListGroupsResponse) GetJSON200() *Page {
+func (r ListGroupsResponse) GetJSON200() *GroupSummaryPage {
 	return r.JSON200
 }
 
-// GetJSONDefault returns the response for an HTTP default `application/json` response
-func (r ListGroupsResponse) GetJSONDefault() *Problem {
-	return r.JSONDefault
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListGroupsResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListGroupsResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListGroupsResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r ListGroupsResponse) GetJSON503() *Problem {
+	return r.JSON503
 }
 
 // GetBody returns the raw response body bytes
@@ -1772,8 +4626,20 @@ type BlacklistsResponse struct {
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
 	JSON200 *Result
-	// JSONDefault the response for an HTTP default `application/json` response
-	JSONDefault *Problem
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Problem
+	// JSON409 the response for an HTTP 409 `application/json` response
+	JSON409 *Problem
+	// JSON422 the response for an HTTP 422 `application/json` response
+	JSON422 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -1781,9 +4647,39 @@ func (r BlacklistsResponse) GetJSON200() *Result {
 	return r.JSON200
 }
 
-// GetJSONDefault returns the response for an HTTP default `application/json` response
-func (r BlacklistsResponse) GetJSONDefault() *Problem {
-	return r.JSONDefault
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r BlacklistsResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r BlacklistsResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r BlacklistsResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r BlacklistsResponse) GetJSON404() *Problem {
+	return r.JSON404
+}
+
+// GetJSON409 returns the response for an HTTP 409 `application/json` response
+func (r BlacklistsResponse) GetJSON409() *Problem {
+	return r.JSON409
+}
+
+// GetJSON422 returns the response for an HTTP 422 `application/json` response
+func (r BlacklistsResponse) GetJSON422() *Problem {
+	return r.JSON422
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r BlacklistsResponse) GetJSON503() *Problem {
+	return r.JSON503
 }
 
 // GetBody returns the raw response body bytes
@@ -1819,19 +4715,47 @@ type GetGroupResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *Config
-	// JSONDefault the response for an HTTP default `application/json` response
-	JSONDefault *Problem
+	JSON200 *GroupConfig
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r GetGroupResponse) GetJSON200() *Config {
+func (r GetGroupResponse) GetJSON200() *GroupConfig {
 	return r.JSON200
 }
 
-// GetJSONDefault returns the response for an HTTP default `application/json` response
-func (r GetGroupResponse) GetJSONDefault() *Problem {
-	return r.JSONDefault
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r GetGroupResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r GetGroupResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r GetGroupResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r GetGroupResponse) GetJSON404() *Problem {
+	return r.JSON404
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r GetGroupResponse) GetJSON503() *Problem {
+	return r.JSON503
 }
 
 // GetBody returns the raw response body bytes
@@ -1867,19 +4791,61 @@ type ConfigureGroupResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *Config
-	// JSONDefault the response for an HTTP default `application/json` response
-	JSONDefault *Problem
+	JSON200 *GroupConfig
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Problem
+	// JSON409 the response for an HTTP 409 `application/json` response
+	JSON409 *Problem
+	// JSON422 the response for an HTTP 422 `application/json` response
+	JSON422 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r ConfigureGroupResponse) GetJSON200() *Config {
+func (r ConfigureGroupResponse) GetJSON200() *GroupConfig {
 	return r.JSON200
 }
 
-// GetJSONDefault returns the response for an HTTP default `application/json` response
-func (r ConfigureGroupResponse) GetJSONDefault() *Problem {
-	return r.JSONDefault
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ConfigureGroupResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ConfigureGroupResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ConfigureGroupResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r ConfigureGroupResponse) GetJSON404() *Problem {
+	return r.JSON404
+}
+
+// GetJSON409 returns the response for an HTTP 409 `application/json` response
+func (r ConfigureGroupResponse) GetJSON409() *Problem {
+	return r.JSON409
+}
+
+// GetJSON422 returns the response for an HTTP 422 `application/json` response
+func (r ConfigureGroupResponse) GetJSON422() *Problem {
+	return r.JSON422
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r ConfigureGroupResponse) GetJSON503() *Problem {
+	return r.JSON503
 }
 
 // GetBody returns the raw response body bytes
@@ -1911,13 +4877,101 @@ func (r ConfigureGroupResponse) ContentType() string {
 	return ""
 }
 
+type ListActionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ActionPage
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListActionsResponse) GetJSON200() *ActionPage {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListActionsResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListActionsResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListActionsResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r ListActionsResponse) GetJSON404() *Problem {
+	return r.JSON404
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r ListActionsResponse) GetJSON503() *Problem {
+	return r.JSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListActionsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListActionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListActionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListActionsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type BatchResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
 	JSON200 *BulkResult
-	// JSONDefault the response for an HTTP default `application/json` response
-	JSONDefault *Problem
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Problem
+	// JSON409 the response for an HTTP 409 `application/json` response
+	JSON409 *Problem
+	// JSON422 the response for an HTTP 422 `application/json` response
+	JSON422 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -1925,9 +4979,39 @@ func (r BatchResponse) GetJSON200() *BulkResult {
 	return r.JSON200
 }
 
-// GetJSONDefault returns the response for an HTTP default `application/json` response
-func (r BatchResponse) GetJSONDefault() *Problem {
-	return r.JSONDefault
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r BatchResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r BatchResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r BatchResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r BatchResponse) GetJSON404() *Problem {
+	return r.JSON404
+}
+
+// GetJSON409 returns the response for an HTTP 409 `application/json` response
+func (r BatchResponse) GetJSON409() *Problem {
+	return r.JSON409
+}
+
+// GetJSON422 returns the response for an HTTP 422 `application/json` response
+func (r BatchResponse) GetJSON422() *Problem {
+	return r.JSON422
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r BatchResponse) GetJSON503() *Problem {
+	return r.JSON503
 }
 
 // GetBody returns the raw response body bytes
@@ -1959,13 +5043,101 @@ func (r BatchResponse) ContentType() string {
 	return ""
 }
 
+type ListBlacklistResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *BlacklistPage
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListBlacklistResponse) GetJSON200() *BlacklistPage {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListBlacklistResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListBlacklistResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListBlacklistResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r ListBlacklistResponse) GetJSON404() *Problem {
+	return r.JSON404
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r ListBlacklistResponse) GetJSON503() *Problem {
+	return r.JSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListBlacklistResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListBlacklistResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListBlacklistResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListBlacklistResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type CommandResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
 	JSON200 *Result
-	// JSONDefault the response for an HTTP default `application/json` response
-	JSONDefault *Problem
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Problem
+	// JSON409 the response for an HTTP 409 `application/json` response
+	JSON409 *Problem
+	// JSON422 the response for an HTTP 422 `application/json` response
+	JSON422 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -1973,9 +5145,39 @@ func (r CommandResponse) GetJSON200() *Result {
 	return r.JSON200
 }
 
-// GetJSONDefault returns the response for an HTTP default `application/json` response
-func (r CommandResponse) GetJSONDefault() *Problem {
-	return r.JSONDefault
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r CommandResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r CommandResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r CommandResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r CommandResponse) GetJSON404() *Problem {
+	return r.JSON404
+}
+
+// GetJSON409 returns the response for an HTTP 409 `application/json` response
+func (r CommandResponse) GetJSON409() *Problem {
+	return r.JSON409
+}
+
+// GetJSON422 returns the response for an HTTP 422 `application/json` response
+func (r CommandResponse) GetJSON422() *Problem {
+	return r.JSON422
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r CommandResponse) GetJSON503() *Problem {
+	return r.JSON503
 }
 
 // GetBody returns the raw response body bytes
@@ -2007,23 +5209,355 @@ func (r CommandResponse) ContentType() string {
 	return ""
 }
 
+type ListDeliverysResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *DeliveryPage
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListDeliverysResponse) GetJSON200() *DeliveryPage {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListDeliverysResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListDeliverysResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListDeliverysResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r ListDeliverysResponse) GetJSON404() *Problem {
+	return r.JSON404
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r ListDeliverysResponse) GetJSON503() *Problem {
+	return r.JSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListDeliverysResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListDeliverysResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListDeliverysResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListDeliverysResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListHitsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *HitPage
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListHitsResponse) GetJSON200() *HitPage {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListHitsResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListHitsResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListHitsResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r ListHitsResponse) GetJSON404() *Problem {
+	return r.JSON404
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r ListHitsResponse) GetJSON503() *Problem {
+	return r.JSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListHitsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListHitsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListHitsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListHitsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListMembersResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *MemberPage
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListMembersResponse) GetJSON200() *MemberPage {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListMembersResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListMembersResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListMembersResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r ListMembersResponse) GetJSON404() *Problem {
+	return r.JSON404
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r ListMembersResponse) GetJSON503() *Problem {
+	return r.JSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListMembersResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListMembersResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListMembersResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListMembersResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListMessagesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *MessagePage
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListMessagesResponse) GetJSON200() *MessagePage {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListMessagesResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListMessagesResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListMessagesResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r ListMessagesResponse) GetJSON404() *Problem {
+	return r.JSON404
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r ListMessagesResponse) GetJSON503() *Problem {
+	return r.JSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListMessagesResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListMessagesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListMessagesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListMessagesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type OwnProgressResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *Record
-	// JSONDefault the response for an HTTP default `application/json` response
-	JSONDefault *Problem
+	JSON200 *Member
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r OwnProgressResponse) GetJSON200() *Record {
+func (r OwnProgressResponse) GetJSON200() *Member {
 	return r.JSON200
 }
 
-// GetJSONDefault returns the response for an HTTP default `application/json` response
-func (r OwnProgressResponse) GetJSONDefault() *Problem {
-	return r.JSONDefault
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r OwnProgressResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r OwnProgressResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r OwnProgressResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r OwnProgressResponse) GetJSON404() *Problem {
+	return r.JSON404
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r OwnProgressResponse) GetJSON503() *Problem {
+	return r.JSON503
 }
 
 // GetBody returns the raw response body bytes
@@ -2055,32 +5589,60 @@ func (r OwnProgressResponse) ContentType() string {
 	return ""
 }
 
-type ListRecordsResponse struct {
+type ListReportsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *Page
-	// JSONDefault the response for an HTTP default `application/json` response
-	JSONDefault *Problem
+	JSON200 *ReportPage
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r ListRecordsResponse) GetJSON200() *Page {
+func (r ListReportsResponse) GetJSON200() *ReportPage {
 	return r.JSON200
 }
 
-// GetJSONDefault returns the response for an HTTP default `application/json` response
-func (r ListRecordsResponse) GetJSONDefault() *Problem {
-	return r.JSONDefault
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListReportsResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListReportsResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListReportsResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r ListReportsResponse) GetJSON404() *Problem {
+	return r.JSON404
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r ListReportsResponse) GetJSON503() *Problem {
+	return r.JSON503
 }
 
 // GetBody returns the raw response body bytes
-func (r ListRecordsResponse) GetBody() []byte {
+func (r ListReportsResponse) GetBody() []byte {
 	return r.Body
 }
 
 // Status returns HTTPResponse.Status
-func (r ListRecordsResponse) Status() string {
+func (r ListReportsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -2088,7 +5650,7 @@ func (r ListRecordsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ListRecordsResponse) StatusCode() int {
+func (r ListReportsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -2096,7 +5658,235 @@ func (r ListRecordsResponse) StatusCode() int {
 }
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r ListRecordsResponse) ContentType() string {
+func (r ListReportsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListSubscriptionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *SubscriptionPage
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListSubscriptionsResponse) GetJSON200() *SubscriptionPage {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListSubscriptionsResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListSubscriptionsResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListSubscriptionsResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r ListSubscriptionsResponse) GetJSON404() *Problem {
+	return r.JSON404
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r ListSubscriptionsResponse) GetJSON503() *Problem {
+	return r.JSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListSubscriptionsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListSubscriptionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListSubscriptionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListSubscriptionsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListWarningsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *WarningsPage
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListWarningsResponse) GetJSON200() *WarningsPage {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListWarningsResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListWarningsResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListWarningsResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r ListWarningsResponse) GetJSON404() *Problem {
+	return r.JSON404
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r ListWarningsResponse) GetJSON503() *Problem {
+	return r.JSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListWarningsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListWarningsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListWarningsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListWarningsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListWatchResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *WatchPage
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListWatchResponse) GetJSON200() *WatchPage {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListWatchResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListWatchResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListWatchResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r ListWatchResponse) GetJSON404() *Problem {
+	return r.JSON404
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r ListWatchResponse) GetJSON503() *Problem {
+	return r.JSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListWatchResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListWatchResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListWatchResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListWatchResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -2104,6 +5894,8 @@ func (r ListRecordsResponse) ContentType() string {
 }
 
 // ListGroupsWithResponse performs a GET /api/v1/groups (the `ListGroups` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
 //
 // Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ListGroupsWithResponse(ctx context.Context, params *ListGroupsParams, reqEditors ...RequestEditorFn) (*ListGroupsResponse, error) {
@@ -2169,6 +5961,19 @@ func (c *ClientWithResponses) ConfigureGroupWithResponse(ctx context.Context, gr
 	return ParseConfigureGroupResponse(rsp)
 }
 
+// ListActionsWithResponse performs a GET /api/v1/groups/{group}/actions (the `ListActions` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ListActionsWithResponse(ctx context.Context, group string, params *ListActionsParams, reqEditors ...RequestEditorFn) (*ListActionsResponse, error) {
+	rsp, err := c.ListActions(ctx, group, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListActionsResponse(rsp)
+}
+
 // BatchWithBodyWithResponse performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request,
 // with any type of body and a specified content type.
 //
@@ -2189,6 +5994,19 @@ func (c *ClientWithResponses) BatchWithResponse(ctx context.Context, group strin
 		return nil, err
 	}
 	return ParseBatchResponse(rsp)
+}
+
+// ListBlacklistWithResponse performs a GET /api/v1/groups/{group}/blacklist (the `ListBlacklist` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ListBlacklistWithResponse(ctx context.Context, group string, params *ListBlacklistParams, reqEditors ...RequestEditorFn) (*ListBlacklistResponse, error) {
+	rsp, err := c.ListBlacklist(ctx, group, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListBlacklistResponse(rsp)
 }
 
 // CommandWithBodyWithResponse performs a POST /api/v1/groups/{group}/commands (the `Command` operationId) request,
@@ -2213,6 +6031,58 @@ func (c *ClientWithResponses) CommandWithResponse(ctx context.Context, group str
 	return ParseCommandResponse(rsp)
 }
 
+// ListDeliverysWithResponse performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ListDeliverysWithResponse(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*ListDeliverysResponse, error) {
+	rsp, err := c.ListDeliverys(ctx, group, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListDeliverysResponse(rsp)
+}
+
+// ListHitsWithResponse performs a GET /api/v1/groups/{group}/hits (the `ListHits` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ListHitsWithResponse(ctx context.Context, group string, params *ListHitsParams, reqEditors ...RequestEditorFn) (*ListHitsResponse, error) {
+	rsp, err := c.ListHits(ctx, group, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListHitsResponse(rsp)
+}
+
+// ListMembersWithResponse performs a GET /api/v1/groups/{group}/members (the `ListMembers` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ListMembersWithResponse(ctx context.Context, group string, params *ListMembersParams, reqEditors ...RequestEditorFn) (*ListMembersResponse, error) {
+	rsp, err := c.ListMembers(ctx, group, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListMembersResponse(rsp)
+}
+
+// ListMessagesWithResponse performs a GET /api/v1/groups/{group}/messages (the `ListMessages` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ListMessagesWithResponse(ctx context.Context, group string, params *ListMessagesParams, reqEditors ...RequestEditorFn) (*ListMessagesResponse, error) {
+	rsp, err := c.ListMessages(ctx, group, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListMessagesResponse(rsp)
+}
+
 // OwnProgressWithResponse performs a GET /api/v1/groups/{group}/progress (the `OwnProgress` operationId) request.
 //
 // Returns a wrapper object for the known response body format(s).
@@ -2224,15 +6094,56 @@ func (c *ClientWithResponses) OwnProgressWithResponse(ctx context.Context, group
 	return ParseOwnProgressResponse(rsp)
 }
 
-// ListRecordsWithResponse performs a GET /api/v1/groups/{group}/{collection} (the `ListRecords` operationId) request.
+// ListReportsWithResponse performs a GET /api/v1/groups/{group}/reports (the `ListReports` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
 //
 // Returns a wrapper object for the known response body format(s).
-func (c *ClientWithResponses) ListRecordsWithResponse(ctx context.Context, group string, collection ListRecordsParamsCollection, params *ListRecordsParams, reqEditors ...RequestEditorFn) (*ListRecordsResponse, error) {
-	rsp, err := c.ListRecords(ctx, group, collection, params, reqEditors...)
+func (c *ClientWithResponses) ListReportsWithResponse(ctx context.Context, group string, params *ListReportsParams, reqEditors ...RequestEditorFn) (*ListReportsResponse, error) {
+	rsp, err := c.ListReports(ctx, group, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseListRecordsResponse(rsp)
+	return ParseListReportsResponse(rsp)
+}
+
+// ListSubscriptionsWithResponse performs a GET /api/v1/groups/{group}/subscriptions (the `ListSubscriptions` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ListSubscriptionsWithResponse(ctx context.Context, group string, params *ListSubscriptionsParams, reqEditors ...RequestEditorFn) (*ListSubscriptionsResponse, error) {
+	rsp, err := c.ListSubscriptions(ctx, group, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListSubscriptionsResponse(rsp)
+}
+
+// ListWarningsWithResponse performs a GET /api/v1/groups/{group}/warnings (the `ListWarnings` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ListWarningsWithResponse(ctx context.Context, group string, params *ListWarningsParams, reqEditors ...RequestEditorFn) (*ListWarningsResponse, error) {
+	rsp, err := c.ListWarnings(ctx, group, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListWarningsResponse(rsp)
+}
+
+// ListWatchWithResponse performs a GET /api/v1/groups/{group}/watch (the `ListWatch` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ListWatchWithResponse(ctx context.Context, group string, params *ListWatchParams, reqEditors ...RequestEditorFn) (*ListWatchResponse, error) {
+	rsp, err := c.ListWatch(ctx, group, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListWatchResponse(rsp)
 }
 
 // ParseListGroupsResponse parses an HTTP response from a ListGroupsWithResponse call
@@ -2250,18 +6161,39 @@ func ParseListGroupsResponse(rsp *http.Response) (*ListGroupsResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Page
+		var dest GroupSummaryPage
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest Problem
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSONDefault = &dest
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
 
 	}
 
@@ -2289,12 +6221,54 @@ func ParseBlacklistsResponse(rsp *http.Response) (*BlacklistsResponse, error) {
 		}
 		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest Problem
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSONDefault = &dest
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
 
 	}
 
@@ -2316,18 +6290,46 @@ func ParseGetGroupResponse(rsp *http.Response) (*GetGroupResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Config
+		var dest GroupConfig
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest Problem
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSONDefault = &dest
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
 
 	}
 
@@ -2349,18 +6351,121 @@ func ParseConfigureGroupResponse(rsp *http.Response) (*ConfigureGroupResponse, e
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Config
+		var dest GroupConfig
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest Problem
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSONDefault = &dest
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListActionsResponse parses an HTTP response from a ListActionsWithResponse call
+func ParseListActionsResponse(rsp *http.Response) (*ListActionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListActionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ActionPage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
 
 	}
 
@@ -2388,12 +6493,115 @@ func ParseBatchResponse(rsp *http.Response) (*BatchResponse, error) {
 		}
 		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest Problem
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSONDefault = &dest
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListBlacklistResponse parses an HTTP response from a ListBlacklistWithResponse call
+func ParseListBlacklistResponse(rsp *http.Response) (*ListBlacklistResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListBlacklistResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest BlacklistPage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
 
 	}
 
@@ -2421,12 +6629,298 @@ func ParseCommandResponse(rsp *http.Response) (*CommandResponse, error) {
 		}
 		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest Problem
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSONDefault = &dest
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListDeliverysResponse parses an HTTP response from a ListDeliverysWithResponse call
+func ParseListDeliverysResponse(rsp *http.Response) (*ListDeliverysResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListDeliverysResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DeliveryPage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListHitsResponse parses an HTTP response from a ListHitsWithResponse call
+func ParseListHitsResponse(rsp *http.Response) (*ListHitsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListHitsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest HitPage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListMembersResponse parses an HTTP response from a ListMembersWithResponse call
+func ParseListMembersResponse(rsp *http.Response) (*ListMembersResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListMembersResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest MemberPage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListMessagesResponse parses an HTTP response from a ListMessagesWithResponse call
+func ParseListMessagesResponse(rsp *http.Response) (*ListMessagesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListMessagesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest MessagePage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
 
 	}
 
@@ -2448,51 +6942,290 @@ func ParseOwnProgressResponse(rsp *http.Response) (*OwnProgressResponse, error) 
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Record
+		var dest Member
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest Problem
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSONDefault = &dest
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
 
 	}
 
 	return response, nil
 }
 
-// ParseListRecordsResponse parses an HTTP response from a ListRecordsWithResponse call
-func ParseListRecordsResponse(rsp *http.Response) (*ListRecordsResponse, error) {
+// ParseListReportsResponse parses an HTTP response from a ListReportsWithResponse call
+func ParseListReportsResponse(rsp *http.Response) (*ListReportsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ListRecordsResponse{
+	response := &ListReportsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Page
+		var dest ReportPage
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest Problem
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSONDefault = &dest
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListSubscriptionsResponse parses an HTTP response from a ListSubscriptionsWithResponse call
+func ParseListSubscriptionsResponse(rsp *http.Response) (*ListSubscriptionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListSubscriptionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SubscriptionPage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListWarningsResponse parses an HTTP response from a ListWarningsWithResponse call
+func ParseListWarningsResponse(rsp *http.Response) (*ListWarningsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListWarningsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WarningsPage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListWatchResponse parses an HTTP response from a ListWatchWithResponse call
+func ParseListWatchResponse(rsp *http.Response) (*ListWatchResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListWatchResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WatchPage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
 
 	}
 

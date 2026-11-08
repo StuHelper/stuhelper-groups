@@ -41,7 +41,7 @@ func TestGroupFactsFiltersFieldsAtServiceBoundary(t *testing.T) {
 		c.CardTemplate = "{" + name + "}"
 		c.AutoCard = true
 		c.RemindCard = true
-		if _, err := f.s.Configure(ctx, manager, "config-"+name, c); err != nil {
+		if _, err := configureCurrent(t, f, manager, "config-"+name, c); err != nil {
 			t.Fatal(err)
 		}
 		result = command(t, f, manager, "card-"+name, g.Command{Kind: "card", Target: user.Key()})

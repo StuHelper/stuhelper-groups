@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/StuHelper/stuhelper-platform/account"
 	"github.com/StuHelper/stuhelper-platform/admin"
@@ -41,7 +42,7 @@ func (s *Service) run(ctx context.Context, fn func(Tx) error) error {
 	defer cancel()
 	return s.Repo.Transaction(c, fn)
 }
-func (s *Service) auth(ctx context.Context, p account.Principal, c string, g Config) error {
+func (s *Service) auth(ctx context.Context, p account.Principal, c string, g GroupConfig) error {
 	if !p.Valid() {
 		return ErrUnauthenticated
 	}
@@ -101,8 +102,8 @@ func save(tx Tx, owner, key string, input, out any) error {
 	}
 	return tx.Put("receipts", hash([]string{owner, key}), receipt{hash(input), b})
 }
-func validateConfig(c Config) error {
-	if c.ID == "*" || c.School == "*" || !valid(c.ID, 128) || !valid(c.School, 128) || !slices.Contains([]string{"before", "muted", "password"}, c.Mode) {
+func validateConfig(c GroupConfig) error {
+	if strings.TrimSpace(c.Name) == "" || utf8.RuneCountInString(c.Name) > 128 || strings.ContainsFunc(c.Name, unicode.IsControl) || c.ID == "*" || c.School == "*" || !valid(c.ID, 128) || !valid(c.School, 128) || !slices.Contains([]string{"before", "muted", "password"}, c.Mode) {
 		return ErrInvalid
 	}
 	for _, n := range []int64{c.GraceSeconds, c.ReminderSeconds, c.RetentionSeconds, c.CooldownSeconds} {
@@ -122,11 +123,8 @@ func validateConfig(c Config) error {
 	if c.MuteProbability > 0 && (c.MuteSeconds == 0 || c.CooldownSeconds == 0) {
 		return ErrInvalid
 	}
-	if c.Mode == "password" {
-		b, e := hex.DecodeString(c.PasswordHash)
-		if e != nil || len(b) != 32 {
-			return ErrInvalid
-		}
+	if c.Mode == "password" && !c.PasswordSet {
+		return ErrInvalid
 	}
 	for _, k := range c.Keywords {
 		if strings.TrimSpace(k) == "" || len(k) > 256 {
@@ -142,120 +140,6 @@ func validateConfig(c Config) error {
 		}
 	}
 	return nil
-}
-func (s *Service) Configure(ctx context.Context, p account.Principal, key string, c Config) (Config, error) {
-	if c.Keywords == nil {
-		c.Keywords = []string{}
-	}
-	if c.AutoActions == nil {
-		c.AutoActions = []string{}
-	}
-	if e := validateConfig(c); e != nil {
-		return Config{}, e
-	}
-	if !valid(key, 128) {
-		return Config{}, ErrInvalid
-	}
-	var out Config
-	e := s.run(ctx, func(tx Tx) error {
-		if e := s.auth(ctx, p, "groups.configure", c); e != nil {
-			return e
-		}
-		var old Config
-		e := tx.Get("config", c.ID, &old)
-		if e == nil && old.School != c.School {
-			return ErrConflict
-		}
-		if e != nil && !errors.Is(e, ErrNotFound) {
-			return e
-		}
-		ok, e := replay(tx, p.Key(), key, c, &out)
-		if e != nil || ok {
-			return e
-		}
-		out = c
-		if e = tx.Put("config", c.ID, c); e != nil {
-			return e
-		}
-		if e = s.audit(tx, p, c.ID, "configure", c.ID, "saved"); e != nil {
-			return e
-		}
-		if e = s.event(tx, c.ID, "configured", map[string]string{"group": c.ID}); e != nil {
-			return e
-		}
-		return save(tx, p.Key(), key, c, out)
-	})
-	return out, e
-}
-func (s *Service) Configuration(ctx context.Context, p account.Principal, g string) (Config, error) {
-	var c Config
-	e := s.run(ctx, func(tx Tx) error {
-		if e := tx.Get("config", g, &c); e != nil {
-			return e
-		}
-		return s.auth(ctx, p, "groups.read", c)
-	})
-	c.PasswordHash = ""
-	return c, e
-}
-func (s *Service) List(ctx context.Context, p account.Principal, g, collection, cursor string, limit int) (Page, error) {
-	out := Page{Items: []json.RawMessage{}}
-	if limit < 1 || limit > 100 || !slices.Contains([]string{"members", "actions", "reports", "hits", "messages", "subscriptions", "blacklist", "warnings", "watch", "deliveries"}, collection) {
-		return out, ErrInvalid
-	}
-	e := s.run(ctx, func(tx Tx) error {
-		var c Config
-		if e := tx.Get("config", g, &c); e != nil {
-			return e
-		}
-		cap := "groups.read"
-		if collection == "messages" {
-			cap = "groups.messages.read"
-		}
-		if e := s.auth(ctx, p, cap, c); e != nil {
-			return e
-		}
-		rows, e := tx.List(bucket(g, collection), cursor, limit)
-		if e != nil {
-			return e
-		}
-		for _, r := range rows {
-			out.NextCursor = r.ID
-			if collection == "messages" {
-				var m Message
-				if e = json.Unmarshal(r.Data, &m); e != nil {
-					return e
-				}
-				if c.RetentionSeconds == 0 || !s.now().Before(m.Expires) {
-					continue
-				}
-			}
-			var record map[string]any
-			if e = json.Unmarshal(r.Data, &record); e != nil {
-				return e
-			}
-			record["id"] = r.ID
-			if collection == "deliveries" {
-				receiver, _ := record["receiver"].(string)
-				id, _ := record["action"].(string)
-				var action Action
-				if e = tx.Get(bucket(receiver, "actions"), id, &action); e != nil {
-					return e
-				}
-				record["state"] = action.State
-			}
-			encoded, e := json.Marshal(record)
-			if e != nil {
-				return e
-			}
-			out.Items = append(out.Items, encoded)
-		}
-		if len(rows) < limit {
-			out.NextCursor = ""
-		}
-		return nil
-	})
-	return out, e
 }
 func capability(kind string) string {
 	switch kind {
@@ -274,7 +158,10 @@ func capability(kind string) string {
 	}
 	return ""
 }
-func (s *Service) queue(tx Tx, p account.Principal, c Config, cmd Command, cap string) (Result, error) {
+func (s *Service) queue(tx Tx, p account.Principal, c GroupConfig, cmd Command, cap string) (Result, error) {
+	if !c.BotEnabled {
+		return Result{}, ErrDisabled
+	}
 	pending, e := tx.PendingActions(c.ID)
 	if e != nil {
 		return Result{}, e
@@ -282,7 +169,7 @@ func (s *Service) queue(tx Tx, p account.Principal, c Config, cmd Command, cap s
 	if pending >= 1000 {
 		return Result{}, ErrCooldown
 	}
-	a := Action{ID: uuid.NewString(), Group: c.ID, Actor: p, Capability: cap, Command: cmd, State: "pending", Created: s.now()}
+	a := Action{ID: uuid.NewString(), Group: c.ID, Actor: Actor(p), Capability: cap, Command: cmd, State: "pending", Created: s.now()}
 	if e := tx.Put(bucket(c.ID, "actions"), a.ID, a); e != nil {
 		return Result{}, e
 	}
@@ -303,7 +190,7 @@ func (s *Service) Command(ctx context.Context, p account.Principal, g, key strin
 		return out, ErrInvalid
 	}
 	e := s.run(ctx, func(tx Tx) error {
-		var c Config
+		var c GroupConfig
 		if e := tx.Get("config", g, &c); e != nil {
 			return e
 		}
@@ -337,7 +224,7 @@ func (s *Service) Command(ctx context.Context, p account.Principal, g, key strin
 	})
 	return out, e
 }
-func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Config, cmd Command, cap string) (Result, error) {
+func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, cmd Command, cap string) (Result, error) {
 	out := Result{State: "completed"}
 	switch cmd.Kind {
 	case "apply", "recheck":
@@ -370,8 +257,11 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Con
 		if c.Mode != "password" {
 			return out, ErrDisabled
 		}
-		h := sha256.Sum256([]byte(cmd.Text))
-		if hex.EncodeToString(h[:]) != c.PasswordHash {
+		var stored configRecord
+		if e := tx.Get("config", c.ID, &stored); e != nil {
+			return out, e
+		}
+		if !checkPassword(cmd.Text, stored.PasswordDigest) {
 			return out, ErrForbidden
 		}
 		var m Member
@@ -392,7 +282,7 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Con
 		if !valid(cmd.Target, 2048) {
 			return out, ErrInvalid
 		}
-		if e := tx.Put(bucket(c.ID, "blacklist"), cmd.Target, Blacklist{cmd.Text, s.now().Add(time.Duration(cmd.Seconds) * time.Second), cmd.Seconds == 0}); e != nil {
+		if e := tx.Put(bucket(c.ID, "blacklist"), cmd.Target, Blacklist{ID: cmd.Target, Reason: cmd.Text, Until: s.now().Add(time.Duration(cmd.Seconds) * time.Second), Permanent: cmd.Seconds == 0}); e != nil {
 			return out, e
 		}
 		return out, s.audit(tx, p, c.ID, cmd.Kind, cmd.Target, "blocked")
@@ -457,7 +347,7 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Con
 		if len(rows) >= 100 && errors.Is(tx.Get(bucket(c.ID, "subscriptions"), cmd.Receiver, &exists), ErrNotFound) {
 			return out, ErrInvalid
 		}
-		var receiver Config
+		var receiver GroupConfig
 		if e := tx.Get("config", cmd.Receiver, &receiver); e != nil {
 			return out, e
 		}
@@ -465,7 +355,7 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Con
 			return out, e
 		}
 		out.ID = cmd.Receiver
-		return out, tx.Put(bucket(c.ID, "subscriptions"), cmd.Receiver, map[string]any{"receiver": cmd.Receiver, "enabled": cmd.Enabled, "actor": p})
+		return out, tx.Put(bucket(c.ID, "subscriptions"), cmd.Receiver, map[string]any{"receiver": cmd.Receiver, "enabled": cmd.Enabled, "actor": Actor(p)})
 	case "warn", "mute", "unmute", "kick", "send", "forward", "recall":
 		if cmd.Kind == "forward" {
 			if e := s.auth(ctx, p, "groups.messages.read", c); e != nil {
@@ -500,12 +390,13 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Con
 }
 
 type Blacklist struct {
-	Reason    string
-	Until     time.Time
-	Permanent bool
+	ID        string    `json:"id"`
+	Reason    string    `json:"reason"`
+	Until     time.Time `json:"until"`
+	Permanent bool      `json:"permanent"`
 }
 
-func (s *Service) eligible(ctx context.Context, tx Tx, c Config, m Member) (bool, error) {
+func (s *Service) eligible(ctx context.Context, tx Tx, c GroupConfig, m Member) (bool, error) {
 	for _, g := range []string{c.ID, "*"} {
 		var b Blacklist
 		e := tx.Get(bucket(g, "blacklist"), m.Owner, &b)
@@ -525,7 +416,7 @@ func (s *Service) eligible(ctx context.Context, tx Tx, c Config, m Member) (bool
 	}
 	return f.Bound && (!c.RequireStudent || (f.StudentKnown && f.StageKnown && f.Student && (!f.Alumni || c.AcceptAlumni) && (!f.Temporary || c.AcceptTemporary))) && (c.Mode != "password" || m.Password), nil
 }
-func (s *Service) admission(ctx context.Context, tx Tx, p account.Principal, c Config, owner string, apply bool) (Result, error) {
+func (s *Service) admission(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, owner string, apply bool) (Result, error) {
 	out := Result{}
 	if !valid(owner, 2048) {
 		return out, ErrInvalid
@@ -617,8 +508,11 @@ func (s *Service) random(n int64) (int64, error) {
 	}
 	return v.Int64(), nil
 }
-func (s *Service) play(ctx context.Context, tx Tx, p account.Principal, c Config, cmd Command) (Result, error) {
+func (s *Service) play(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, cmd Command) (Result, error) {
 	out := Result{State: "completed", Action: cmd.Kind}
+	if !c.BotEnabled {
+		return out, ErrDisabled
+	}
 	var m Member
 	if e := tx.Get(bucket(c.ID, "members"), p.Key(), &m); e != nil {
 		return out, e

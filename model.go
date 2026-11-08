@@ -11,17 +11,20 @@ import (
 )
 
 var (
-	ErrInvalid         = errors.New("invalid_request")
-	ErrUnauthenticated = errors.New("unauthenticated")
-	ErrForbidden       = errors.New("forbidden")
-	ErrNotFound        = errors.New("not_found")
-	ErrConflict        = errors.New("conflict")
-	ErrUnavailable     = errors.New("unavailable")
-	ErrDisabled        = errors.New("disabled")
-	ErrCooldown        = errors.New("cooldown")
+	ErrUnprocessable   = errors.New("groups_unprocessable")
+	ErrInvalid         = errors.New("groups_invalid_request")
+	ErrUnauthenticated = errors.New("groups_unauthenticated")
+	ErrForbidden       = errors.New("groups_forbidden")
+	ErrNotFound        = errors.New("groups_not_found")
+	ErrConflict        = errors.New("groups_conflict")
+	ErrUnavailable     = errors.New("groups_unavailable")
+	ErrDisabled        = errors.New("groups_disabled")
+	ErrCooldown        = errors.New("groups_cooldown")
 )
 
-type Config struct {
+type GroupSettings struct {
+	Name             string   `json:"name"`
+	BotEnabled       bool     `json:"bot_enabled"`
 	Welcome          string   `json:"welcome"`
 	RulesTemplate    string   `json:"rules_template"`
 	CheckCard        bool     `json:"check_card"`
@@ -39,7 +42,6 @@ type Config struct {
 	GraceSeconds     int64    `json:"grace_seconds"`
 	ReminderSeconds  int64    `json:"reminder_seconds"`
 	RetentionSeconds int64    `json:"retention_seconds"`
-	PasswordHash     string   `json:"password_hash"`
 	CardTemplate     string   `json:"card_template"`
 	AutoCard         bool     `json:"auto_card"`
 	DiceSides        int64    `json:"dice_sides"`
@@ -51,6 +53,40 @@ type Config struct {
 	RepeatThreshold  int64    `json:"repeat_threshold"`
 	AutoActions      []string `json:"auto_actions"`
 }
+type GroupConfig struct {
+	GroupSettings
+	Number      string `json:"number"`
+	Revision    int64  `json:"revision"`
+	PasswordSet bool   `json:"password_set"`
+}
+type GroupConfigInput struct {
+	GroupSettings
+	Number           *string `json:"number,omitempty"`
+	ExpectedRevision int64   `json:"expected_revision"`
+	Password         *string `json:"password,omitempty"`
+}
+type GroupSummary struct {
+	ID             string `json:"id"`
+	School         string `json:"school"`
+	Name           string `json:"name"`
+	Number         string `json:"number"`
+	MemberCount    int64  `json:"member_count"`
+	BotEnabled     bool   `json:"bot_enabled"`
+	RequireStudent bool   `json:"require_student"`
+	PendingCount   int64  `json:"pending_count"`
+	Revision       int64  `json:"revision"`
+}
+type GroupCounts struct{ Members, Pending int64 }
+type Actor struct {
+	Issuer  string `json:"issuer"`
+	Subject string `json:"subject"`
+}
+
+func (a Actor) Principal() account.Principal {
+	return account.Principal{Issuer: a.Issuer, Subject: a.Subject}
+}
+func (a Actor) Key() string { return a.Principal().Key() }
+
 type Command struct {
 	Kind     string `json:"kind"`
 	Target   string `json:"target,omitempty"`
@@ -68,6 +104,7 @@ type Result struct {
 	Detail string `json:"detail"`
 }
 type Member struct {
+	ID         string    `json:"id"`
 	Joined     bool      `json:"joined"`
 	Owner      string    `json:"owner"`
 	State      string    `json:"state"`
@@ -84,14 +121,15 @@ type Authorizer interface {
 	Evaluate(context.Context, account.Principal, string, admin.Scope) error
 }
 type Action struct {
-	ID         string            `json:"id"`
-	Group      string            `json:"group"`
-	Actor      account.Principal `json:"actor"`
-	Capability string            `json:"capability"`
-	Command    Command           `json:"command"`
-	State      string            `json:"state"`
-	Result     string            `json:"result"`
-	Created    time.Time         `json:"created"`
+	LeaseUntil *time.Time `json:"lease_until,omitempty"`
+	ID         string     `json:"id"`
+	Group      string     `json:"group"`
+	Actor      Actor      `json:"actor"`
+	Capability string     `json:"capability"`
+	Command    Command    `json:"command"`
+	State      string     `json:"state"`
+	Result     string     `json:"result"`
+	Created    time.Time  `json:"created"`
 }
 
 // Bot must deduplicate by Action.ID and query actual outcomes after timeouts.
@@ -127,6 +165,7 @@ type Tx interface {
 	Delete(string, string) error
 	List(string, string, int) ([]Row, error)
 	PendingActions(string) (int, error)
+	GroupCounts([]string) (map[string]GroupCounts, error)
 	Emit(Event) error
 	Accept(Event) (bool, error)
 }
@@ -144,7 +183,7 @@ type Service struct {
 	Now              func() time.Time
 	Random           func(int64) (int64, error)
 }
-type Page struct {
-	Items      []json.RawMessage `json:"items"`
-	NextCursor string            `json:"next_cursor"`
+type Page[T any] struct {
+	Items      []T    `json:"items"`
+	NextCursor string `json:"next_cursor"`
 }

@@ -8,7 +8,7 @@ updated: 2026-11-09
 
 ## 当前实现
 
-OpenAPI 0.2.0 使用 /api/v1/groups 前缀，Go/TypeScript 客户端、HTTP Handler、Service 与 PostgreSQL Repository 已建立。群与学校关联、分范围管理、本人申请进度、三项绑定和资格判断、动态口令、宽限期、恢复、延期、豁免与自动移出均由服务端处理。
+OpenAPI 0.3.0 使用 /api/v1/groups 前缀，Go/TypeScript 客户端、HTTP Handler、Service 与 PostgreSQL Repository 已建立。群与学校关联、分范围管理、本人申请进度、三项绑定和资格判断、动态口令、宽限期、恢复、延期、豁免与自动移出均由服务端处理。
 
 群名片检查区分资料缺失和不合规，性别未知使用中性分隔符。检查、提醒和自动修改分别配置。模板可引用许可字段及自由昵称，名片不合规不触发资格失效移出。
 
@@ -22,9 +22,11 @@ OpenAPI 0.2.0 使用 /api/v1/groups 前缀，Go/TypeScript 客户端、HTTP Hand
 
 业务写入、审计和 outbox 在同一事务，提交后 pg_notify。inbox 拒绝同 ID 内容变化，忽略重复与旧修订。发送器使用部分索引、LISTEN、60 秒补读及退避队列。
 
+群列表返回 GroupSummary，集合各有独立分页类型。配置采用 expected_revision 比较更新，口令只在请求中接收并保存带盐摘要。命令按 kind 验证必填字段，错误码采用 groups_ 枚举。
+
 ## 验证
 
-隔离 PostgreSQL 18.6 已验证初始迁移和重复执行、运行身份允许访问本模块数据且拒绝其他 schema 和 DDL、并发幂等、越权及撤权、期限边界、失败与超时、事件顺序和回滚不发通知。
+隔离 PostgreSQL 18.6 覆盖独立集合的分页与授权、群摘要计数、并发配置冲突、口令不泄露、命令判别校验，以及初始迁移和重复执行、运行身份允许访问本模块数据且拒绝其他 schema 和 DDL、并发幂等、越权及撤权、期限边界、失败与超时、事件顺序和回滚不发通知。
 
 规格 QQ-01 至 QQ-10、BE-01 至 BE-03 的后端测试函数登记在 module.yaml。QQ-10 的菜单位置由前端和 Koishi 完成，本仓测试覆盖撤回内容权限和娱乐动作边界。
 

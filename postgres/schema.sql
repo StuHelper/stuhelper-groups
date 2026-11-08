@@ -21,3 +21,25 @@ CREATE TABLE IF NOT EXISTS groups.outbox (
 CREATE INDEX IF NOT EXISTS groups_outbox_pending ON groups.outbox(sequence) WHERE sent_at IS NULL;
 
 CREATE INDEX IF NOT EXISTS groups_pending_actions ON groups.records(bucket,id) WHERE data->>'state' IN ('pending','executing','unknown');
+
+-- Candidate 0.2 records become the final 0.3 wire/storage shape once. Historical
+-- unsalted password hashes cannot satisfy the new password format: administrators
+-- must set a new password before password-mode admission can succeed.
+UPDATE groups.records SET data=(data-'password_hash') || jsonb_build_object(
+ 'name',COALESCE(data->>'name',id),'number',COALESCE(data->>'number',''),
+ 'bot_enabled',COALESCE((data->>'bot_enabled')::boolean,true),
+ 'revision',COALESCE((data->>'revision')::bigint,1),
+ 'password_set',false,'password_digest','')
+ WHERE bucket='config' AND (NOT data ? 'revision' OR data ? 'password_hash');
+UPDATE groups.records SET data=jsonb_set(data,'{actor}',jsonb_build_object(
+ 'issuer',data->'actor'->>'Issuer','subject',data->'actor'->>'Subject'))
+ WHERE (bucket LIKE '%/actions' OR bucket LIKE '%/subscriptions') AND data->'actor' ? 'Issuer';
+UPDATE groups.records SET data=(data-'Reason'-'Until'-'Permanent') || jsonb_build_object(
+ 'reason',data->'Reason','until',data->'Until','permanent',data->'Permanent')
+ WHERE bucket LIKE '%/blacklist' AND data ? 'Reason';
+UPDATE groups.records SET data=(data-'Count') || jsonb_build_object('count',data->'Count')
+ WHERE bucket LIKE '%/warnings' AND data ? 'Count';
+CREATE INDEX IF NOT EXISTS groups_records_bytewise ON groups.records(bucket,id COLLATE "C");
+
+UPDATE groups.records SET data=jsonb_set(data || jsonb_build_object('lease_until',data->'result'),'{result}','""'::jsonb)
+ WHERE bucket LIKE '%/actions' AND data->>'state'='executing' AND NOT data ? 'lease_until';

@@ -2,7 +2,6 @@ package groups
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"github.com/StuHelper/stuhelper-platform/account"
 	"slices"
@@ -37,7 +36,7 @@ func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string,
 	}
 	if !in.Preview {
 		err := s.run(ctx, func(tx Tx) error {
-			var c Config
+			var c GroupConfig
 			if e := tx.Get("config", g, &c); e != nil {
 				return e
 			}
@@ -71,7 +70,7 @@ func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string,
 		var e error
 		if in.Preview {
 			e = s.run(ctx, func(tx Tx) error {
-				var c Config
+				var c GroupConfig
 				if e := tx.Get("config", g, &c); e != nil {
 					return e
 				}
@@ -82,8 +81,8 @@ func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string,
 			r, e = s.Command(ctx, p, g, key+"-"+hash(target)[:20], cmd)
 		}
 		if e != nil {
-			r = Result{State: "rejected", Detail: "unavailable"}
-			for _, known := range []error{ErrInvalid, ErrForbidden, ErrUnauthenticated, ErrNotFound, ErrConflict, ErrDisabled} {
+			r = Result{State: "rejected", Detail: ErrUnavailable.Error()}
+			for _, known := range []error{ErrInvalid, ErrForbidden, ErrUnauthenticated, ErrNotFound, ErrConflict, ErrDisabled, ErrUnprocessable, ErrCooldown} {
 				if errors.Is(e, known) {
 					r.Detail = known.Error()
 					break
@@ -115,7 +114,7 @@ func (s *Service) Blacklists(ctx context.Context, p account.Principal, key strin
 				return ErrInvalid
 			}
 			seen[id] = true
-			c := Config{ID: "*", School: "*"}
+			c := GroupConfig{GroupSettings: GroupSettings{ID: "*", School: "*"}}
 			if id == "*" {
 				if s.PlatformIdentity == nil {
 					return ErrUnavailable
@@ -145,7 +144,7 @@ func (s *Service) Blacklists(ctx context.Context, p account.Principal, key strin
 			if in.Remove {
 				e = tx.Delete(bucket(id, "blacklist"), in.Target)
 			} else {
-				e = tx.Put(bucket(id, "blacklist"), in.Target, Blacklist{in.Reason, s.now().Add(time.Duration(in.Seconds) * time.Second), in.Seconds == 0})
+				e = tx.Put(bucket(id, "blacklist"), in.Target, Blacklist{ID: in.Target, Reason: in.Reason, Until: s.now().Add(time.Duration(in.Seconds) * time.Second), Permanent: in.Seconds == 0})
 			}
 			if e != nil {
 				return e
@@ -158,54 +157,16 @@ func (s *Service) Blacklists(ctx context.Context, p account.Principal, key strin
 	})
 	return out, e
 }
-func (s *Service) Groups(ctx context.Context, p account.Principal, cursor string, limit int) (Page, error) {
-	out := Page{Items: []json.RawMessage{}}
-	if !p.Valid() {
-		return out, ErrUnauthenticated
-	}
-	if limit < 1 || limit > 100 {
-		return out, ErrInvalid
-	}
-	e := s.run(ctx, func(tx Tx) error {
-		rows, e := tx.List("config", cursor, limit)
-		if e != nil {
-			return e
-		}
-		for _, r := range rows {
-			out.NextCursor = r.ID
-			var c Config
-			if e = json.Unmarshal(r.Data, &c); e != nil {
-				return e
-			}
-			if e = s.auth(ctx, p, "groups.read", c); e != nil {
-				if errors.Is(e, ErrForbidden) {
-					continue
-				}
-				return e
-			}
-			c.PasswordHash = ""
-			b, e := json.Marshal(c)
-			if e != nil {
-				return e
-			}
-			out.Items = append(out.Items, b)
-		}
-		if len(rows) < limit {
-			out.NextCursor = ""
-		}
-		return nil
-	})
-	return out, e
-}
 func (s *Service) Progress(ctx context.Context, p account.Principal, g string) (Member, error) {
 	var out Member
 	if !p.Valid() {
 		return out, ErrUnauthenticated
 	}
 	e := s.run(ctx, func(tx Tx) error { return tx.Get(bucket(g, "members"), p.Key(), &out) })
+	out.ID = out.Owner
 	return out, e
 }
-func (s *Service) manageRecord(ctx context.Context, tx Tx, p account.Principal, c Config, cmd Command) (Result, error) {
+func (s *Service) manageRecord(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, cmd Command) (Result, error) {
 	out := Result{State: "completed"}
 	if cmd.Kind == "watch" {
 		if !valid(cmd.Target, 2048) {

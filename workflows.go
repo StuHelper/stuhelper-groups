@@ -14,7 +14,7 @@ import (
 func (s *Service) Sweep(ctx context.Context, g, cursor string) (string, error) {
 	next := ""
 	e := s.run(ctx, func(tx Tx) error {
-		var c Config
+		var c GroupConfig
 		if e := tx.Get("config", g, &c); e != nil {
 			return e
 		}
@@ -75,9 +75,9 @@ func (s *Service) Fanout(ctx context.Context, e Event) error {
 		}
 		for _, r := range rows {
 			var sub struct {
-				Receiver string            `json:"receiver"`
-				Enabled  bool              `json:"enabled"`
-				Actor    account.Principal `json:"actor"`
+				Receiver string `json:"receiver"`
+				Enabled  bool   `json:"enabled"`
+				Actor    Actor  `json:"actor"`
 			}
 			if err = json.Unmarshal(r.Data, &sub); err != nil {
 				return err
@@ -85,11 +85,11 @@ func (s *Service) Fanout(ctx context.Context, e Event) error {
 			if !sub.Enabled {
 				continue
 			}
-			var c Config
+			var c GroupConfig
 			if err = tx.Get("config", sub.Receiver, &c); err != nil {
 				return err
 			}
-			result, err := s.queue(tx, sub.Actor, c, Command{Kind: "send", Receiver: e.Subject, Text: "group_event:" + origin.ID + ":" + origin.State}, "groups.messages.send")
+			result, err := s.queue(tx, sub.Actor.Principal(), c, Command{Kind: "send", Receiver: e.Subject, Text: "group_event:" + origin.ID + ":" + origin.State}, "groups.messages.send")
 			if err != nil {
 				return err
 			}
@@ -100,7 +100,7 @@ func (s *Service) Fanout(ctx context.Context, e Event) error {
 		return nil
 	})
 }
-func (s *Service) frequency(tx Tx, c Config, cmd Command, preview bool) (bool, error) {
+func (s *Service) frequency(tx Tx, c GroupConfig, cmd Command, preview bool) (bool, error) {
 	if c.FrequencyLimit == 0 || c.FrequencySeconds == 0 {
 		return false, nil
 	}
@@ -144,7 +144,7 @@ func (s *Service) MemberEvent(ctx context.Context, g string, event Event, owner 
 		if e != nil || !ok {
 			return e
 		}
-		var c Config
+		var c GroupConfig
 		if e = tx.Get("config", g, &c); e != nil {
 			return e
 		}

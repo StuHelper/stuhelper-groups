@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "StuHelper Groups",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "description": "Server-authorized QQ group services. UTC RFC3339 times, durations in seconds. Bot ingress is a trusted server Go interface."
   },
   "servers": [
@@ -46,13 +46,73 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Config"
+                  "$ref": "#/components/schemas/GroupConfig"
                 }
               }
             }
           },
-          "default": {
-            "description": "Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown.",
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Current identity cannot perform this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "groups_not_found: Requested group, member, message or related object does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_cooldown: Cooldown or pending action capacity prevents this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
             "content": {
               "application/json": {
                 "schema": {
@@ -67,7 +127,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Config"
+                "$ref": "#/components/schemas/GroupConfigInput"
               }
             }
           }
@@ -92,13 +152,53 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Config"
+                  "$ref": "#/components/schemas/GroupConfig"
                 }
               }
             }
           },
-          "default": {
-            "description": "Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown.",
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Current identity cannot perform this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "groups_not_found: Requested group, member, message or related object does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
             "content": {
               "application/json": {
                 "schema": {
@@ -145,8 +245,68 @@
               }
             }
           },
-          "default": {
-            "description": "Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown.",
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Current identity cannot perform this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "groups_not_found: Requested group, member, message or related object does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_cooldown: Cooldown or pending action capacity prevents this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
             "content": {
               "application/json": {
                 "schema": {
@@ -162,82 +322,6 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/Command"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/groups/{group}/{collection}": {
-      "get": {
-        "operationId": "listRecords",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "group",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "maxLength": 2048
-            }
-          },
-          {
-            "in": "path",
-            "name": "collection",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "members",
-                "actions",
-                "reports",
-                "hits",
-                "messages",
-                "subscriptions",
-                "blacklist",
-                "warnings",
-                "watch",
-                "deliveries"
-              ]
-            }
-          },
-          {
-            "in": "query",
-            "name": "cursor",
-            "schema": {
-              "type": "string",
-              "maxLength": 2048
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100,
-              "default": 50
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Current result. Pending is not executed; unknown requires lookup.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Page"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
               }
             }
           }
@@ -279,8 +363,68 @@
               }
             }
           },
-          "default": {
-            "description": "Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown.",
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Current identity cannot perform this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "groups_not_found: Requested group, member, message or related object does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_cooldown: Cooldown or pending action capacity prevents this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
             "content": {
               "application/json": {
                 "schema": {
@@ -328,8 +472,68 @@
               }
             }
           },
-          "default": {
-            "description": "Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown.",
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Current identity cannot perform this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "groups_not_found: Requested group, member, message or related object does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_cooldown: Cooldown or pending action capacity prevents this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
             "content": {
               "application/json": {
                 "schema": {
@@ -360,7 +564,7 @@
             "name": "cursor",
             "schema": {
               "type": "string",
-              "maxLength": 2048
+              "maxLength": 4096
             }
           },
           {
@@ -380,13 +584,43 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Page"
+                  "$ref": "#/components/schemas/GroupSummaryPage"
                 }
               }
             }
           },
-          "default": {
-            "description": "Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown.",
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Current identity cannot perform this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
             "content": {
               "application/json": {
                 "schema": {
@@ -395,7 +629,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering."
       }
     },
     "/api/v1/groups/{group}/progress": {
@@ -418,13 +653,53 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Record"
+                  "$ref": "#/components/schemas/Member"
                 }
               }
             }
           },
-          "default": {
-            "description": "Stable errors: invalid_request, unauthenticated, forbidden, not_found, conflict, unavailable, disabled, cooldown.",
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Current identity cannot perform this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "groups_not_found: Requested group, member, message or related object does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
             "content": {
               "application/json": {
                 "schema": {
@@ -434,6 +709,976 @@
             }
           }
         }
+      }
+    },
+    "/api/v1/groups/{group}/members": {
+      "get": {
+        "operationId": "listMembers",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current result. Pending is not executed; unknown requires lookup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Current identity cannot perform this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "groups_not_found: Requested group, member, message or related object does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering."
+      }
+    },
+    "/api/v1/groups/{group}/actions": {
+      "get": {
+        "operationId": "listActions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current result. Pending is not executed; unknown requires lookup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Current identity cannot perform this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "groups_not_found: Requested group, member, message or related object does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering."
+      }
+    },
+    "/api/v1/groups/{group}/reports": {
+      "get": {
+        "operationId": "listReports",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current result. Pending is not executed; unknown requires lookup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Current identity cannot perform this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "groups_not_found: Requested group, member, message or related object does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering."
+      }
+    },
+    "/api/v1/groups/{group}/hits": {
+      "get": {
+        "operationId": "listHits",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current result. Pending is not executed; unknown requires lookup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HitPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Current identity cannot perform this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "groups_not_found: Requested group, member, message or related object does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering."
+      }
+    },
+    "/api/v1/groups/{group}/messages": {
+      "get": {
+        "operationId": "listMessages",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current result. Pending is not executed; unknown requires lookup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessagePage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Current identity cannot perform this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "groups_not_found: Requested group, member, message or related object does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering."
+      }
+    },
+    "/api/v1/groups/{group}/subscriptions": {
+      "get": {
+        "operationId": "listSubscriptions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current result. Pending is not executed; unknown requires lookup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Current identity cannot perform this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "groups_not_found: Requested group, member, message or related object does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering."
+      }
+    },
+    "/api/v1/groups/{group}/blacklist": {
+      "get": {
+        "operationId": "listBlacklist",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current result. Pending is not executed; unknown requires lookup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlacklistPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Current identity cannot perform this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "groups_not_found: Requested group, member, message or related object does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering."
+      }
+    },
+    "/api/v1/groups/{group}/warnings": {
+      "get": {
+        "operationId": "listWarnings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current result. Pending is not executed; unknown requires lookup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarningsPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Current identity cannot perform this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "groups_not_found: Requested group, member, message or related object does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering."
+      }
+    },
+    "/api/v1/groups/{group}/watch": {
+      "get": {
+        "operationId": "listWatch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current result. Pending is not executed; unknown requires lookup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Current identity cannot perform this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "groups_not_found: Requested group, member, message or related object does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering."
+      }
+    },
+    "/api/v1/groups/{group}/deliveries": {
+      "get": {
+        "operationId": "listDeliverys",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current result. Pending is not executed; unknown requires lookup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Current identity cannot perform this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "groups_not_found: Requested group, member, message or related object does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering."
       }
     }
   },
@@ -445,238 +1690,114 @@
       }
     },
     "schemas": {
-      "Config": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "string",
-            "maxLength": 2048
-          },
-          "school": {
-            "type": "string",
-            "maxLength": 2048
-          },
-          "mode": {
-            "type": "string",
-            "enum": [
-              "before",
-              "muted",
-              "password"
-            ]
-          },
-          "require_student": {
-            "type": "boolean"
-          },
-          "accept_alumni": {
-            "type": "boolean"
-          },
-          "accept_temporary": {
-            "type": "boolean"
-          },
-          "grace_seconds": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          },
-          "reminder_seconds": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          },
-          "retention_seconds": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          },
-          "password_hash": {
-            "type": "string",
-            "maxLength": 2048,
-            "writeOnly": true
-          },
-          "card_template": {
-            "type": "string",
-            "maxLength": 2048
-          },
-          "auto_card": {
-            "type": "boolean"
-          },
-          "dice_sides": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          },
-          "mute_probability": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          },
-          "mute_seconds": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          },
-          "cooldown_seconds": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          },
-          "pity": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          },
-          "keywords": {
-            "type": "array",
-            "maxItems": 100,
-            "items": {
-              "type": "string",
-              "maxLength": 2048
-            }
-          },
-          "repeat_threshold": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          },
-          "auto_actions": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "warn",
-                "recall",
-                "mute",
-                "kick",
-                "blacklist"
-              ]
-            }
-          },
-          "welcome": {
-            "type": "string",
-            "maxLength": 2048
-          },
-          "rules_template": {
-            "type": "string",
-            "maxLength": 2048
-          },
-          "check_card": {
-            "type": "boolean"
-          },
-          "remind_card": {
-            "type": "boolean"
-          },
-          "block_links": {
-            "type": "boolean"
-          },
-          "frequency_seconds": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          },
-          "frequency_limit": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          },
-          "warning_limit": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "id",
-          "school",
-          "mode",
-          "require_student",
-          "accept_alumni",
-          "accept_temporary",
-          "grace_seconds",
-          "reminder_seconds",
-          "retention_seconds",
-          "card_template",
-          "auto_card",
-          "dice_sides",
-          "mute_probability",
-          "mute_seconds",
-          "cooldown_seconds",
-          "pity",
-          "keywords",
-          "repeat_threshold",
-          "auto_actions",
-          "welcome",
-          "rules_template",
-          "check_card",
-          "remind_card",
-          "block_links",
-          "frequency_seconds",
-          "frequency_limit",
-          "warning_limit"
-        ]
-      },
       "Command": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "kind": {
-            "type": "string",
-            "enum": [
-              "apply",
-              "recheck",
-              "extend",
-              "exempt",
-              "password",
-              "warn",
-              "mute",
-              "unmute",
-              "kick",
-              "blacklist",
-              "unblacklist",
-              "send",
-              "forward",
-              "recall",
-              "card",
-              "dice",
-              "self_mute",
-              "report",
-              "analyze",
-              "preview",
-              "rule",
-              "subscribe",
-              "feedback",
-              "watch",
-              "ai_execute"
-            ]
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ApplyCommand"
           },
-          "target": {
-            "type": "string",
-            "maxLength": 2048
+          {
+            "$ref": "#/components/schemas/PasswordCommand"
           },
-          "text": {
-            "type": "string",
-            "maxLength": 8192
+          {
+            "$ref": "#/components/schemas/DiceCommand"
           },
-          "seconds": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
+          {
+            "$ref": "#/components/schemas/SelfMuteCommand"
           },
-          "message": {
-            "type": "string",
-            "maxLength": 2048
+          {
+            "$ref": "#/components/schemas/ReportCommand"
           },
-          "receiver": {
-            "type": "string",
-            "maxLength": 2048
+          {
+            "$ref": "#/components/schemas/RecheckCommand"
           },
-          "enabled": {
-            "type": "boolean"
+          {
+            "$ref": "#/components/schemas/ExtendCommand"
+          },
+          {
+            "$ref": "#/components/schemas/ExemptCommand"
+          },
+          {
+            "$ref": "#/components/schemas/WarnCommand"
+          },
+          {
+            "$ref": "#/components/schemas/MuteCommand"
+          },
+          {
+            "$ref": "#/components/schemas/UnmuteCommand"
+          },
+          {
+            "$ref": "#/components/schemas/KickCommand"
+          },
+          {
+            "$ref": "#/components/schemas/BlacklistCommand"
+          },
+          {
+            "$ref": "#/components/schemas/UnblacklistCommand"
+          },
+          {
+            "$ref": "#/components/schemas/SendCommand"
+          },
+          {
+            "$ref": "#/components/schemas/ForwardCommand"
+          },
+          {
+            "$ref": "#/components/schemas/RecallCommand"
+          },
+          {
+            "$ref": "#/components/schemas/CardCommand"
+          },
+          {
+            "$ref": "#/components/schemas/AnalyzeCommand"
+          },
+          {
+            "$ref": "#/components/schemas/PreviewCommand"
+          },
+          {
+            "$ref": "#/components/schemas/RuleCommand"
+          },
+          {
+            "$ref": "#/components/schemas/SubscribeCommand"
+          },
+          {
+            "$ref": "#/components/schemas/FeedbackCommand"
+          },
+          {
+            "$ref": "#/components/schemas/WatchCommand"
+          },
+          {
+            "$ref": "#/components/schemas/AiExecuteCommand"
           }
-        },
-        "required": [
-          "kind"
-        ]
+        ],
+        "discriminator": {
+          "propertyName": "kind",
+          "mapping": {
+            "apply": "#/components/schemas/ApplyCommand",
+            "password": "#/components/schemas/PasswordCommand",
+            "dice": "#/components/schemas/DiceCommand",
+            "self_mute": "#/components/schemas/SelfMuteCommand",
+            "report": "#/components/schemas/ReportCommand",
+            "recheck": "#/components/schemas/RecheckCommand",
+            "extend": "#/components/schemas/ExtendCommand",
+            "exempt": "#/components/schemas/ExemptCommand",
+            "warn": "#/components/schemas/WarnCommand",
+            "mute": "#/components/schemas/MuteCommand",
+            "unmute": "#/components/schemas/UnmuteCommand",
+            "kick": "#/components/schemas/KickCommand",
+            "blacklist": "#/components/schemas/BlacklistCommand",
+            "unblacklist": "#/components/schemas/UnblacklistCommand",
+            "send": "#/components/schemas/SendCommand",
+            "forward": "#/components/schemas/ForwardCommand",
+            "recall": "#/components/schemas/RecallCommand",
+            "card": "#/components/schemas/CardCommand",
+            "analyze": "#/components/schemas/AnalyzeCommand",
+            "preview": "#/components/schemas/PreviewCommand",
+            "rule": "#/components/schemas/RuleCommand",
+            "subscribe": "#/components/schemas/SubscribeCommand",
+            "feedback": "#/components/schemas/FeedbackCommand",
+            "watch": "#/components/schemas/WatchCommand",
+            "ai_execute": "#/components/schemas/AiExecuteCommand"
+          }
+        }
       },
       "Result": {
         "type": "object",
@@ -712,70 +1833,24 @@
           "detail"
         ]
       },
-      "Record": {
-        "oneOf": [
-          {
-            "$ref": "#/components/schemas/Config"
-          },
-          {
-            "$ref": "#/components/schemas/Member"
-          },
-          {
-            "$ref": "#/components/schemas/Action"
-          },
-          {
-            "$ref": "#/components/schemas/Message"
-          },
-          {
-            "$ref": "#/components/schemas/Report"
-          },
-          {
-            "$ref": "#/components/schemas/Hit"
-          },
-          {
-            "$ref": "#/components/schemas/Subscription"
-          },
-          {
-            "$ref": "#/components/schemas/Blacklist"
-          },
-          {
-            "$ref": "#/components/schemas/Warnings"
-          },
-          {
-            "$ref": "#/components/schemas/Watch"
-          },
-          {
-            "$ref": "#/components/schemas/Delivery"
-          }
-        ]
-      },
-      "Page": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Record"
-            }
-          },
-          "next_cursor": {
-            "type": "string",
-            "maxLength": 2048
-          }
-        },
-        "required": [
-          "items",
-          "next_cursor"
-        ]
-      },
       "Problem": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
           "code": {
             "type": "string",
-            "maxLength": 2048
+            "enum": [
+              "groups_invalid_request",
+              "groups_unauthenticated",
+              "groups_forbidden",
+              "groups_not_found",
+              "groups_conflict",
+              "groups_unprocessable",
+              "groups_disabled",
+              "groups_cooldown",
+              "groups_unavailable"
+            ],
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. groups_unauthenticated: Missing or invalid authenticated identity. groups_forbidden: Current identity cannot perform this operation. groups_not_found: Requested group, member, message or related object does not exist. groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled. groups_cooldown: Cooldown or pending action capacity prevents this operation. groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified."
           }
         },
         "required": [
@@ -802,7 +1877,7 @@
             }
           },
           "command": {
-            "$ref": "#/components/schemas/Command"
+            "$ref": "#/components/schemas/BatchCommand"
           },
           "preview": {
             "type": "boolean"
@@ -886,11 +1961,13 @@
           },
           "deadline": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "UTC timestamp. 0001-01-01T00:00:00Z means no deadline/event is currently set."
           },
           "reminder": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "UTC timestamp. 0001-01-01T00:00:00Z means no deadline/event is currently set."
           },
           "password": {
             "type": "boolean"
@@ -907,11 +1984,13 @@
           },
           "last_play": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "UTC timestamp. 0001-01-01T00:00:00Z means no deadline/event is currently set."
           },
           "muted_until": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "UTC timestamp. 0001-01-01T00:00:00Z means no deadline/event is currently set."
           },
           "id": {
             "type": "string"
@@ -931,7 +2010,8 @@
           "failures",
           "last_play",
           "muted_until",
-          "joined"
+          "joined",
+          "id"
         ],
         "additionalProperties": false
       },
@@ -945,20 +2025,7 @@
             "type": "string"
           },
           "actor": {
-            "type": "object",
-            "properties": {
-              "Issuer": {
-                "type": "string"
-              },
-              "Subject": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "Issuer",
-              "Subject"
-            ],
-            "additionalProperties": false
+            "$ref": "#/components/schemas/Actor"
           },
           "capability": {
             "type": "string"
@@ -983,6 +2050,11 @@
           "created": {
             "type": "string",
             "format": "date-time"
+          },
+          "lease_until": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Execution lease deadline; present only while executing."
           }
         },
         "required": [
@@ -1071,7 +2143,8 @@
           "reporter",
           "message",
           "reason",
-          "state"
+          "state",
+          "id"
         ],
         "additionalProperties": false
       },
@@ -1101,7 +2174,8 @@
           "owner",
           "message",
           "rules",
-          "state"
+          "state",
+          "id"
         ],
         "additionalProperties": false
       },
@@ -1115,20 +2189,7 @@
             "type": "boolean"
           },
           "actor": {
-            "type": "object",
-            "properties": {
-              "Issuer": {
-                "type": "string"
-              },
-              "Subject": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "Issuer",
-              "Subject"
-            ],
-            "additionalProperties": false
+            "$ref": "#/components/schemas/Actor"
           },
           "id": {
             "type": "string"
@@ -1137,7 +2198,8 @@
         "required": [
           "receiver",
           "enabled",
-          "actor"
+          "actor",
+          "id"
         ],
         "additionalProperties": false
       },
@@ -1148,33 +2210,33 @@
           "kind": {
             "type": "string",
             "enum": [
+              "ai_execute",
+              "analyze",
               "apply",
-              "recheck",
-              "extend",
-              "exempt",
-              "password",
-              "warn",
-              "mute",
-              "unmute",
-              "kick",
+              "approve",
               "blacklist",
-              "unblacklist",
-              "send",
-              "forward",
-              "recall",
               "card",
               "dice",
-              "self_mute",
-              "report",
-              "analyze",
-              "preview",
-              "rule",
-              "subscribe",
+              "exempt",
+              "extend",
               "feedback",
-              "watch",
-              "ai_execute",
-              "approve",
+              "forward",
+              "kick",
+              "mute",
+              "password",
+              "preview",
+              "recall",
+              "recheck",
               "remind",
+              "report",
+              "rule",
+              "self_mute",
+              "send",
+              "subscribe",
+              "unblacklist",
+              "unmute",
+              "warn",
+              "watch",
               "welcome"
             ]
           },
@@ -1189,7 +2251,8 @@
           "seconds": {
             "type": "integer",
             "format": "int64",
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 31536000
           },
           "message": {
             "type": "string",
@@ -1210,42 +2273,43 @@
       "Blacklist": {
         "type": "object",
         "properties": {
-          "Reason": {
+          "id": {
             "type": "string"
           },
-          "Until": {
+          "reason": {
+            "type": "string"
+          },
+          "until": {
             "type": "string",
             "format": "date-time"
           },
-          "Permanent": {
+          "permanent": {
             "type": "boolean"
-          },
-          "id": {
-            "type": "string"
           }
         },
         "required": [
-          "Reason",
-          "Until",
-          "Permanent",
-          "id"
+          "id",
+          "reason",
+          "until",
+          "permanent"
         ],
         "additionalProperties": false
       },
       "Warnings": {
         "type": "object",
         "properties": {
-          "Count": {
-            "type": "integer",
-            "format": "int64"
-          },
           "id": {
             "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
           }
         },
         "required": [
-          "Count",
-          "id"
+          "id",
+          "count"
         ],
         "additionalProperties": false
       },
@@ -1292,6 +2356,1565 @@
           "id"
         ],
         "additionalProperties": false
+      },
+      "GroupConfig": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1
+          },
+          "school": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "before",
+              "muted",
+              "password"
+            ]
+          },
+          "require_student": {
+            "type": "boolean"
+          },
+          "accept_alumni": {
+            "type": "boolean"
+          },
+          "accept_temporary": {
+            "type": "boolean"
+          },
+          "grace_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 31536000
+          },
+          "reminder_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 31536000
+          },
+          "retention_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 31536000
+          },
+          "card_template": {
+            "type": "string",
+            "maxLength": 1024
+          },
+          "auto_card": {
+            "type": "boolean"
+          },
+          "dice_sides": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "mute_probability": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "mute_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 2592000
+          },
+          "cooldown_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 31536000
+          },
+          "pity": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "keywords": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "maxLength": 256,
+              "minLength": 1
+            }
+          },
+          "repeat_threshold": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "auto_actions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "warn",
+                "recall",
+                "mute",
+                "kick",
+                "blacklist"
+              ]
+            }
+          },
+          "welcome": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "rules_template": {
+            "type": "string",
+            "maxLength": 8192
+          },
+          "check_card": {
+            "type": "boolean"
+          },
+          "remind_card": {
+            "type": "boolean"
+          },
+          "block_links": {
+            "type": "boolean"
+          },
+          "frequency_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 86400
+          },
+          "frequency_limit": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "warning_limit": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "bot_enabled": {
+            "type": "boolean"
+          },
+          "number": {
+            "type": "string",
+            "description": "Masked QQ group number; only its final four digits are shown."
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "password_set": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "school",
+          "mode",
+          "require_student",
+          "accept_alumni",
+          "accept_temporary",
+          "grace_seconds",
+          "reminder_seconds",
+          "retention_seconds",
+          "card_template",
+          "auto_card",
+          "dice_sides",
+          "mute_probability",
+          "mute_seconds",
+          "cooldown_seconds",
+          "pity",
+          "keywords",
+          "repeat_threshold",
+          "auto_actions",
+          "welcome",
+          "rules_template",
+          "check_card",
+          "remind_card",
+          "block_links",
+          "frequency_seconds",
+          "frequency_limit",
+          "warning_limit",
+          "name",
+          "bot_enabled",
+          "number",
+          "revision",
+          "password_set"
+        ]
+      },
+      "GroupConfigInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1
+          },
+          "school": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "before",
+              "muted",
+              "password"
+            ]
+          },
+          "require_student": {
+            "type": "boolean"
+          },
+          "accept_alumni": {
+            "type": "boolean"
+          },
+          "accept_temporary": {
+            "type": "boolean"
+          },
+          "grace_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 31536000
+          },
+          "reminder_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 31536000
+          },
+          "retention_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 31536000
+          },
+          "card_template": {
+            "type": "string",
+            "maxLength": 1024
+          },
+          "auto_card": {
+            "type": "boolean"
+          },
+          "dice_sides": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "mute_probability": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "mute_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 2592000
+          },
+          "cooldown_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 31536000
+          },
+          "pity": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "keywords": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "maxLength": 256,
+              "minLength": 1
+            }
+          },
+          "repeat_threshold": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "auto_actions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "warn",
+                "recall",
+                "mute",
+                "kick",
+                "blacklist"
+              ]
+            }
+          },
+          "welcome": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "rules_template": {
+            "type": "string",
+            "maxLength": 8192
+          },
+          "check_card": {
+            "type": "boolean"
+          },
+          "remind_card": {
+            "type": "boolean"
+          },
+          "block_links": {
+            "type": "boolean"
+          },
+          "frequency_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 86400
+          },
+          "frequency_limit": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "warning_limit": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "bot_enabled": {
+            "type": "boolean"
+          },
+          "number": {
+            "type": "string",
+            "pattern": "^[0-9]{5,20}$",
+            "description": "Optional real group number for create/update; omitted preserves the stored masked number."
+          },
+          "expected_revision": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "description": "0 creates a group; otherwise must equal the current revision. A successful update increments revision by one."
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 256,
+            "writeOnly": true,
+            "description": "Omitted preserves password; empty clears it (not allowed in password mode). Never returned or saved as plaintext."
+          }
+        },
+        "required": [
+          "id",
+          "school",
+          "mode",
+          "require_student",
+          "accept_alumni",
+          "accept_temporary",
+          "grace_seconds",
+          "reminder_seconds",
+          "retention_seconds",
+          "card_template",
+          "auto_card",
+          "dice_sides",
+          "mute_probability",
+          "mute_seconds",
+          "cooldown_seconds",
+          "pity",
+          "keywords",
+          "repeat_threshold",
+          "auto_actions",
+          "welcome",
+          "rules_template",
+          "check_card",
+          "remind_card",
+          "block_links",
+          "frequency_seconds",
+          "frequency_limit",
+          "warning_limit",
+          "name",
+          "bot_enabled",
+          "expected_revision"
+        ]
+      },
+      "GroupSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "school": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "description": "Masked QQ group number, same as GroupConfig.number."
+          },
+          "member_count": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "description": "Number of members whose joined fact is currently true."
+          },
+          "bot_enabled": {
+            "type": "boolean"
+          },
+          "require_student": {
+            "type": "boolean"
+          },
+          "pending_count": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "description": "Sum of unresolved eligibility records (requested, awaiting_verification, grace, extended, removal_pending) and actions in pending/executing/unknown. One member can contribute to both counts."
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "id",
+          "school",
+          "name",
+          "number",
+          "member_count",
+          "bot_enabled",
+          "require_student",
+          "pending_count",
+          "revision"
+        ]
+      },
+      "Actor": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "issuer": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "issuer",
+          "subject"
+        ]
+      },
+      "GroupSummaryPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupSummary"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor."
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ]
+      },
+      "MemberPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Member"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor."
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ]
+      },
+      "ActionPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Action"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor."
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ]
+      },
+      "ReportPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Report"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor."
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ]
+      },
+      "HitPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Hit"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor."
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ]
+      },
+      "MessagePage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor."
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ]
+      },
+      "SubscriptionPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Subscription"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor."
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ]
+      },
+      "BlacklistPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Blacklist"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor."
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ]
+      },
+      "WarningsPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Warnings"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor."
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ]
+      },
+      "WatchPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Watch"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor."
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ]
+      },
+      "DeliveryPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Delivery"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Opaque cursor for the next scan, or empty when exhausted. A filtered page may be empty with a nonempty cursor."
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ]
+      },
+      "ApplyCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "apply"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "description": "User command; caller only."
+      },
+      "PasswordCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "password"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "text"
+        ],
+        "description": "User command; caller only."
+      },
+      "DiceCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "dice"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "description": "User command; caller only."
+      },
+      "SelfMuteCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "self_mute"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "description": "User command; caller only."
+      },
+      "ReportCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "report"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "message",
+          "text"
+        ],
+        "description": "User command; caller only."
+      },
+      "RecheckCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "recheck"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "kind",
+          "target"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "ExtendCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "extend"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 31536000
+          }
+        },
+        "required": [
+          "kind",
+          "target",
+          "text",
+          "seconds"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "ExemptCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "exempt"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "target",
+          "text"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "WarnCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "warn"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "target",
+          "text"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "MuteCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "mute"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 2592000
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "target",
+          "seconds"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "UnmuteCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "unmute"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "kind",
+          "target"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "KickCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "kick"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "target"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "BlacklistCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "blacklist"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 31536000
+          }
+        },
+        "required": [
+          "kind",
+          "target",
+          "text"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "UnblacklistCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "unblacklist"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "kind",
+          "target"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "SendCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "send"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "text"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "ForwardCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "forward"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "kind",
+          "message"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "RecallCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "recall"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "kind",
+          "message"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "CardCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "card"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "target",
+          "text"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "AnalyzeCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "analyze"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "kind",
+          "target"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "PreviewCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "preview"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "kind",
+          "target",
+          "text"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "RuleCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "rule"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "kind",
+          "target",
+          "text",
+          "message"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "SubscribeCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "subscribe"
+            ]
+          },
+          "receiver": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kind",
+          "receiver",
+          "enabled"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "FeedbackCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "feedback"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "target",
+          "text"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "WatchCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "watch"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "target",
+          "enabled"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "AiExecuteCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "ai_execute"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "kind",
+          "target"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "WarnBatchCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "warn"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "text"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "MuteBatchCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "mute"
+            ]
+          },
+          "seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 2592000
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "seconds"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "UnmuteBatchCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "unmute"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "KickBatchCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "kick"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "RecheckBatchCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "recheck"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "ExtendBatchCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "extend"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 31536000
+          }
+        },
+        "required": [
+          "kind",
+          "text",
+          "seconds"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "ExemptBatchCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "exempt"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "text"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "CardBatchCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "card"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "text"
+        ],
+        "description": "Management command; requires current group-scoped capability."
+      },
+      "BatchCommand": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/WarnBatchCommand"
+          },
+          {
+            "$ref": "#/components/schemas/MuteBatchCommand"
+          },
+          {
+            "$ref": "#/components/schemas/UnmuteBatchCommand"
+          },
+          {
+            "$ref": "#/components/schemas/KickBatchCommand"
+          },
+          {
+            "$ref": "#/components/schemas/RecheckBatchCommand"
+          },
+          {
+            "$ref": "#/components/schemas/ExtendBatchCommand"
+          },
+          {
+            "$ref": "#/components/schemas/ExemptBatchCommand"
+          },
+          {
+            "$ref": "#/components/schemas/CardBatchCommand"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "kind",
+          "mapping": {
+            "warn": "#/components/schemas/WarnBatchCommand",
+            "mute": "#/components/schemas/MuteBatchCommand",
+            "unmute": "#/components/schemas/UnmuteBatchCommand",
+            "kick": "#/components/schemas/KickBatchCommand",
+            "recheck": "#/components/schemas/RecheckBatchCommand",
+            "extend": "#/components/schemas/ExtendBatchCommand",
+            "exempt": "#/components/schemas/ExemptBatchCommand",
+            "card": "#/components/schemas/CardBatchCommand"
+          }
+        }
       }
     }
   }
