@@ -51,7 +51,7 @@ func TestAccountQueryScopePaginationAndRuntime(t *testing.T) {
 		exec(`INSERT INTO groups.records(bucket,id,data) VALUES($1,$2,jsonb_build_object('owner',$2::text,'state','eligible','joined',true))`, v.id+"/members", target.Key())
 	}
 	exec(`INSERT INTO groups.records(bucket,id,data) VALUES('b/actions','action',jsonb_build_object('command',jsonb_build_object('target',$1::text,'kind','mute'),'state','done'))`, target.Key())
-	// Repeat the migration against existing data, including the timestamp column.
+	// Repeating final-schema initialization must preserve stored records.
 	if _, e = db.Exec(Schema); e != nil {
 		t.Fatal(e)
 	}

@@ -27,6 +27,7 @@ specifications:
   - docs/spec/account-query.md
 scenario_tests:
   IQ-02:
+    - postgres/query_write_test.go#TestAccountQueryRepositoryWritesRefreshTime
     - accountquery/query_test.go#TestAccountQueryAuthorizationAndFailures
     - postgres/account_query_test.go#TestAccountQueryScopePaginationAndRuntime
   QQ-01:
@@ -35,7 +36,7 @@ scenario_tests:
     - delivery_membership_test.go#TestGroupsForOwnerPaginationAndBounds
     - api_v03_test.go#TestGroupSummaryCountsMaskingAndScope
     - api_v03_test.go#TestConfigurationRevisionPasswordAndReplay
-    - api_v03_test.go#TestCandidateMigrationToFinalContractAndLeaseRecovery
+    - api_v03_test.go#TestFinalSchemaInitializationAndLeaseRecovery
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-02:
     - my_groups_test.go#TestMyGroupsMissingConditionsAndUnknownFacts

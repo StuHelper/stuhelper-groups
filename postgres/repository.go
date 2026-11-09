@@ -60,7 +60,7 @@ func (t *transaction) Put(bucket, id string, v any) error {
 	if e != nil {
 		return e
 	}
-	_, e = t.tx.Exec(t.ctx, "INSERT INTO groups.records(bucket,id,data) VALUES($1,$2,$3) ON CONFLICT(bucket,id) DO UPDATE SET data=EXCLUDED.data", bucket, id, b)
+	_, e = t.tx.Exec(t.ctx, "INSERT INTO groups.records(bucket,id,data,query_changed_at) VALUES($1,$2,$3,clock_timestamp()) ON CONFLICT(bucket,id) DO UPDATE SET data=EXCLUDED.data,query_changed_at=clock_timestamp()", bucket, id, b)
 	return e
 }
 func (t *transaction) Delete(bucket, id string) error {

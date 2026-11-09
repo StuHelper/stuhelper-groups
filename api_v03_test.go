@@ -348,26 +348,20 @@ func TestCommandDiscriminatorRequiresKindSpecificFields(t *testing.T) {
 	}
 }
 
-func TestCandidateMigrationToFinalContractAndLeaseRecovery(t *testing.T) {
+func TestFinalSchemaInitializationAndLeaseRecovery(t *testing.T) {
 	f := setup(t)
-	e := f.r.Transaction(ctx, func(tx g.Tx) error {
-		records := map[string]any{
-			"config":               map[string]any{"id": "legacy", "school": "school", "mode": "password", "password_hash": "unsalted", "grace_seconds": 3600, "keywords": []string{}, "auto_actions": []string{}},
-			"legacy/actions":       map[string]any{"id": "a", "actor": map[string]string{"Issuer": "test", "Subject": "manager"}, "state": "executing", "result": f.now.Add(-time.Minute).Format(time.RFC3339Nano)},
-			"legacy/subscriptions": map[string]any{"actor": map[string]string{"Issuer": "test", "Subject": "manager"}, "receiver": "g", "enabled": true},
-			"legacy/blacklist":     map[string]any{"Reason": "reason", "Until": f.now, "Permanent": true},
-			"legacy/warnings":      map[string]int{"Count": 3},
-		}
-		for bucket, value := range records {
-			id := "a"
-			if bucket == "config" {
-				id = "legacy"
-			}
-			if e := tx.Put(bucket, id, value); e != nil {
-				return e
-			}
-		}
-		return nil
+	root := account.Principal{Issuer: "test", Subject: "root"}
+	in := config()
+	in.ID = "initialized"
+	in.Mode = "password"
+	in.Password = strptr("configured-password")
+	configured, e := f.s.Configure(ctx, root, "initialize", in)
+	if e != nil {
+		t.Fatal(e)
+	}
+	lease := f.now.Add(-time.Minute)
+	e = f.r.Transaction(ctx, func(tx g.Tx) error {
+		return tx.Put("initialized/actions", "action", g.Action{ID: "action", Group: "initialized", Actor: g.Actor(root), State: "executing", LeaseUntil: &lease})
 	})
 	if e != nil {
 		t.Fatal(e)
@@ -375,57 +369,19 @@ func TestCandidateMigrationToFinalContractAndLeaseRecovery(t *testing.T) {
 	if e = f.r.Migrate(ctx); e != nil {
 		t.Fatal(e)
 	}
-	root := account.Principal{Issuer: "test", Subject: "root"}
-	c, e := f.s.Configuration(ctx, root, "legacy")
-	if e != nil || c.Revision != 1 || c.Name != "legacy" || c.PasswordSet {
-		t.Fatalf("%+v %v", c, e)
+	current, e := f.s.Configuration(ctx, root, "initialized")
+	if e != nil || !current.PasswordSet || current.Revision != configured.Revision {
+		t.Fatal("initialization changed configuration", current, e)
 	}
-	for collection, schema := range map[string]string{"actions": "ActionPage", "subscriptions": "SubscriptionPage", "blacklist": "BlacklistPage", "warnings": "WarningsPage"} {
-		// Inspect storage keys directly: response structs must not hide a missed migration.
-		var stored map[string]any
-		if e = f.r.Transaction(ctx, func(tx g.Tx) error { return tx.Get("legacy/"+collection, "a", &stored) }); e != nil {
-			t.Fatal(e)
-		}
-		raw, e := json.Marshal(stored)
-		if e != nil {
-			t.Fatal(e)
-		}
-		if strings.Contains(string(raw), "Issuer") || strings.Contains(string(raw), "Reason") || strings.Contains(string(raw), "Count") {
-			t.Fatalf("unmigrated %s: %s", schema, raw)
-		}
-	}
-	if _, e = f.s.Recover(ctx, "legacy", ""); e != nil {
+	if _, e = f.s.Recover(ctx, "initialized", ""); e != nil {
 		t.Fatal(e)
 	}
 	var action g.Action
-	if e = f.r.Transaction(ctx, func(tx g.Tx) error { return tx.Get("legacy/actions", "a", &action) }); e != nil {
+	if e = f.r.Transaction(ctx, func(tx g.Tx) error { return tx.Get("initialized/actions", "action", &action) }); e != nil {
 		t.Fatal(e)
 	}
 	if action.State != "unknown" || action.LeaseUntil != nil {
 		t.Fatal(action)
-	}
-	in := config()
-	in.ID = "legacy"
-	in.Mode = "password"
-	in.ExpectedRevision = 1
-	in.Password = strptr("replacement")
-	updated, e := f.s.Configure(ctx, root, "reset-legacy", in)
-	if e != nil || !updated.PasswordSet {
-		t.Fatal(updated, e)
-	}
-	if e = f.r.Migrate(ctx); e != nil {
-		t.Fatal(e)
-	}
-	c, e = f.s.Configuration(ctx, root, "legacy")
-	if e != nil || !c.PasswordSet || c.Revision != 2 {
-		t.Fatal("repeat migration cleared new config", c, e)
-	}
-	var stored map[string]any
-	if e = f.r.Transaction(ctx, func(tx g.Tx) error { return tx.Get("config", "legacy", &stored) }); e != nil {
-		t.Fatal(e)
-	}
-	if _, ok := stored["password_hash"]; ok {
-		t.Fatal("legacy password retained")
 	}
 }
 

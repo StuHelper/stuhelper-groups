@@ -406,8 +406,4 @@ HTTP 422 表示请求不符合分支字段要求或功能未启用，分别使�
 
 管理端契约使用独立集合类型，0.4.0 另外增加 Web 本人查询。消费端需重新生成类型，改用独立集合客户端、GroupSummary、GroupConfigInput.expected_revision、分支命令及 groups_ 错误码。没有通用 Record、动态 collection 路由或旧字段别名。
 
-先合入本模块契约及迁移，再由 backend 固定候选提交并装配，最后管理端按同一契约生成类型与联调。本次只验证 groups，管理端和 backend 的实际提交组合由各自任务记录。
-
-迁移将候选旧数据中的 actor、警告和黑名单字段转换为 snake_case，并为已有群配置建立 revision。旧的无盐口令摘要被删除，password_set=false；原 password 模式保留，管理员重新设置口令前无法通过口令校验。
-
-迁移可重复执行，不删除成员、动作与处置记录。已完成的口令重设不会在重复迁移时被清除。旧 executing 动作的租约时间转换为 lease_until，保留后续查询与恢复流程。
+先合入本模块契约及最终表结构，再由 backend 固定候选提交并装配，最后管理端按同一契约生成类型与联调。本次只验证 groups，管理端和 backend 的实际提交组合由各自任务记录。
