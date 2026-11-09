@@ -261,7 +261,7 @@ Consume 自行反查 owner 的受管群，并包括仍有效的入群申请，�
 
 旧 Consume(ctx, group, event, owner) 已删除。backend 不再自己逐群分页后调用消费；直接转发上游封套并等待 Consume 返回，再推进来源事件的确认。原有 groups 出站动作消费者继续调用 Execute/Fanout。
 
-这些新增和修改均为 Go 装配端口，HTTP OpenAPI 仍为 0.3.0，路径与生成 SDK 无变化。
+这些新增和修改均为 Go 装配端口，HTTP OpenAPI 仍为 0.4.0，路径与生成 SDK 无变化。
 
 ## Koishi
 
@@ -277,11 +277,12 @@ Consume 自行反查 owner 的受管群，并包括仍有效的入群申请，�
 
 ## 接口使用
 
-OpenAPI 与模块版本为 0.3.0，HTTP 路由使用 /api/v1/groups 前缀。SDK 的 server 参数填写服务根地址。以下路径中的 {group} 是内部群 ID。
+OpenAPI 与模块版本为 0.4.0，HTTP 路由使用 /api/v1/groups 前缀。SDK 的 server 参数填写服务根地址。以下路径中的 {group} 是内部群 ID。
 
 | 方法与路径 | 请求 / 响应 | 用途 |
 | --- | --- | --- |
 | GET /api/v1/groups | GroupSummaryPage | 群摘要与计数 |
+| GET /api/v1/groups/me | MyGroupPage | 本人的群、申请与下一步动作 |
 | GET /api/v1/groups/{group} | GroupConfig | 当前配置与 revision |
 | PUT /api/v1/groups/{group} | GroupConfigInput / GroupConfig | 创建或更新配置 |
 | GET /api/v1/groups/{group}/members | MemberPage | 成员与资格处理阶段 |
@@ -298,6 +299,41 @@ OpenAPI 与模块版本为 0.3.0，HTTP 路由使用 /api/v1/groups 前缀。SDK
 | POST /api/v1/groups/{group}/commands | Command / Result | 管理或用户命令 |
 | POST /api/v1/groups/{group}/batch | Bulk / BulkResult | 批量预览与逐项执行 |
 | POST /api/v1/groups/blacklists | BlacklistInput / Result | 单群、多群及全平台黑名单 |
+
+### Web：我的群与入群进度
+
+GET /api/v1/groups/me 只使用认证中间件给出的 account.Principal，不接受 owner、issuer、subject 或管理角色参数。普通登录用户无需 groups.read 管理权限。未登录返回 401 groups_unauthenticated。
+
+每项返回 id、name、school、掩码 number、joined、state、deadline、requires_password、eligibility、missing_conditions、unknown_conditions、next_actions。没有其他成员、群管理计数、配置、口令摘要、名片资料或处置原因。
+
+joined 表示已由机器人确认加入，state 是本人当前处理阶段。待入群申请也列出，removed 记录和没有 groups 配置的群不返回。deadline 为 UTC date-time；没有期限时返回 null，GET 不修改期限或处理状态。
+
+此接口复用 GroupsForOwner 的 owner 反向索引、查询和分页逻辑，额外包含有效申请。每页在同一事务读取群公开信息和本人记录；当前事实按 owner、school 在单次请求内复用，不跨请求缓存。
+
+limit 默认 50，范围 1–100；cursor 最长 128 字节。按群 ID 字节顺序升序，next_cursor 是最后返回的群 ID，空字符串表示结束。无关联记录时返回空 items；未知查询参数或无效分页返回 400 groups_invalid_request。
+
+eligibility 为 eligible、ineligible 或 unknown，只说明当前准入条件是否满足，不表示已经批准入群，也不会撤销既有豁免。所需事实明确未知时返回 unknown，不能视为具备资格；不需要的学生资格条件不参与判断。
+
+| missing_conditions | 含义与 next_actions |
+| --- | --- |
+| qq_binding | 三项 QQ 绑定未全部完成，bind_qq |
+| student_verification | 已确认缺少学生资格，verify_student |
+| alumni_not_accepted | 当前群不接受校友，contact_group_admin |
+| temporary_not_accepted | 当前群不接受临时新生，contact_group_admin |
+| password | 本人尚未通过当前口令要求，submit_password；管理员尚未设置口令时为 contact_group_admin |
+| restricted | 存在有效准入限制，contact_group_admin，不返回管理原因 |
+
+unknown_conditions 为 student_eligibility 或 student_stage，next_actions 提示 refresh。学籍阶段只在已有有效学生资格时参与判断；已确认没有学生资格时直接引导认证，不要求用户重复认证已有有效资格。
+
+requires_password 表示群采用口令模式，即使本人已经通过口令也保持 true；是否仍需提交由 missing_conditions 中的 password 表示。通过口令不会自动授予学生资格。
+
+next_actions 是 Web 动作类别，不是权限令牌。前端将 bind_qq、verify_student、submit_password、contact_group_admin、refresh 映射到自身页面或刷新操作。条件已满足但仍待加入或状态尚待更新时，也提示 refresh。
+
+需要读取当前事实时，FactsProvider 缺失、实际依赖调用失败或事实格式矛盾，返回 503 groups_unavailable，不返回已经计算的部分页面。绑定事实未知应由提供方返回错误，不能用 Bound=false 冒充已确认的未绑定。
+
+此接口复用入群与执行前检查的资格判定，只读取数据，不执行入群批准、提醒、移出，不写业务查看审计、inbox 或 outbox。实际状态推进仍由 Consume、Sweep 和机器人回执负责。
+
+0.4.0 新增 listMyGroups SDK 方法，现有管理接口与 progress 路径继续保留。me 是该静态路径保留的群 ID，新配置不能使用这个 ID。
 
 ### 群摘要与列表
 
@@ -337,7 +373,7 @@ HTTP 422 表示请求不符合分支字段要求或功能未启用，分别使�
 
 ### 接入与数据升级
 
-0.3.0 是管理端首次接入前的最终契约整改。消费端需重新生成类型，改用独立集合客户端、GroupSummary、GroupConfigInput.expected_revision、分支命令及 groups_ 错误码。没有通用 Record、动态 collection 路由或旧字段别名。
+管理端契约使用独立集合类型，0.4.0 另外增加 Web 本人查询。消费端需重新生成类型，改用独立集合客户端、GroupSummary、GroupConfigInput.expected_revision、分支命令及 groups_ 错误码。没有通用 Record、动态 collection 路由或旧字段别名。
 
 先合入本模块契约及迁移，再由 backend 固定候选提交并装配，最后管理端按同一契约生成类型与联调。本次只验证 groups，管理端和 backend 的实际提交组合由各自任务记录。
 

@@ -441,6 +441,9 @@ func TestExplicitErrorResponsesAndBulkDiscriminator(t *testing.T) {
 				t.Fatalf("default response at %s %s", method, path)
 			}
 			for _, code := range []string{"400", "401", "403", "503"} {
+				if path == "/api/v1/groups/me" && code == "403" {
+					continue
+				}
 				if op.Responses.Value(code) == nil {
 					t.Fatalf("missing %s at %s %s", code, method, path)
 				}

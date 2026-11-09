@@ -167,6 +167,7 @@ type Tx interface {
 	PendingActions(string) (int, error)
 	GroupCounts([]string) (map[string]GroupCounts, error)
 	OwnerGroups(owner, cursor string, limit int, includeApplicants bool) (Page[ManagedGroup], error)
+	OwnerGroupRecords(owner, cursor string, limit int, includeApplicants bool) (Page[OwnerGroupRecord], error)
 	Emit(Event) error
 	Accept(Event) (bool, error)
 }

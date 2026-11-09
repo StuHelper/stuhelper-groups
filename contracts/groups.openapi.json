@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "StuHelper Groups",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "description": "Server-authorized QQ group services. UTC RFC3339 times, durations in seconds. Bot ingress is a trusted server Go interface."
   },
   "servers": [
@@ -1680,6 +1680,74 @@
         },
         "description": "Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering."
       }
+    },
+    "/api/v1/groups/me": {
+      "get": {
+        "operationId": "listMyGroups",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 128
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Own group information and current eligibility guidance, including explicit unknown facts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyGroupPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Authenticated user only; no owner/issuer/subject parameter or management role is accepted. Includes joined memberships and active applications in configured groups; excludes removed or unmanaged groups. Ordered by group ID in bytewise ascending order. Read-only: no admission, punishment, inbox or audit writes."
+      }
     }
   },
   "components": {
@@ -2569,7 +2637,12 @@
           "id": {
             "type": "string",
             "maxLength": 128,
-            "minLength": 1
+            "minLength": 1,
+            "not": {
+              "enum": [
+                "me"
+              ]
+            }
           },
           "school": {
             "type": "string",
@@ -3915,6 +3988,143 @@
             "card": "#/components/schemas/CardBatchCommand"
           }
         }
+      },
+      "MyGroup": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Internal group ID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "school": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "pattern": "^(?:|\\*+[0-9]{4})$",
+            "description": "Masked group number, showing at most the final four digits; empty when not recorded."
+          },
+          "joined": {
+            "type": "boolean",
+            "description": "True only after the bot confirms group membership; an application does not imply joining."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "requested",
+              "awaiting_verification",
+              "grace",
+              "extended",
+              "exempt",
+              "restored",
+              "removal_pending"
+            ],
+            "description": "Stored processing state for this authenticated user; removed memberships are excluded."
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Current deadline in UTC, or null when none. Reads do not extend or restart the deadline."
+          },
+          "requires_password": {
+            "type": "boolean",
+            "description": "The group uses password mode. A previously accepted password is not listed as missing."
+          },
+          "eligibility": {
+            "type": "string",
+            "enum": [
+              "eligible",
+              "ineligible",
+              "unknown"
+            ],
+            "description": "Current prerequisite assessment, separate from recorded membership/approval or exemption. Any required unknown fact prevents eligible."
+          },
+          "missing_conditions": {
+            "type": "array",
+            "uniqueItems": true,
+            "maxItems": 6,
+            "items": {
+              "type": "string",
+              "enum": [
+                "qq_binding",
+                "student_verification",
+                "alumni_not_accepted",
+                "temporary_not_accepted",
+                "password",
+                "restricted"
+              ]
+            },
+            "description": "Confirmed unmet conditions only. restricted discloses no blacklist reasons or management data."
+          },
+          "unknown_conditions": {
+            "type": "array",
+            "uniqueItems": true,
+            "maxItems": 2,
+            "items": {
+              "type": "string",
+              "enum": [
+                "student_eligibility",
+                "student_stage"
+              ]
+            },
+            "description": "Required facts whose provider explicitly reported unknown. A provider failure instead returns HTTP 503 with no partial page."
+          },
+          "next_actions": {
+            "type": "array",
+            "uniqueItems": true,
+            "maxItems": 5,
+            "items": {
+              "type": "string",
+              "enum": [
+                "bind_qq",
+                "verify_student",
+                "submit_password",
+                "contact_group_admin",
+                "refresh"
+              ]
+            },
+            "description": "UI action categories, not authorization grants. Unknown facts suggest refresh. Unsupported stages suggest contacting an administrator rather than repeating verification."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "school",
+          "number",
+          "joined",
+          "state",
+          "deadline",
+          "requires_password",
+          "eligibility",
+          "missing_conditions",
+          "unknown_conditions",
+          "next_actions"
+        ]
+      },
+      "MyGroupPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MyGroup"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Last returned group ID if another page exists, or empty when exhausted."
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ]
       }
     }
   }

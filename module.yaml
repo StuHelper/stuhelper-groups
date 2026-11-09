@@ -1,5 +1,5 @@
 id: groups
-version: 0.3.0
+version: 0.4.0
 kind: module
 api: 1
 critical: false
@@ -24,12 +24,17 @@ capabilities:
   - groups.messages.recall
 scenario_tests:
   QQ-01:
+    - my_groups_test.go#TestMyGroupsOwnIsolationPaginationAndReadOnly
+    - my_groups_test.go#TestMyGroupsGeneratedClientAndRouteReservation
     - delivery_membership_test.go#TestGroupsForOwnerPaginationAndBounds
     - api_v03_test.go#TestGroupSummaryCountsMaskingAndScope
     - api_v03_test.go#TestConfigurationRevisionPasswordAndReplay
     - api_v03_test.go#TestCandidateMigrationToFinalContractAndLeaseRecovery
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-02:
+    - my_groups_test.go#TestMyGroupsMissingConditionsAndUnknownFacts
+    - my_groups_test.go#TestMyGroupsDependencyFailureReturnsNoPartialPage
+    - my_groups_test.go#TestMyGroupsPasswordRestrictionAndPublicProjection
     - facts_test.go#TestGroupFactsRejectsUnknownContradictoryAndFailedFacts
     - integration_test.go#TestPasswordDoesNotGrantStudentEligibilityAndBlacklistScope
   QQ-03:

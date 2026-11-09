@@ -20,28 +20,28 @@ import (
 
 // Defines values for ActionState.
 const (
-	Cancelled ActionState = "cancelled"
-	Executing ActionState = "executing"
-	Failed    ActionState = "failed"
-	Pending   ActionState = "pending"
-	Succeeded ActionState = "succeeded"
-	Unknown   ActionState = "unknown"
+	ActionStateCancelled ActionState = "cancelled"
+	ActionStateExecuting ActionState = "executing"
+	ActionStateFailed    ActionState = "failed"
+	ActionStatePending   ActionState = "pending"
+	ActionStateSucceeded ActionState = "succeeded"
+	ActionStateUnknown   ActionState = "unknown"
 )
 
 // Valid indicates whether the value is a known member of the ActionState enum.
 func (e ActionState) Valid() bool {
 	switch e {
-	case Cancelled:
+	case ActionStateCancelled:
 		return true
-	case Executing:
+	case ActionStateExecuting:
 		return true
-	case Failed:
+	case ActionStateFailed:
 		return true
-	case Pending:
+	case ActionStatePending:
 		return true
-	case Succeeded:
+	case ActionStateSucceeded:
 		return true
-	case Unknown:
+	case ActionStateUnknown:
 		return true
 	default:
 		return false
@@ -489,6 +489,135 @@ const (
 func (e MuteCommandKind) Valid() bool {
 	switch e {
 	case MuteCommandKindMute:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MyGroupEligibility.
+const (
+	MyGroupEligibilityEligible   MyGroupEligibility = "eligible"
+	MyGroupEligibilityIneligible MyGroupEligibility = "ineligible"
+	MyGroupEligibilityUnknown    MyGroupEligibility = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the MyGroupEligibility enum.
+func (e MyGroupEligibility) Valid() bool {
+	switch e {
+	case MyGroupEligibilityEligible:
+		return true
+	case MyGroupEligibilityIneligible:
+		return true
+	case MyGroupEligibilityUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MyGroupMissingConditions.
+const (
+	MyGroupMissingConditionsAlumniNotAccepted    MyGroupMissingConditions = "alumni_not_accepted"
+	MyGroupMissingConditionsPassword             MyGroupMissingConditions = "password"
+	MyGroupMissingConditionsQqBinding            MyGroupMissingConditions = "qq_binding"
+	MyGroupMissingConditionsRestricted           MyGroupMissingConditions = "restricted"
+	MyGroupMissingConditionsStudentVerification  MyGroupMissingConditions = "student_verification"
+	MyGroupMissingConditionsTemporaryNotAccepted MyGroupMissingConditions = "temporary_not_accepted"
+)
+
+// Valid indicates whether the value is a known member of the MyGroupMissingConditions enum.
+func (e MyGroupMissingConditions) Valid() bool {
+	switch e {
+	case MyGroupMissingConditionsAlumniNotAccepted:
+		return true
+	case MyGroupMissingConditionsPassword:
+		return true
+	case MyGroupMissingConditionsQqBinding:
+		return true
+	case MyGroupMissingConditionsRestricted:
+		return true
+	case MyGroupMissingConditionsStudentVerification:
+		return true
+	case MyGroupMissingConditionsTemporaryNotAccepted:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MyGroupNextActions.
+const (
+	BindQq            MyGroupNextActions = "bind_qq"
+	ContactGroupAdmin MyGroupNextActions = "contact_group_admin"
+	Refresh           MyGroupNextActions = "refresh"
+	SubmitPassword    MyGroupNextActions = "submit_password"
+	VerifyStudent     MyGroupNextActions = "verify_student"
+)
+
+// Valid indicates whether the value is a known member of the MyGroupNextActions enum.
+func (e MyGroupNextActions) Valid() bool {
+	switch e {
+	case BindQq:
+		return true
+	case ContactGroupAdmin:
+		return true
+	case Refresh:
+		return true
+	case SubmitPassword:
+		return true
+	case VerifyStudent:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MyGroupState.
+const (
+	MyGroupStateAwaitingVerification MyGroupState = "awaiting_verification"
+	MyGroupStateExempt               MyGroupState = "exempt"
+	MyGroupStateExtended             MyGroupState = "extended"
+	MyGroupStateGrace                MyGroupState = "grace"
+	MyGroupStateRemovalPending       MyGroupState = "removal_pending"
+	MyGroupStateRequested            MyGroupState = "requested"
+	MyGroupStateRestored             MyGroupState = "restored"
+)
+
+// Valid indicates whether the value is a known member of the MyGroupState enum.
+func (e MyGroupState) Valid() bool {
+	switch e {
+	case MyGroupStateAwaitingVerification:
+		return true
+	case MyGroupStateExempt:
+		return true
+	case MyGroupStateExtended:
+		return true
+	case MyGroupStateGrace:
+		return true
+	case MyGroupStateRemovalPending:
+		return true
+	case MyGroupStateRequested:
+		return true
+	case MyGroupStateRestored:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MyGroupUnknownConditions.
+const (
+	StudentEligibility MyGroupUnknownConditions = "student_eligibility"
+	StudentStage       MyGroupUnknownConditions = "student_stage"
+)
+
+// Valid indicates whether the value is a known member of the MyGroupUnknownConditions enum.
+func (e MyGroupUnknownConditions) Valid() bool {
+	switch e {
+	case StudentEligibility:
+		return true
+	case StudentStage:
 		return true
 	default:
 		return false
@@ -1235,6 +1364,64 @@ type MuteCommand struct {
 // MuteCommandKind defines model for MuteCommand.Kind.
 type MuteCommandKind string
 
+// MyGroup defines model for MyGroup.
+type MyGroup struct {
+	// Deadline Current deadline in UTC, or null when none. Reads do not extend or restart the deadline.
+	Deadline *time.Time `json:"deadline"`
+
+	// Eligibility Current prerequisite assessment, separate from recorded membership/approval or exemption. Any required unknown fact prevents eligible.
+	Eligibility MyGroupEligibility `json:"eligibility"`
+
+	// Id Internal group ID.
+	Id string `json:"id"`
+
+	// Joined True only after the bot confirms group membership; an application does not imply joining.
+	Joined bool `json:"joined"`
+
+	// MissingConditions Confirmed unmet conditions only. restricted discloses no blacklist reasons or management data.
+	MissingConditions []MyGroupMissingConditions `json:"missing_conditions"`
+	Name              string                     `json:"name"`
+
+	// NextActions UI action categories, not authorization grants. Unknown facts suggest refresh. Unsupported stages suggest contacting an administrator rather than repeating verification.
+	NextActions []MyGroupNextActions `json:"next_actions"`
+
+	// Number Masked group number, showing at most the final four digits; empty when not recorded.
+	Number string `json:"number"`
+
+	// RequiresPassword The group uses password mode. A previously accepted password is not listed as missing.
+	RequiresPassword bool   `json:"requires_password"`
+	School           string `json:"school"`
+
+	// State Stored processing state for this authenticated user; removed memberships are excluded.
+	State MyGroupState `json:"state"`
+
+	// UnknownConditions Required facts whose provider explicitly reported unknown. A provider failure instead returns HTTP 503 with no partial page.
+	UnknownConditions []MyGroupUnknownConditions `json:"unknown_conditions"`
+}
+
+// MyGroupEligibility Current prerequisite assessment, separate from recorded membership/approval or exemption. Any required unknown fact prevents eligible.
+type MyGroupEligibility string
+
+// MyGroupMissingConditions defines model for MyGroup.MissingConditions.
+type MyGroupMissingConditions string
+
+// MyGroupNextActions defines model for MyGroup.NextActions.
+type MyGroupNextActions string
+
+// MyGroupState Stored processing state for this authenticated user; removed memberships are excluded.
+type MyGroupState string
+
+// MyGroupUnknownConditions defines model for MyGroup.UnknownConditions.
+type MyGroupUnknownConditions string
+
+// MyGroupPage defines model for MyGroupPage.
+type MyGroupPage struct {
+	Items []MyGroup `json:"items"`
+
+	// NextCursor Last returned group ID if another page exists, or empty when exhausted.
+	NextCursor string `json:"next_cursor"`
+}
+
 // PasswordCommand User command; caller only.
 type PasswordCommand struct {
 	Kind PasswordCommandKind `json:"kind"`
@@ -1477,6 +1664,12 @@ type ListGroupsParams struct {
 // BlacklistsParams defines parameters for Blacklists.
 type BlacklistsParams struct {
 	IdempotencyKey string `json:"Idempotency-Key"`
+}
+
+// ListMyGroupsParams defines parameters for ListMyGroups.
+type ListMyGroupsParams struct {
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // ConfigureGroupParams defines parameters for ConfigureGroup.
@@ -2899,6 +3092,11 @@ type ClientInterface interface {
 	// Takes a body of the `application/json` content type.
 	Blacklists(ctx context.Context, params *BlacklistsParams, body BlacklistsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListMyGroups performs a GET /api/v1/groups/me (the `ListMyGroups` operationId) request.
+	//
+	// Authenticated user only; no owner/issuer/subject parameter or management role is accepted. Includes joined memberships and active applications in configured groups; excludes removed or unmanaged groups. Ordered by group ID in bytewise ascending order. Read-only: no admission, punishment, inbox or audit writes.
+	ListMyGroups(ctx context.Context, params *ListMyGroupsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetGroup performs a GET /api/v1/groups/{group} (the `GetGroup` operationId) request.
 	GetGroup(ctx context.Context, group string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3013,6 +3211,21 @@ func (c *Client) BlacklistsWithBody(ctx context.Context, params *BlacklistsParam
 // Takes a body of the `application/json` content type.
 func (c *Client) Blacklists(ctx context.Context, params *BlacklistsParams, body BlacklistsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewBlacklistsRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListMyGroups performs a GET /api/v1/groups/me (the `ListMyGroups` operationId) request.
+//
+// Authenticated user only; no owner/issuer/subject parameter or management role is accepted. Includes joined memberships and active applications in configured groups; excludes removed or unmanaged groups. Ordered by group ID in bytewise ascending order. Read-only: no admission, punishment, inbox or audit writes.
+func (c *Client) ListMyGroups(ctx context.Context, params *ListMyGroupsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListMyGroupsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -3397,6 +3610,72 @@ func NewBlacklistsRequestWithBody(server string, params *BlacklistsParams, conte
 
 		req.Header.Set("Idempotency-Key", headerParam0)
 
+	}
+
+	return req, nil
+}
+
+// NewListMyGroupsRequest constructs an http.Request for the ListMyGroups method
+func NewListMyGroupsRequest(server string, params *ListMyGroupsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/groups/me")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
 	}
 
 	return req, nil
@@ -4441,6 +4720,13 @@ type ClientWithResponsesInterface interface {
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	BlacklistsWithResponse(ctx context.Context, params *BlacklistsParams, body BlacklistsJSONRequestBody, reqEditors ...RequestEditorFn) (*BlacklistsResponse, error)
 
+	// ListMyGroupsWithResponse performs a GET /api/v1/groups/me (the `ListMyGroups` operationId) request.
+	//
+	// Authenticated user only; no owner/issuer/subject parameter or management role is accepted. Includes joined memberships and active applications in configured groups; excludes removed or unmanaged groups. Ordered by group ID in bytewise ascending order. Read-only: no admission, punishment, inbox or audit writes.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ListMyGroupsWithResponse(ctx context.Context, params *ListMyGroupsParams, reqEditors ...RequestEditorFn) (*ListMyGroupsResponse, error)
+
 	// GetGroupWithResponse performs a GET /api/v1/groups/{group} (the `GetGroup` operationId) request.
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -4705,6 +4991,68 @@ func (r BlacklistsResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r BlacklistsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListMyGroupsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *MyGroupPage
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListMyGroupsResponse) GetJSON200() *MyGroupPage {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListMyGroupsResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListMyGroupsResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r ListMyGroupsResponse) GetJSON503() *Problem {
+	return r.JSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListMyGroupsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListMyGroupsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListMyGroupsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListMyGroupsResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -5928,6 +6276,19 @@ func (c *ClientWithResponses) BlacklistsWithResponse(ctx context.Context, params
 	return ParseBlacklistsResponse(rsp)
 }
 
+// ListMyGroupsWithResponse performs a GET /api/v1/groups/me (the `ListMyGroups` operationId) request.
+//
+// Authenticated user only; no owner/issuer/subject parameter or management role is accepted. Includes joined memberships and active applications in configured groups; excludes removed or unmanaged groups. Ordered by group ID in bytewise ascending order. Read-only: no admission, punishment, inbox or audit writes.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ListMyGroupsWithResponse(ctx context.Context, params *ListMyGroupsParams, reqEditors ...RequestEditorFn) (*ListMyGroupsResponse, error) {
+	rsp, err := c.ListMyGroups(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListMyGroupsResponse(rsp)
+}
+
 // GetGroupWithResponse performs a GET /api/v1/groups/{group} (the `GetGroup` operationId) request.
 //
 // Returns a wrapper object for the known response body format(s).
@@ -6262,6 +6623,53 @@ func ParseBlacklistsResponse(rsp *http.Response) (*BlacklistsResponse, error) {
 			return nil, err
 		}
 		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListMyGroupsResponse parses an HTTP response from a ListMyGroupsWithResponse call
+func ParseListMyGroupsResponse(rsp *http.Response) (*ListMyGroupsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListMyGroupsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest MyGroupPage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
 		var dest Problem

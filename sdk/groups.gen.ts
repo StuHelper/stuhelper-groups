@@ -271,6 +271,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/groups/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Authenticated user only; no owner/issuer/subject parameter or management role is accepted. Includes joined memberships and active applications in configured groups; excludes removed or unmanaged groups. Ordered by group ID in bytewise ascending order. Read-only: no admission, punishment, inbox or audit writes. */
+        get: operations["listMyGroups"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -926,6 +943,44 @@ export interface components {
             text: string;
         };
         BatchCommand: components["schemas"]["WarnBatchCommand"] | components["schemas"]["MuteBatchCommand"] | components["schemas"]["UnmuteBatchCommand"] | components["schemas"]["KickBatchCommand"] | components["schemas"]["RecheckBatchCommand"] | components["schemas"]["ExtendBatchCommand"] | components["schemas"]["ExemptBatchCommand"] | components["schemas"]["CardBatchCommand"];
+        MyGroup: {
+            /** @description Internal group ID. */
+            id: string;
+            name: string;
+            school: string;
+            /** @description Masked group number, showing at most the final four digits; empty when not recorded. */
+            number: string;
+            /** @description True only after the bot confirms group membership; an application does not imply joining. */
+            joined: boolean;
+            /**
+             * @description Stored processing state for this authenticated user; removed memberships are excluded.
+             * @enum {string}
+             */
+            state: "requested" | "awaiting_verification" | "grace" | "extended" | "exempt" | "restored" | "removal_pending";
+            /**
+             * Format: date-time
+             * @description Current deadline in UTC, or null when none. Reads do not extend or restart the deadline.
+             */
+            deadline: string | null;
+            /** @description The group uses password mode. A previously accepted password is not listed as missing. */
+            requires_password: boolean;
+            /**
+             * @description Current prerequisite assessment, separate from recorded membership/approval or exemption. Any required unknown fact prevents eligible.
+             * @enum {string}
+             */
+            eligibility: "eligible" | "ineligible" | "unknown";
+            /** @description Confirmed unmet conditions only. restricted discloses no blacklist reasons or management data. */
+            missing_conditions: ("qq_binding" | "student_verification" | "alumni_not_accepted" | "temporary_not_accepted" | "password" | "restricted")[];
+            /** @description Required facts whose provider explicitly reported unknown. A provider failure instead returns HTTP 503 with no partial page. */
+            unknown_conditions: ("student_eligibility" | "student_stage")[];
+            /** @description UI action categories, not authorization grants. Unknown facts suggest refresh. Unsupported stages suggest contacting an administrator rather than repeating verification. */
+            next_actions: ("bind_qq" | "verify_student" | "submit_password" | "contact_group_admin" | "refresh")[];
+        };
+        MyGroupPage: {
+            items: components["schemas"]["MyGroup"][];
+            /** @description Last returned group ID if another page exists, or empty when exhausted. */
+            next_cursor: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -2172,6 +2227,56 @@ export interface operations {
             };
             /** @description groups_not_found: Requested group, member, message or related object does not exist. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listMyGroups: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Own group information and current eligibility guidance, including explicit unknown facts. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyGroupPage"];
+                };
+            };
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

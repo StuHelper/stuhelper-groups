@@ -63,7 +63,7 @@ func TestAPIPrefixMatchesContractRoutesAndGeneratedClient(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if doc.Info.Version != "0.3.0" {
+	if doc.Info.Version != "0.4.0" {
 		t.Fatal(doc.Info.Version)
 	}
 	handler := httpapi.Handler(&g.Service{}, nil)

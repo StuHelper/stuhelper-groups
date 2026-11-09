@@ -103,7 +103,7 @@ func save(tx Tx, owner, key string, input, out any) error {
 	return tx.Put("receipts", hash([]string{owner, key}), receipt{hash(input), b})
 }
 func validateConfig(c GroupConfig) error {
-	if strings.TrimSpace(c.Name) == "" || utf8.RuneCountInString(c.Name) > 128 || strings.ContainsFunc(c.Name, unicode.IsControl) || c.ID == "*" || c.School == "*" || !valid(c.ID, 128) || !valid(c.School, 128) || !slices.Contains([]string{"before", "muted", "password"}, c.Mode) {
+	if strings.TrimSpace(c.Name) == "" || utf8.RuneCountInString(c.Name) > 128 || strings.ContainsFunc(c.Name, unicode.IsControl) || c.ID == "me" || c.ID == "*" || c.School == "*" || !valid(c.ID, 128) || !valid(c.School, 128) || !slices.Contains([]string{"before", "muted", "password"}, c.Mode) {
 		return ErrInvalid
 	}
 	for _, n := range []int64{c.GraceSeconds, c.ReminderSeconds, c.RetentionSeconds, c.CooldownSeconds} {
@@ -397,24 +397,8 @@ type Blacklist struct {
 }
 
 func (s *Service) eligible(ctx context.Context, tx Tx, c GroupConfig, m Member) (bool, error) {
-	for _, g := range []string{c.ID, "*"} {
-		var b Blacklist
-		e := tx.Get(bucket(g, "blacklist"), m.Owner, &b)
-		if e == nil && (b.Permanent || s.now().Before(b.Until)) {
-			return false, nil
-		}
-		if e != nil && !errors.Is(e, ErrNotFound) {
-			return false, e
-		}
-	}
-	if s.Facts == nil {
-		return false, ErrUnavailable
-	}
-	f, e := s.currentFacts(ctx, m.Owner, c.School)
-	if e != nil {
-		return false, ErrUnavailable
-	}
-	return f.Bound && (!c.RequireStudent || (f.StudentKnown && f.StageKnown && f.Student && (!f.Alumni || c.AcceptAlumni) && (!f.Temporary || c.AcceptTemporary))) && (c.Mode != "password" || m.Password), nil
+	result, e := s.assessEligibility(ctx, tx, c, m, nil)
+	return e == nil && result.state == "eligible", e
 }
 func (s *Service) admission(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, owner string, apply bool) (Result, error) {
 	out := Result{}

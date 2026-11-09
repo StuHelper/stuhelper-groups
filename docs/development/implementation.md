@@ -8,7 +8,7 @@ updated: 2026-11-09
 
 ## 当前实现
 
-OpenAPI 0.3.0 使用 /api/v1/groups 前缀，Go/TypeScript 客户端、HTTP Handler、Service 与 PostgreSQL Repository 已建立。群与学校关联、分范围管理、本人申请进度、三项绑定和资格判断、动态口令、宽限期、恢复、延期、豁免与自动移出均由服务端处理。
+OpenAPI 0.4.0 使用 /api/v1/groups 前缀，Go/TypeScript 客户端、HTTP Handler、Service 与 PostgreSQL Repository 已建立。群与学校关联、分范围管理、本人申请进度、三项绑定和资格判断、动态口令、宽限期、恢复、延期、豁免与自动移出均由服务端处理。
 
 群名片检查区分资料缺失和不合规，性别未知使用中性分隔符。检查、提醒和自动修改分别配置。模板可引用许可字段及自由昵称，名片不合规不触发资格失效移出。
 
@@ -25,6 +25,8 @@ OpenAPI 0.3.0 使用 /api/v1/groups 前缀，Go/TypeScript 客户端、HTTP Hand
 群列表返回 GroupSummary，集合各有独立分页类型。配置采用 expected_revision 比较更新，口令只在请求中接收并保存带盐摘要。命令按 kind 验证必填字段，错误码采用 groups_ 枚举。
 
 outbox 提供带排除主题和 limit 的 PendingOutbox，以及幂等 ConfirmOutbox。GroupsForOwner 提供有界成员反查，Consume 按上游 owner 在同一事务内重算关联群，Sweep 保留为周期性核对与期限处理。
+
+Web 通过 GET /api/v1/groups/me 查询自己的成员和申请记录。本人查询复用 owner 反向索引和资格判定，区分缺失条件、未知事实和依赖失败，不返回管理信息，不触发业务写入。
 
 ## 验证
 

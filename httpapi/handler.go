@@ -34,6 +34,21 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 			fn(w, r, p)
 		}
 	}
+	mux.HandleFunc("GET /api/v1/groups/me", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+		for name := range r.URL.Query() {
+			if name != "cursor" && name != "limit" {
+				write(w, nil, g.ErrInvalid)
+				return
+			}
+		}
+		cursor, limit, e := pagination(r)
+		if e != nil {
+			write(w, nil, e)
+			return
+		}
+		v, e := s.MyGroups(r.Context(), p, cursor, limit)
+		write(w, v, e)
+	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
 		v, e := s.Configuration(r.Context(), p, r.PathValue("group"))
 		write(w, v, e)
