@@ -103,6 +103,10 @@ type Audit struct {
 	Scope                Scope
 	Targets              []string
 	Category, Capability string
+	Result               string
+	Count                int
+	At                   time.Time
+	Scopes               []Scope
 }
 
 // Record commits the disclosure audit before any sensitive result is returned.
@@ -120,6 +124,7 @@ type Service struct {
 	Repo  Repository
 	Auth  Authorizer
 	Audit Auditor
+	Now   func() time.Time
 }
 
 func intersect(scopes []Scope, requested Scope) []Scope {
@@ -184,12 +189,18 @@ func (s Service) Query(ctx context.Context, p Principal, q Query) ([]Record, err
 		sensitive, err = s.Auth.Scopes(ctx, p, SensitiveCapability)
 		if err != nil {
 			if errors.Is(err, ErrForbidden) {
+				if e := s.recordAudit(ctx, p, q, nil, nil, "denied"); e != nil {
+					return nil, e
+				}
 				return nil, ErrForbidden
 			}
 			return nil, ErrUnavailable
 		}
 		sensitive = intersect(sensitive, q.Scope)
 		if len(sensitive) == 0 {
+			if e := s.recordAudit(ctx, p, q, nil, nil, "denied"); e != nil {
+				return nil, e
+			}
 			return nil, ErrForbidden
 		}
 	}
@@ -229,13 +240,25 @@ func (s Service) Query(ctx context.Context, p Principal, q Query) ([]Record, err
 		}
 		r.Fields = fields
 	}
-	if len(targets) > 0 {
-		if s.Audit == nil {
-			return nil, ErrUnavailable
-		}
-		if err = s.Audit.Record(ctx, Audit{p, q.RequestID, q.Purpose, q.Scope, targets, "identity", SensitiveCapability}); err != nil {
-			return nil, ErrUnavailable
+	if len(sensitive) > 0 {
+		if err = s.recordAudit(ctx, p, q, sensitive, targets, "success"); err != nil {
+			return nil, err
 		}
 	}
 	return records, nil
+}
+
+func (s Service) recordAudit(ctx context.Context, p Principal, q Query, scopes []Scope, targets []string, result string) error {
+	if s.Audit == nil {
+		return ErrUnavailable
+	}
+	now := time.Now().UTC()
+	if s.Now != nil {
+		now = s.Now().UTC()
+	}
+	a := Audit{Actor: p, RequestID: q.RequestID, Purpose: q.Purpose, Scope: q.Scope, Targets: targets, Category: "identity", Capability: SensitiveCapability, Result: result, Count: len(targets), At: now, Scopes: scopes}
+	if s.Audit.Record(ctx, a) != nil {
+		return ErrUnavailable
+	}
+	return nil
 }

@@ -94,11 +94,13 @@ func TestAccountQueryAuthorizationAndFailures(t *testing.T) {
 	if e != nil || got[0].Fields[1].Value != "***" || !got[0].Fields[1].Masked {
 		t.Fatal(got, e)
 	}
+	svc.Audit = auditStub{&audited, nil}
 	q.Fields = []string{"business", "identity"}
 	if _, e = svc.Query(ctx, p, q); e != ErrForbidden {
 		t.Fatal("sensitive capability not independent", e)
 	}
 	svc.Auth = authStub{map[string][]Scope{Capability: {scope}, SensitiveCapability: {scope}}, nil}
+	svc.Audit = nil
 	if _, e = svc.Query(ctx, p, q); e != ErrUnavailable {
 		t.Fatal("missing audit accepted", e)
 	}
