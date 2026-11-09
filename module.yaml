@@ -24,6 +24,7 @@ capabilities:
   - groups.messages.recall
 scenario_tests:
   QQ-01:
+    - delivery_membership_test.go#TestGroupsForOwnerPaginationAndBounds
     - api_v03_test.go#TestGroupSummaryCountsMaskingAndScope
     - api_v03_test.go#TestConfigurationRevisionPasswordAndReplay
     - api_v03_test.go#TestCandidateMigrationToFinalContractAndLeaseRecovery
@@ -32,8 +33,11 @@ scenario_tests:
     - facts_test.go#TestGroupFactsRejectsUnknownContradictoryAndFailedFacts
     - integration_test.go#TestPasswordDoesNotGrantStudentEligibilityAndBlacklistScope
   QQ-03:
+    - delivery_membership_test.go#TestConsumeFanoutDeduplicationOldRevisionsAndConcurrency
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-04:
+    - delivery_membership_test.go#TestConsumeFailureRollsBackInboxAllGroupsAndOutbox
+    - delivery_membership_test.go#TestConsumeApplicantsNoMembershipInvalidAndBoundedFanout
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-05:
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
@@ -43,6 +47,8 @@ scenario_tests:
     - facts_test.go#TestGroupFactsFiltersFieldsAtServiceBoundary
     - integration_test.go#TestRulesCardsReportAndBatchPreview
   QQ-08:
+    - delivery_membership_test.go#TestPendingOutboxExclusionLimitOrderingAndConfirmation
+    - delivery_membership_test.go#TestRelayStopsFailedSubjectWithinBatchAndDeliversOthers
     - api_v03_test.go#TestEveryCollectionTypedPaginationAndAuthorization
     - api_v03_test.go#TestCommandDiscriminatorRequiresKindSpecificFields
     - api_v03_test.go#TestExplicitErrorResponsesAndBulkDiscriminator

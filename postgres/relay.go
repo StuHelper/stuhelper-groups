@@ -28,17 +28,26 @@ func (r *Repository) Relay(ctx context.Context, deliver func(context.Context, g.
 		if e = ctx.Err(); e != nil {
 			return e
 		}
-		pending, e := r.Pending(ctx, r.now())
+		excluded, e := r.deferredSubjects(ctx)
 		if e != nil {
 			return e
 		}
+		pending, e := r.PendingOutbox(ctx, 100, excluded)
+		if e != nil {
+			return e
+		}
+		failed := map[string]bool{}
 		for _, event := range pending {
+			if failed[event.Subject] {
+				continue
+			}
 			call, cancel := context.WithTimeout(ctx, 10*time.Second)
 			err := deliver(call, event)
 			cancel()
 			if err == nil {
-				e = r.Delivered(ctx, event.ID, r.now())
+				e = r.ConfirmOutbox(ctx, event.ID)
 			} else {
+				failed[event.Subject] = true
 				e = r.Failed(ctx, event.ID, r.now())
 			}
 			if e != nil {

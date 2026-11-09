@@ -43,3 +43,10 @@ CREATE INDEX IF NOT EXISTS groups_records_bytewise ON groups.records(bucket,id C
 
 UPDATE groups.records SET data=jsonb_set(data || jsonb_build_object('lease_until',data->'result'),'{result}','""'::jsonb)
  WHERE bucket LIKE '%/actions' AND data->>'state'='executing' AND NOT data ? 'lease_until';
+
+-- Relay excludes subjects before LIMIT; the partial index avoids retained history.
+CREATE INDEX IF NOT EXISTS groups_outbox_delivery_pending ON groups.outbox
+ (subject COLLATE "C",((envelope->>'revision')::bigint),id COLLATE "C") WHERE sent_at IS NULL;
+-- Reverse membership lookup uses the canonical owner key, not a full group scan.
+CREATE INDEX IF NOT EXISTS groups_members_by_owner ON groups.records(id,bucket)
+ WHERE right(bucket,8)='/members';

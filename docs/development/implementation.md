@@ -24,6 +24,8 @@ OpenAPI 0.3.0 使用 /api/v1/groups 前缀，Go/TypeScript 客户端、HTTP Hand
 
 群列表返回 GroupSummary，集合各有独立分页类型。配置采用 expected_revision 比较更新，口令只在请求中接收并保存带盐摘要。命令按 kind 验证必填字段，错误码采用 groups_ 枚举。
 
+outbox 提供带排除主题和 limit 的 PendingOutbox，以及幂等 ConfirmOutbox。GroupsForOwner 提供有界成员反查，Consume 按上游 owner 在同一事务内重算关联群，Sweep 保留为周期性核对与期限处理。
+
 ## 验证
 
 隔离 PostgreSQL 18.6 覆盖独立集合的分页与授权、群摘要计数、并发配置冲突、口令不泄露、命令判别校验，以及初始迁移和重复执行、运行身份允许访问本模块数据且拒绝其他 schema 和 DDL、并发幂等、越权及撤权、期限边界、失败与超时、事件顺序和回滚不发通知。

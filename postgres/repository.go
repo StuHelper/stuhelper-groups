@@ -133,31 +133,6 @@ func (t *transaction) Accept(event g.Event) (bool, error) {
 	return tag.RowsAffected() == 1, e
 }
 
-// Pending returns only each stream's earliest unsent event, preserving order.
-func (r *Repository) Pending(ctx context.Context, now time.Time) ([]g.Event, error) {
-	rows, e := r.Pool.Query(ctx, `SELECT envelope FROM groups.outbox o WHERE sent_at IS NULL AND NOT held AND next_attempt<=$1 AND NOT EXISTS (SELECT 1 FROM groups.outbox p WHERE p.sent_at IS NULL AND p.source=o.source AND p.subject=o.subject AND p.sequence<o.sequence) ORDER BY sequence LIMIT 100`, now)
-	if e != nil {
-		return nil, e
-	}
-	defer rows.Close()
-	out := []g.Event{}
-	for rows.Next() {
-		var b []byte
-		var v g.Event
-		if e = rows.Scan(&b); e != nil {
-			return nil, e
-		}
-		if e = json.Unmarshal(b, &v); e != nil {
-			return nil, e
-		}
-		out = append(out, v)
-	}
-	return out, rows.Err()
-}
-func (r *Repository) Delivered(ctx context.Context, id string, now time.Time) error {
-	_, e := r.Pool.Exec(ctx, "UPDATE groups.outbox SET sent_at=$2 WHERE id=$1 AND sent_at IS NULL", id, now)
-	return e
-}
 func (r *Repository) Failed(ctx context.Context, id string, now time.Time) error {
 	_, e := r.Pool.Exec(ctx, `UPDATE groups.outbox SET attempts=attempts+1,next_attempt=$2::timestamptz+make_interval(secs=>LEAST(3600,5*power(2,LEAST(attempts,10)))::double precision),held=($2::timestamptz-created_at>=interval '24 hours') WHERE id=$1 AND sent_at IS NULL`, id, now)
 	return e

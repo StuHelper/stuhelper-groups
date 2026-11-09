@@ -75,27 +75,6 @@ func (s *Service) Ingest(ctx context.Context, g string, event Event, m Message) 
 	})
 }
 
-// Consume re-reads public current facts; event payloads never grant eligibility.
-// Host fans an owner event out using a durable, paginated membership index.
-func (s *Service) Consume(ctx context.Context, g string, e Event, owner string) error {
-	if !slices.Contains([]string{"qq-binding", "verification"}, e.Source) || e.Subject != owner {
-		return ErrInvalid
-	}
-	return s.run(ctx, func(tx Tx) error {
-		var c GroupConfig
-		if err := tx.Get("config", g, &c); err != nil {
-			return err
-		}
-		scoped := e
-		scoped.Source = e.Source + "/" + g
-		ok, err := tx.Accept(scoped)
-		if err != nil || !ok {
-			return err
-		}
-		_, err = s.admission(ctx, tx, account.Principal{}, c, owner, false)
-		return err
-	})
-}
 func (s *Service) rule(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, cmd Command, preview bool) (Result, error) {
 	out := Result{State: "clear"}
 	hits := []string{}

@@ -401,8 +401,8 @@ func TestRetentionInboxRollbackAndNoRecallViewAudit(t *testing.T) {
 	}
 	command(t, f, user, "apply", g.Command{Kind: "apply"})
 	f.facts.err = fmt.Errorf("unavailable")
-	change := event("change", "verification", user.Key(), "verification.changed", 1)
-	if err = f.s.Consume(ctx, "g", change, user.Key()); !errors.Is(err, g.ErrUnavailable) {
+	change := upstream("change", "verification", "credential/1", user, 1)
+	if err = f.s.Consume(ctx, change); !errors.Is(err, g.ErrUnavailable) {
 		t.Fatal(err)
 	}
 	var n int
@@ -410,7 +410,7 @@ func TestRetentionInboxRollbackAndNoRecallViewAudit(t *testing.T) {
 		t.Fatal("failed consumer committed inbox", err)
 	}
 	f.facts.err = nil
-	if err = f.s.Consume(ctx, "g", change, user.Key()); err != nil {
+	if err = f.s.Consume(ctx, change); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -489,43 +489,44 @@ func TestOutboxOrderingBackoffHeldRetryAndNotificationRollback(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		command(t, f, manager, fmt.Sprintf("warn%d", i), g.Command{Kind: "warn", Target: user.Key(), Text: "reason"})
 	}
-	events, e := f.r.Pending(ctx, f.now)
-	if e != nil || len(events) != 1 {
+	events, e := f.r.PendingOutbox(ctx, 100, nil)
+	if e != nil || len(events) != 4 {
 		t.Fatalf("%d %v", len(events), e)
 	}
 	first := events[0]
 	if e = f.r.Failed(ctx, first.ID, f.now); e != nil {
 		t.Fatal(e)
 	}
-	events, e = f.r.Pending(ctx, f.now.Add(4*time.Second))
-	if e != nil || len(events) != 0 {
-		t.Fatal("stream overtook retry", e)
+	var next time.Time
+	var held bool
+	if e = f.pool.QueryRow(ctx, "SELECT next_attempt,held FROM groups.outbox WHERE id=$1", first.ID).Scan(&next, &held); e != nil || !next.Equal(f.now.Add(5*time.Second)) || held {
+		t.Fatal(next, held, e)
 	}
-	events, e = f.r.Pending(ctx, f.now.Add(5*time.Second))
-	if e != nil || len(events) != 1 || events[0].ID != first.ID {
-		t.Fatal("retry deadline", e)
+	events, e = f.r.PendingOutbox(ctx, 100, []string{first.Subject})
+	if e != nil || len(events) != 0 {
+		t.Fatal("deferred subject not excluded", e)
 	}
 	if e = f.r.Failed(ctx, first.ID, f.now.Add(25*time.Hour)); e != nil {
 		t.Fatal(e)
 	}
-	events, e = f.r.Pending(ctx, f.now.Add(26*time.Hour))
-	if e != nil || len(events) != 0 {
-		t.Fatal("held stream bypassed", e)
+	if e = f.pool.QueryRow(ctx, "SELECT held FROM groups.outbox WHERE id=$1", first.ID).Scan(&held); e != nil || !held {
+		t.Fatal("not held", e)
 	}
 	if e = f.r.Retry(ctx, first.ID, f.now.Add(26*time.Hour)); e != nil {
 		t.Fatal(e)
 	}
-	events, e = f.r.Pending(ctx, f.now.Add(26*time.Hour))
+	events, e = f.r.PendingOutbox(ctx, 1, nil)
 	if e != nil || len(events) != 1 || events[0].ID != first.ID {
 		t.Fatal("retry changed event", e)
 	}
-	if e = f.r.Delivered(ctx, first.ID, f.now); e != nil {
+	if e = f.r.ConfirmOutbox(ctx, first.ID); e != nil {
 		t.Fatal(e)
 	}
-	events, e = f.r.Pending(ctx, f.now)
+	events, e = f.r.PendingOutbox(ctx, 1, nil)
 	if e != nil || len(events) != 1 || events[0].Revision <= first.Revision {
 		t.Fatal("outbox ordering", e)
 	}
+
 }
 func TestRuntimeDatabaseRoleIsolationAndMigration(t *testing.T) {
 	f := setup(t)

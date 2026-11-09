@@ -14,12 +14,12 @@ updated: 2026-11-09
 4. backend 实现 groups.FactsProvider 并注入 Service.Facts，将可信服务身份配置到 Service.FactsPrincipal。groups 只接收自有 Facts 类型；调用 verification、profiles、qq-binding 的代码与凭据留在 backend。
 5. 用 HTTP 认证中间件提供 account.Principal，挂载 httpapi.Handler。请求体中的角色、学校或主体声明不能替代认证身份。群的学校创建后不能通过配置迁移。
 6. 注入 Bot 与可选 Analyzer。Bot 以 Action.ID 幂等执行并查询实际结果，使用绑定事实和配置把内部群、用户标识映射到平台标识。禁止从请求自行决定机器人身份。
-7. 启动 Repository.Relay。它 LISTEN groups_outbox，启动时补读，空闲最多每 60 秒补读；按来源和对象保序，每批最多 100。投递失败从 5 秒指数退避至 1 小时，累计 24 小时进入 held。
-8. relay 连接失败时由宿主按有上限的退避重启，重启立即补读。取消上下文会停止等待。每个模块只需一个主动 relay；多个 relay 下消费者仍须 inbox 去重。
-9. 消费 action.requested 时调用 Execute，消费 action.result 时调用 Fanout。跨模块资格事件按成员所属群调用 Consume，并在宿主持久记录分页进度。事件正文不能直接授予资格。
+7. backend 的共享 relay 监听 groups.OutboxChannel，在启动、重连与通知后调用 PendingOutbox；每 60 秒兜底补读。传入当前退避和人工处理主题，在数据库中排除后再取最多 100 条。
+8. 宿主维护投递退避：5 秒起，指数增加至 1 小时，累计 24 小时转人工。每个主题按返回顺序串行消费，失败后停止该批同主题后续事件，其他主题继续。所有消费者持久提交后调用 ConfirmOutbox。
+9. groups.action.requested 调用 Execute，groups.action.result 调用 Fanout。verification 与 qq-binding 的资格、绑定事件转为 groups.UpstreamEvent 后调用 Consume(ctx, event)，无需宿主逐群扇出。
 10. 对每群分页调用 Sweep、Recover、Cleanup。每页最多 100，宿主保留游标并安排下一轮。Sweep 用于资格期限和提醒，Recover 处理执行租约，Cleanup 删除到期消息。
 
-held 事件通过 Repository.Retry 按原 ID 重试。这个方法仅供后台装配使用，调用入口必须先执行平台管理授权和管理审计。发布通知不携带消息正文或身份材料。
+宿主按原事件 ID 重试人工队列，并对重试入口执行管理授权和审计。Repository.Relay 是独立运行帮助器，使用本地 Failed/Retry 记录，不与共享 relay 同时启用。它最多处理 1000 个排除主题，超限返回 unavailable。
 
 动作状态包括 pending、executing、unknown、succeeded、failed、cancelled。只有 Bot 返回实际成功，动作才成为 succeeded。网络失败保留 unknown，后续先 Lookup；无法确定是否执行时继续保留 unknown。
 
@@ -155,6 +155,113 @@ groups 的 currentFacts 在资格判断和名片操作前校验自有 Facts，�
 backend 的机器人执行器还应校验解析返回值与请求实例一致，再调用实际机器人。解析接口是宿主装配约定，groups 不提供身份解析实现；调用方不得用空字符串或零值 BotIdentity 代表解析成功。
 
 事件生产方按 EVENT-DELIVERY.md 输出 CloudEvents 1.0，携带稳定 ID、source、subject 和单调 revision。groups 的 Consume 接受 qq-binding 与 verification 来源，再读取当前事实。
+
+## outbox 与上游事件
+
+### outbox 读取端口
+
+```go
+const OutboxChannel = "groups_outbox"
+
+type OutboxReader interface {
+    PendingOutbox(ctx context.Context, limit int, excludeSubjects []string) ([]Event, error)
+    ConfirmOutbox(ctx context.Context, id string) error
+}
+```
+
+postgres.Repository 实现 OutboxReader。limit 必须为 1–100，排除主题最多 1000 项，nil 与空集合等价，重复项允许但计入上限。参数越界返回 groups.ErrInvalid。
+
+PendingOutbox 只读 sent_at IS NULL 的行，在 SQL 中先排除主题，然后按 subject 的字节顺序、revision、事件 ID 升序排序并应用 limit。部分索引限定未确认记录，不在读取后过滤首批。
+
+读取不领取或确认事件；同一批可以包含同主题的多条记录。所有 outbox 事件来源均为 groups，因此上述排序保持每个 (source, subject) 内的顺序。宿主不得在较早事件失败后继续消费或确认同主题后续事件。
+
+ConfirmOutbox 在首次确认时保存时间，重复确认成功且保持原时间，未知 ID 返回 groups.ErrNotFound。它仅供可信 relay 调用，宿主应在全部消费者成功提交后确认。旧 Pending 和 Delivered 入口已删除。
+
+公开读取端口与 verification 796b76f 一致，不按提供方时钟或本地 Failed/Retry 状态隐式过滤。backend 必须把自己的退避与人工主题传入 excludeSubjects，不能先取 100 条再在内存中排除。
+
+groups 自有 outbox 仍使用 Event：revision 在封套顶层，data 是该事件的业务 JSON。backend 的 Source 继续把 Event.Revision 映射到 relay 修订字段，其他字段按原值传递。
+
+### owner 反向查询
+
+```go
+type ManagedGroup struct {
+    ID     string `json:"id"`
+    School string `json:"school"`
+}
+
+func (s *Service) GroupsForOwner(
+    ctx context.Context, owner account.Principal, cursor string, limit int,
+) (Page[ManagedGroup], error)
+```
+
+owner 的 Issuer、Subject 必须构成有效平台账号键。按完整 owner 键查询，返回 joined=true 且 state 非 removed、同时存在 groups 配置的群。其他用户、已离群、待入群及未由 groups 配置管理的群不返回。
+
+单页 limit 为 1–100，没有省略参数的默认值。结果按群 ID 字节顺序升序，next_cursor 为最后返回的群 ID，空字符串表示结束。数据库最多读取 limit+1 条以判断后续页；游标最长 128 字节。
+
+此接口是 backend 专用 Go 端口，没有新增 HTTP 路由。owner 参数标识查询对象，不代表调用者授权。backend 若把结果提供给管理端或信息查询调用者，仍须检查调用者对各群的当前读取范围。
+
+### 上游事件形状
+
+```go
+type EligibilityChange struct {
+    Owner    string `json:"owner"`
+    Revision int64  `json:"revision"`
+}
+
+type UpstreamEvent struct {
+    SpecVersion     string            `json:"specversion"`
+    ID              string            `json:"id"`
+    Source          string            `json:"source"`
+    Type            string            `json:"type"`
+    Subject         string            `json:"subject"`
+    Time            time.Time         `json:"time"`
+    DataContentType string            `json:"datacontenttype"`
+    SchoolID        string            `json:"schoolid,omitempty"`
+    Data            EligibilityChange `json:"data"`
+}
+
+func (s *Service) Consume(ctx context.Context, event UpstreamEvent) error
+```
+
+```json
+{
+  "specversion": "1.0",
+  "id": "qualification-change-001",
+  "source": "verification",
+  "type": "verification.credential.revoked.v1",
+  "subject": "credential/example-001",
+  "time": "2026-11-09T00:00:00Z",
+  "datacontenttype": "application/json",
+  "schoolid": "school-example",
+  "data": { "owner": "dGVzdA:dXNlcg", "revision": 2 }
+}
+```
+
+此示例 owner 是测试 issuer/subject 的规范编码。data.owner 用 account.Parse 解析，subject 是上游对象标识，可以是资格或绑定对象 ID，不能替换为 owner。revision 必须是该 (source, subject) 的正整数修订。
+
+verification 来源接收 verification.credential.*.v1、verification.teacher.*.v1、verification.identity.verified.v1。
+
+qq-binding 来源接收 qq-binding.binding.*.v1、qq-binding.unlink.*.v1、qq-binding.account.closed.v1。来源与事件类型必须匹配。
+
+specversion 必须为 1.0，datacontenttype 为 application/json，time 为非零时间。ID 最多 256 字节，subject 最多 2048 字节，type 最多 128 字节，schoolid 可选且最多 128 字节。封套中的字符串不得含控制字符。
+
+backend 从 verification.Envelope 逐字段复制，保留 data.owner 与 data.revision；不把 groups 出站 Event 的顶层 revision 布局用于该输入。qq-binding 也需提供相同上游封套和稳定修订，未提供时不自行生成时间戳修订或身份映射。
+
+### 消费事务与 Sweep 分工
+
+Consume 自行反查 owner 的受管群，并包括仍有效的入群申请，让补齐资格后可推进待批准流程。已移出成员与不存在配置的群不处理。schoolid 保留在封套中，实际资格按每个目标群的当前学校配置重新读取。
+
+同一事务完成 inbox、(source, subject) 修订更新、资格状态、审计和 outbox。重复 ID 且内容相同直接成功，内容变化返回 ErrConflict；新 ID 的旧修订或相同修订登记去重后忽略，不再次读取事实。
+
+不同资格对象的修订分别比较，不按 owner 合并修订。事件内容只用于定位对象；准入结论始终由当前 FactsProvider 返回。没有关联群时也成功记录 inbox，避免反复投递无关事件。
+
+单事件最多重算 1000 个关联群，事务期限 10 秒。超过上限返回 ErrUnavailable，任何群的依赖失败或事务失败均整体回滚，不留下 inbox、修订、部分状态或待执行动作。宿主保留原事件重试，超限应告警并处理该 owner 的异常规模。
+
+事件路径负责变更后的及时重算。Sweep 继续按群分页、每页最多 100 条，负责时间自然到期、提醒、事件源暂不可用时的周期性核对，并保留已有延期与豁免。Sweep 不读取 outbox，也不代替事件确认。
+
+旧 Consume(ctx, group, event, owner) 已删除。backend 不再自己逐群分页后调用消费；直接转发上游封套并等待 Consume 返回，再推进来源事件的确认。原有 groups 出站动作消费者继续调用 Execute/Fanout。
+
+这些新增和修改均为 Go 装配端口，HTTP OpenAPI 仍为 0.3.0，路径与生成 SDK 无变化。
 
 ## Koishi
 
