@@ -50,3 +50,8 @@ CREATE INDEX IF NOT EXISTS groups_outbox_delivery_pending ON groups.outbox
 -- Reverse membership lookup uses the canonical owner key, not a full group scan.
 CREATE INDEX IF NOT EXISTS groups_members_by_owner ON groups.records(id,bucket)
  WHERE right(bucket,8)='/members';
+
+-- Track source changes for account queries; existing rows start at migration time.
+CREATE OR REPLACE FUNCTION groups.account_query_changed() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.query_changed_at=clock_timestamp(); RETURN NEW; END $$;
+ALTER TABLE groups.records ADD COLUMN IF NOT EXISTS query_changed_at timestamptz NOT NULL DEFAULT now();
+CREATE OR REPLACE TRIGGER account_query_changed BEFORE UPDATE ON groups.records FOR EACH ROW EXECUTE FUNCTION groups.account_query_changed();

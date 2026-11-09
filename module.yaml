@@ -16,13 +16,19 @@ optional:
   - id: qq-binding
     api: 1
 capabilities:
+  - groups.account-query
   - groups.read
   - groups.manage
   - groups.configure
   - groups.messages.read
   - groups.messages.send
   - groups.messages.recall
+specifications:
+  - docs/spec/account-query.md
 scenario_tests:
+  IQ-02:
+    - accountquery/query_test.go#TestAccountQueryAuthorizationAndFailures
+    - postgres/account_query_test.go#TestAccountQueryScopePaginationAndRuntime
   QQ-01:
     - my_groups_test.go#TestMyGroupsOwnIsolationPaginationAndReadOnly
     - my_groups_test.go#TestMyGroupsGeneratedClientAndRouteReservation

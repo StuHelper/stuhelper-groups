@@ -14,3 +14,5 @@ bash scripts/check-with-postgres.sh
 Go 使用 1.27.3，Node 使用 24.22.1，pnpm 使用 10.33.4。本地准备脚本从相邻仓库的固定提交仅导出公开 platform 到 .tools/candidates，组合见 [candidate-sources.json](candidate-sources.json)。正式依赖版本与工作区锁由负责人统一固定。
 
 测试脚本创建仅监听独立 Unix socket 的 PostgreSQL，结束时删除本次数据库目录。可通过 `STUHELPER_TEST_PG_BIN` 指定 PostgreSQL 程序目录。测试不访问真实 QQ 账号、真实群或生产系统。
+
+按账号信息查询的 Go 接口、能力、字段与范围限制见[账号查询规格](docs/spec/account-query.md)。
