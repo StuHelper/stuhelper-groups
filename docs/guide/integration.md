@@ -237,15 +237,46 @@ func (s *Service) Consume(ctx context.Context, event UpstreamEvent) error
 }
 ```
 
-此示例 owner 是测试 issuer/subject 的规范编码。data.owner 用 account.Parse 解析，subject 是上游对象标识，可以是资格或绑定对象 ID，不能替换为 owner。revision 必须是该 (source, subject) 的正整数修订。
+此示例 owner 是测试 issuer/subject 的规范编码，data.owner 使用 account.Parse 校验。source 与 subject 均须保留提供方原值：verification 通常以资格对象为主题，qq-binding 的统一绑定变化以 owner 为主题。
 
-verification 来源接收 verification.credential.*.v1、verification.teacher.*.v1、verification.identity.verified.v1。
+以下表格完整列出 groups 接受的类型与类型族。* 表示符合事件类型语法的非空子类型，名称只使用小写字母、数字、点与短横线，版本固定为 v1。表外类型或来源与类型不匹配时返回 ErrInvalid，不写 inbox。
 
-qq-binding 来源接收 qq-binding.binding.*.v1、qq-binding.unlink.*.v1、qq-binding.account.closed.v1。来源与事件类型必须匹配。
+| source | 接受的 type / 类型族 | subject 与修订 |
+| --- | --- | --- |
+| verification | verification.credential.*.v1 | 原资格对象主题，data.revision 为该主题的正整数修订 |
+| verification | verification.teacher.*.v1 | 原教师资格对象主题，data.revision 为该主题的正整数修订 |
+| verification | verification.identity.verified.v1 | 保留提供方主题与正整数修订 |
+| qq-binding | qq-binding.owner-bindings.changed.v1 | subject=data.owner；id 是 data.revision 的规范十进制字符串 |
+| qq-binding | qq-binding.binding.*.v1 | 保留提供方主题与正整数修订 |
+| qq-binding | qq-binding.unlink.*.v1 | 保留提供方主题与正整数修订 |
+| qq-binding | qq-binding.account.closed.v1 | 保留提供方主题与正整数修订 |
 
-specversion 必须为 1.0，datacontenttype 为 application/json，time 为非零时间。ID 最多 256 字节，subject 最多 2048 字节，type 最多 128 字节，schoolid 可选且最多 128 字节。封套中的字符串不得含控制字符。
+所有类型共用上述 UpstreamEvent 字段：specversion 为 1.0，datacontenttype 为 application/json，time 为非零时间，data.owner 为规范账号键，data.revision 为 JSON 整数，使用 Go int64 表示且必须大于 0。
 
-backend 从 verification.Envelope 逐字段复制，保留 data.owner 与 data.revision；不把 groups 出站 Event 的顶层 revision 布局用于该输入。qq-binding 也需提供相同上游封套和稳定修订，未提供时不自行生成时间戳修订或身份映射。
+ID 最多 256 字节，subject 最多 2048 字节，type 最多 128 字节，schoolid 可选且最多 128 字节。封套字符串不得含控制字符。字段名是 data.owner 和 data.revision，不使用 account、version 或字符串形式的 revision。
+
+当前 qq-binding 提供方使用 qq-binding.owner-bindings.changed.v1。依据其提交 49df06ddf58a4521ccb07ff61442e0b5ded6fce2 的 outbox.go 与 postgres/outbox.go，持久 outbox ID 同时作为修订值，不要求同一 owner 的修订连续。
+
+该类型额外校验 subject 等于 data.owner，id 等于 strconv.FormatInt(data.revision, 10)。因此带前导零、正号、非数字或与 revision 不一致的 id 都会被拒绝。schoolid 仍是可选扩展字段，当前提供方不填。
+
+以下脱敏样例由提供方生产赋值代码构造，固定夹具及来源记录位于 testdata/qq-binding-owner-bindings.changed.json 与 testdata/README.md。groups 构建和测试无需 qq-binding 私有源码。
+
+```json
+{
+  "specversion": "1.0",
+  "id": "42",
+  "source": "qq-binding",
+  "type": "qq-binding.owner-bindings.changed.v1",
+  "subject": "dGVzdA:dXNlcg",
+  "time": "2026-11-09T00:00:00Z",
+  "datacontenttype": "application/json",
+  "data": { "owner": "dGVzdA:dXNlcg", "revision": 42 }
+}
+```
+
+backend 从 verification.Envelope 或 qq-binding.Envelope 逐字段复制到 UpstreamEvent，保留事件类型、subject、ID、data.owner 和 data.revision。不使用时间戳重新生成修订，也不先把 int64 转成浮点数，避免大 ID 丢失精度。
+
+groups 出站 Event 的 revision 位于顶层，上游输入仍使用 data.revision。两种布局分别映射，不能混用。已因不支持统一绑定变化类型而进入重试的事件可按原封套和原 ID 再次消费。
 
 ### 消费事务与 Sweep 分工
 
@@ -253,7 +284,7 @@ Consume 自行反查 owner 的受管群，并包括仍有效的入群申请，�
 
 同一事务完成 inbox、(source, subject) 修订更新、资格状态、审计和 outbox。重复 ID 且内容相同直接成功，内容变化返回 ErrConflict；新 ID 的旧修订或相同修订登记去重后忽略，不再次读取事实。
 
-不同资格对象的修订分别比较，不按 owner 合并修订。事件内容只用于定位对象；准入结论始终由当前 FactsProvider 返回。没有关联群时也成功记录 inbox，避免反复投递无关事件。
+修订始终按 (source, subject) 比较。verification 的不同资格对象互不合并，qq-binding 的统一绑定变化按各自 owner 主题比较，不能把不同 owner 或不同来源合并成同一修订流。事件内容只用于定位对象；准入结论始终由当前 FactsProvider 返回。没有关联群时也成功记录 inbox，避免反复投递无关事件。
 
 单事件最多重算 1000 个关联群，事务期限 10 秒。超过上限返回 ErrUnavailable，任何群的依赖失败或事务失败均整体回滚，不留下 inbox、修订、部分状态或待执行动作。宿主保留原事件重试，超限应告警并处理该 owner 的异常规模。
 

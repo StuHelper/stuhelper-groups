@@ -28,6 +28,8 @@ outbox 提供带排除主题和 limit 的 PendingOutbox，以及幂等 ConfirmOu
 
 Web 通过 GET /api/v1/groups/me 查询自己的成员和申请记录。本人查询复用 owner 反向索引和资格判定，区分缺失条件、未知事实和依赖失败，不返回管理信息，不触发业务写入。
 
+Consume 接受 qq-binding.owner-bindings.changed.v1，并按提供方实际封套检查 subject、owner、十进制 ID 与 int64 修订的一致性。已有去重和旧修订规则不变，不支持的类型继续返回 ErrInvalid。
+
 ## 验证
 
 隔离 PostgreSQL 18.6 覆盖独立集合的分页与授权、群摘要计数、并发配置冲突、口令不泄露、命令判别校验，以及初始迁移和重复执行、运行身份允许访问本模块数据且拒绝其他 schema 和 DDL、并发幂等、越权及撤权、期限边界、失败与超时、事件顺序和回滚不发通知。

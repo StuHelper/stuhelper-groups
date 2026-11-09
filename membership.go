@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -33,8 +34,8 @@ func (s *Service) GroupsForOwner(ctx context.Context, owner account.Principal, c
 	return out, nil
 }
 
-// UpstreamEvent uses the same CloudEvents shape as verification's public outbox.
-// Revision belongs to (source, subject), not to the owner. Backend must retain it.
+// UpstreamEvent uses the providers' public CloudEvents shape. Preserve source
+// and subject: verification uses object streams; qq-binding uses an owner stream.
 type UpstreamEvent struct {
 	SpecVersion     string            `json:"specversion"`
 	ID              string            `json:"id"`
@@ -69,12 +70,22 @@ func validUpstream(e UpstreamEvent) bool {
 	}
 	switch e.Source {
 	case "verification":
-		return strings.HasPrefix(e.Type, "verification.credential.") || strings.HasPrefix(e.Type, "verification.teacher.") || e.Type == "verification.identity.verified.v1"
+		return upstreamFamily(e.Type, "verification.credential.") || upstreamFamily(e.Type, "verification.teacher.") || e.Type == "verification.identity.verified.v1"
 	case "qq-binding":
-		return strings.HasPrefix(e.Type, "qq-binding.binding.") || strings.HasPrefix(e.Type, "qq-binding.unlink.") || e.Type == "qq-binding.account.closed.v1"
+		if e.Type == "qq-binding.owner-bindings.changed.v1" {
+			// qq-binding 49df06d allocates one durable positive int64 ID, formats it
+			// in base 10 for the envelope, and uses it as the owner stream revision.
+			return e.Subject == e.Data.Owner && e.ID == strconv.FormatInt(e.Data.Revision, 10)
+		}
+		return upstreamFamily(e.Type, "qq-binding.binding.") || upstreamFamily(e.Type, "qq-binding.unlink.") || e.Type == "qq-binding.account.closed.v1"
 	default:
 		return false
 	}
+}
+
+// A family requires a nonempty subtype before the version suffix.
+func upstreamFamily(kind, prefix string) bool {
+	return strings.HasPrefix(kind, prefix) && len(strings.TrimSuffix(kind, ".v1")) > len(prefix)
 }
 func eventText(v string, n int) bool {
 	return strings.TrimSpace(v) != "" && len(v) <= n && utf8.ValidString(v) && !strings.ContainsFunc(v, unicode.IsControl)
