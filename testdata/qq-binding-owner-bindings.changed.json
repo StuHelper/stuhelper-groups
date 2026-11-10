@@ -1,0 +1,13 @@
+{
+  "specversion": "1.0",
+  "source": "qq-binding",
+  "type": "qq-binding.owner-bindings.changed.v1",
+  "datacontenttype": "application/json",
+  "id": "42",
+  "subject": "dGVzdA:dXNlcg",
+  "time": "2026-11-09T00:00:00Z",
+  "data": {
+    "owner": "dGVzdA:dXNlcg",
+    "revision": 42
+  }
+}
