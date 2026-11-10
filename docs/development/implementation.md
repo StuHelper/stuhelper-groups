@@ -1,0 +1,49 @@
+---
+type: development
+status: Accepted
+updated: 2026-11-09
+---
+
+# Groups 实施状态
+
+## 当前实现
+
+OpenAPI 0.4.0 使用 /api/v1/groups 前缀，Go/TypeScript 客户端、HTTP Handler、Service 与 PostgreSQL Repository 已建立。群与学校关联、分范围管理、本人申请进度、三项绑定和资格判断、动态口令、宽限期、恢复、延期、豁免与自动移出均由服务端处理。
+
+群名片检查区分资料缺失和不合规，性别未知使用中性分隔符。检查、提醒和自动修改分别配置。模板可引用许可字段及自由昵称，名片不合规不触发资格失效移出。
+
+群管理提供警告、禁言、解禁、踢出、黑名单、关键词、链接、频率、防复读、规则预览、观察名单、举报分析与反馈。AI 建议独立保存，执行只采用已启用的动作和当前授权。
+
+欢迎提示与群规则模板可配置。批量管理先预览，执行逐项返回结果。历史成员通过相同资格规则检查，保留延期和豁免。各订阅接收目标独立执行，不合并成功与失败结果。
+
+娱乐功能提供骰子、自助禁言、冷却和保底，未配置不执行。自助禁言只作用于发起者，不写违规记录。管理员可解禁，普通用户没有自行解禁能力。
+
+消息留存默认关闭，到期读取被拒绝并可分页删除。撤回内容查看不写业务查看审计。其他机器人动作保存授权后的待执行记录及实际执行结果审计。
+
+业务写入、审计和 outbox 在同一事务，提交后 pg_notify。inbox 拒绝同 ID 内容变化，忽略重复与旧修订。发送器使用部分索引、LISTEN、60 秒补读及退避队列。
+
+群列表返回 GroupSummary，集合各有独立分页类型。配置采用 expected_revision 比较更新，口令只在请求中接收并保存带盐摘要。命令按 kind 验证必填字段，错误码采用 groups_ 枚举。
+
+outbox 提供带排除主题和 limit 的 PendingOutbox，以及幂等 ConfirmOutbox。GroupsForOwner 提供有界成员反查，Consume 按上游 owner 在同一事务内重算关联群，Sweep 保留为周期性核对与期限处理。
+
+Web 通过 GET /api/v1/groups/me 查询自己的成员和申请记录。本人查询复用 owner 反向索引和资格判定，区分缺失条件、未知事实和依赖失败，不返回管理信息，不触发业务写入。
+
+Consume 接受 qq-binding.owner-bindings.changed.v1，并按提供方实际封套检查 subject、owner、十进制 ID 与 int64 修订的一致性。已有去重和旧修订规则不变，不支持的类型继续返回 ErrInvalid。
+
+## 验证
+
+隔离 PostgreSQL 18.6 覆盖独立集合的分页与授权、群摘要计数、并发配置冲突、口令不泄露、命令判别校验，以及建表初始化及其幂等性、运行身份允许访问本模块数据且拒绝其他 schema 和 DDL、并发幂等、越权及撤权、期限边界、失败与超时、事件顺序和回滚不发通知。
+
+规格 QQ-01 至 QQ-10、BE-01 至 BE-03 的后端测试函数登记在 module.yaml。QQ-10 的菜单位置由前端和 Koishi 完成，本仓测试覆盖撤回内容权限和娱乐动作边界。
+
+本地检查执行生成一致性、仓库规则、文档、模块边界、gofmt、go vet、go test -race、go build 和 workflow 校验。远程 CI 验证公开源码组合。真实账号验收、backend 跨仓装配、部署和性能基准待执行。
+
+## 接入限制
+
+groups 仅依赖自有接口、公开 platform 与公开第三方库。资格、字段许可与机器人身份类型定义在 dependencies.go；verification、profiles 和 qq-binding 的事实读取、DTO 转换及错误映射由 backend 实现。
+
+机器人执行器、身份反向解析、图片媒体代理和实时工作台推送由 backend 与 Koishi 装配。本仓使用模拟机器人验证实际成功、失败和未知结果，不访问真实 QQ。
+
+Repository 使用模块级事务锁保护状态转换，批量上限为 100。AI 和资格查询具有事务超时，但仍占用锁；大规模群并发前需要按业务规模建立基准，再拆分锁和外部查询阶段。
+
+远程仓库为 StuHelper/stuhelper-groups，候选通过 feat/backend-decisions 草稿 PR 验证。现有模块不在本任务写入范围，backend 依赖、工作区锁、管理端和 Koishi 未修改。
