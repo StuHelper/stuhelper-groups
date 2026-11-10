@@ -17,9 +17,11 @@ console.log('PASS: repository SQL boundary and registered scenario functions');
 const modules = execFileSync('go', ['list', '-m', '-f', '{{.Path}}', 'all'], {encoding:'utf8', env:{...process.env,GOWORK:'off'}}).trim().split('\n');
 const publicModules = new Set(['github.com/StuHelper/stuhelper-groups', 'github.com/StuHelper/stuhelper-platform']);
 for (const name of modules) if (name.startsWith('github.com/StuHelper/')) assert(publicModules.has(name), `Non-public-build dependency: ${name}`);
-assert.deepEqual(Object.keys(JSON.parse(fs.readFileSync('candidate-sources.json', 'utf8'))), ['platform']);
+// StuHelper dependencies resolve from released module versions; local replacements
+// and extra source checkouts would make the build differ from the tagged release.
+assert(!/^replace\s/m.test(fs.readFileSync('go.mod', 'utf8')), 'go.mod must not replace modules');
 const workflow = YAML.parse(fs.readFileSync('.github/workflows/checks.yml', 'utf8'));
 for (const job of Object.values(workflow.jobs)) for (const step of job.steps ?? []) {
- if (step.uses?.startsWith('actions/checkout@') && step.with?.repository) assert.equal(step.with.repository, 'StuHelper/stuhelper-platform');
+ if (step.uses?.startsWith('actions/checkout@')) assert(!step.with?.repository, 'Workflow must not check out other repositories');
 }
 console.log('PASS: public source dependency boundary');

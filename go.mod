@@ -3,7 +3,7 @@ module github.com/StuHelper/stuhelper-groups
 go 1.27.3
 
 require (
-	github.com/StuHelper/stuhelper-platform v0.0.0-20261108152919-0efdba00ff59
+	github.com/StuHelper/stuhelper-platform v0.2.0
 	github.com/getkin/kin-openapi v0.149.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.11.0
@@ -24,5 +24,3 @@ require (
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 )
-
-replace github.com/StuHelper/stuhelper-platform => ./.tools/candidates/platform
