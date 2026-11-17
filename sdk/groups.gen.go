@@ -56,6 +56,7 @@ const (
 	ActionCommandKindApprove     ActionCommandKind = "approve"
 	ActionCommandKindBlacklist   ActionCommandKind = "blacklist"
 	ActionCommandKindCard        ActionCommandKind = "card"
+	ActionCommandKindCardPreview ActionCommandKind = "card_preview"
 	ActionCommandKindDice        ActionCommandKind = "dice"
 	ActionCommandKindExempt      ActionCommandKind = "exempt"
 	ActionCommandKindExtend      ActionCommandKind = "extend"
@@ -94,6 +95,8 @@ func (e ActionCommandKind) Valid() bool {
 	case ActionCommandKindBlacklist:
 		return true
 	case ActionCommandKindCard:
+		return true
+	case ActionCommandKindCardPreview:
 		return true
 	case ActionCommandKindDice:
 		return true
@@ -228,6 +231,21 @@ const (
 func (e CardCommandKind) Valid() bool {
 	switch e {
 	case CardCommandKindCard:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CardPreviewCommandKind.
+const (
+	CardPreviewCommandKindCardPreview CardPreviewCommandKind = "card_preview"
+)
+
+// Valid indicates whether the value is a known member of the CardPreviewCommandKind enum.
+func (e CardPreviewCommandKind) Valid() bool {
+	switch e {
+	case CardPreviewCommandKindCardPreview:
 		return true
 	default:
 		return false
@@ -516,6 +534,39 @@ func (e MyGroupEligibility) Valid() bool {
 	}
 }
 
+// Defines values for MyGroupMissingCardFields.
+const (
+	MyGroupMissingCardFieldsDepartment MyGroupMissingCardFields = "department"
+	MyGroupMissingCardFieldsGender     MyGroupMissingCardFields = "gender"
+	MyGroupMissingCardFieldsGrade      MyGroupMissingCardFields = "grade"
+	MyGroupMissingCardFieldsName       MyGroupMissingCardFields = "name"
+	MyGroupMissingCardFieldsNickname   MyGroupMissingCardFields = "nickname"
+	MyGroupMissingCardFieldsSchool     MyGroupMissingCardFields = "school"
+	MyGroupMissingCardFieldsStudentId  MyGroupMissingCardFields = "student_id"
+)
+
+// Valid indicates whether the value is a known member of the MyGroupMissingCardFields enum.
+func (e MyGroupMissingCardFields) Valid() bool {
+	switch e {
+	case MyGroupMissingCardFieldsDepartment:
+		return true
+	case MyGroupMissingCardFieldsGender:
+		return true
+	case MyGroupMissingCardFieldsGrade:
+		return true
+	case MyGroupMissingCardFieldsName:
+		return true
+	case MyGroupMissingCardFieldsNickname:
+		return true
+	case MyGroupMissingCardFieldsSchool:
+		return true
+	case MyGroupMissingCardFieldsStudentId:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MyGroupMissingConditions.
 const (
 	MyGroupMissingConditionsAlumniNotAccepted    MyGroupMissingConditions = "alumni_not_accepted"
@@ -747,6 +798,39 @@ const (
 func (e ReportCommandKind) Valid() bool {
 	switch e {
 	case ReportCommandKindReport:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ResultMissingFields.
+const (
+	ResultMissingFieldsDepartment ResultMissingFields = "department"
+	ResultMissingFieldsGender     ResultMissingFields = "gender"
+	ResultMissingFieldsGrade      ResultMissingFields = "grade"
+	ResultMissingFieldsName       ResultMissingFields = "name"
+	ResultMissingFieldsNickname   ResultMissingFields = "nickname"
+	ResultMissingFieldsSchool     ResultMissingFields = "school"
+	ResultMissingFieldsStudentId  ResultMissingFields = "student_id"
+)
+
+// Valid indicates whether the value is a known member of the ResultMissingFields enum.
+func (e ResultMissingFields) Valid() bool {
+	switch e {
+	case ResultMissingFieldsDepartment:
+		return true
+	case ResultMissingFieldsGender:
+		return true
+	case ResultMissingFieldsGrade:
+		return true
+	case ResultMissingFieldsName:
+		return true
+	case ResultMissingFieldsNickname:
+		return true
+	case ResultMissingFieldsSchool:
+		return true
+	case ResultMissingFieldsStudentId:
 		return true
 	default:
 		return false
@@ -1050,6 +1134,18 @@ type CardCommand struct {
 // CardCommandKind defines model for CardCommand.Kind.
 type CardCommandKind string
 
+// CardPreviewCommand Read-only management command; previews expected card rendering and missing profile fields without queuing bot actions.
+type CardPreviewCommand struct {
+	Kind   CardPreviewCommandKind `json:"kind"`
+	Target string                 `json:"target"`
+
+	// Text Optional candidate card_template override; uses the group's stored card_template when omitted or empty.
+	Text *string `json:"text,omitempty"`
+}
+
+// CardPreviewCommandKind defines model for CardPreviewCommand.Kind.
+type CardPreviewCommandKind string
+
 // Command defines model for Command.
 type Command struct {
 	union json.RawMessage
@@ -1161,7 +1257,10 @@ type GroupConfig struct {
 	Name             string                   `json:"name"`
 
 	// Number Masked QQ group number; only its final four digits are shown.
-	Number           string `json:"number"`
+	Number string `json:"number"`
+
+	// PasswordEpoch Monotonic generation counter incremented whenever the dynamic password is set, rotated or cleared.
+	PasswordEpoch    *int64 `json:"password_epoch,omitempty"`
 	PasswordSet      bool   `json:"password_set"`
 	Pity             int64  `json:"pity"`
 	RemindCard       bool   `json:"remind_card"`
@@ -1311,6 +1410,9 @@ type Member struct {
 	Owner      string    `json:"owner"`
 	Password   bool      `json:"password"`
 
+	// PasswordEpoch Dynamic password generation matched by this member.
+	PasswordEpoch *int64 `json:"password_epoch,omitempty"`
+
 	// Reminder UTC timestamp. 0001-01-01T00:00:00Z means no deadline/event is currently set.
 	Reminder time.Time `json:"reminder"`
 	State    string    `json:"state"`
@@ -1378,6 +1480,9 @@ type MyGroup struct {
 	// Joined True only after the bot confirms group membership; an application does not imply joining.
 	Joined bool `json:"joined"`
 
+	// MissingCardFields Optional card template field keys not yet disclosed or available for this group's card check; never contains field values.
+	MissingCardFields *[]MyGroupMissingCardFields `json:"missing_card_fields,omitempty"`
+
 	// MissingConditions Confirmed unmet conditions only. restricted discloses no blacklist reasons or management data.
 	MissingConditions []MyGroupMissingConditions `json:"missing_conditions"`
 	Name              string                     `json:"name"`
@@ -1401,6 +1506,9 @@ type MyGroup struct {
 
 // MyGroupEligibility Current prerequisite assessment, separate from recorded membership/approval or exemption. Any required unknown fact prevents eligible.
 type MyGroupEligibility string
+
+// MyGroupMissingCardFields defines model for MyGroup.MissingCardFields.
+type MyGroupMissingCardFields string
 
 // MyGroupMissingConditions defines model for MyGroup.MissingConditions.
 type MyGroupMissingConditions string
@@ -1512,9 +1620,15 @@ type Result struct {
 	Action string `json:"action"`
 	Detail string `json:"detail"`
 	Id     string `json:"id"`
-	State  string `json:"state"`
-	Value  int64  `json:"value"`
+
+	// MissingFields Optional list of card template field keys not yet disclosed or available.
+	MissingFields *[]ResultMissingFields `json:"missing_fields,omitempty"`
+	State         string                 `json:"state"`
+	Value         int64                  `json:"value"`
 }
+
+// ResultMissingFields defines model for Result.MissingFields.
+type ResultMissingFields string
 
 // RuleCommand Management command; requires current group-scoped capability.
 type RuleCommand struct {
@@ -2688,6 +2802,40 @@ func (t *Command) MergeCardCommand(v CardCommand) error {
 	return err
 }
 
+// AsCardPreviewCommand returns the union data inside the Command as a CardPreviewCommand
+func (t Command) AsCardPreviewCommand() (CardPreviewCommand, error) {
+	var body CardPreviewCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCardPreviewCommand overwrites any union data inside the Command as the provided CardPreviewCommand
+func (t *Command) FromCardPreviewCommand(v CardPreviewCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"card_preview"}`))
+	t.union = b
+	return err
+}
+
+// MergeCardPreviewCommand performs a merge with any union data inside the Command, using the provided CardPreviewCommand
+func (t *Command) MergeCardPreviewCommand(v CardPreviewCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"card_preview"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 // AsAnalyzeCommand returns the union data inside the Command as a AnalyzeCommand
 func (t Command) AsAnalyzeCommand() (AnalyzeCommand, error) {
 	var body AnalyzeCommand
@@ -2950,6 +3098,8 @@ func (t Command) ValueByDiscriminator() (interface{}, error) {
 		return t.AsBlacklistCommand()
 	case "card":
 		return t.AsCardCommand()
+	case "card_preview":
+		return t.AsCardPreviewCommand()
 	case "dice":
 		return t.AsDiceCommand()
 	case "exempt":

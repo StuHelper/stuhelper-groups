@@ -146,6 +146,85 @@ func (s *Service) rule(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	}
 	return out, nil
 }
+
+var cardTemplateFields = []string{"school", "grade", "department", "name", "student_id", "gender", "nickname"}
+
+func renderCardTemplate(tmpl string, fields map[string]CardField) (string, []string, error) {
+	var b strings.Builder
+	missing := []string{}
+	for i := 0; i < len(tmpl); {
+		switch tmpl[i] {
+		case '}':
+			return "", nil, ErrInvalid
+		case '{':
+			end := strings.IndexByte(tmpl[i+1:], '}')
+			if end < 0 {
+				return "", nil, ErrInvalid
+			}
+			token := tmpl[i+1 : i+1+end]
+			i += end + 2
+			if token == "separator" {
+				sep := "·"
+				if fields["gender"].Value == "male" {
+					sep = "-"
+				} else if fields["gender"].Value == "female" {
+					sep = "+"
+				}
+				b.WriteString(sep)
+				continue
+			}
+			if !slices.Contains(cardTemplateFields, token) {
+				return "", nil, ErrInvalid
+			}
+			v, ok := fields[token]
+			if !ok {
+				if !slices.Contains(missing, token) {
+					missing = append(missing, token)
+				}
+				continue
+			}
+			b.WriteString(v.Value)
+		default:
+			b.WriteByte(tmpl[i])
+			i++
+		}
+	}
+	rendered := b.String()
+	if runes := []rune(rendered); len(runes) > 2048 {
+		rendered = string(runes[:2048])
+	}
+	return rendered, missing, nil
+}
+
+func (s *Service) cardPreview(ctx context.Context, c GroupConfig, cmd Command) (Result, error) {
+	out := Result{State: "unavailable", Action: "card_preview"}
+	if !valid(cmd.Target, 2048) || len(cmd.Text) > 1024 {
+		return out, ErrInvalid
+	}
+	if s.Facts == nil {
+		return out, ErrUnavailable
+	}
+	f, e := s.currentFacts(ctx, cmd.Target, c.School)
+	if e != nil {
+		return out, ErrUnavailable
+	}
+	tmpl := c.CardTemplate
+	if cmd.Text != "" {
+		tmpl = cmd.Text
+	}
+	if tmpl == "" {
+		return out, ErrDisabled
+	}
+	rendered, missing, e := renderCardTemplate(tmpl, f.Fields)
+	if e != nil {
+		return out, e
+	}
+	if len(missing) > 0 {
+		return Result{State: "pending_profile", Action: "card_preview", Detail: strings.Join(missing, ","), MissingFields: missing}, nil
+	}
+	return Result{State: "ready", Action: "card_preview", Detail: rendered}, nil
+}
+
 func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, cmd Command) (Result, error) {
 	out := Result{State: "unavailable"}
 	if s.Facts == nil {
@@ -158,27 +237,12 @@ func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	if !c.CheckCard || c.CardTemplate == "" {
 		return out, ErrDisabled
 	}
-	text := c.CardTemplate
-	for _, field := range []string{"school", "grade", "department", "name", "student_id", "gender", "nickname"} {
-		token := "{" + field + "}"
-		if strings.Contains(text, token) {
-			v, ok := f.Fields[field]
-			if !ok {
-				return Result{State: "pending_profile"}, nil
-			}
-			text = strings.ReplaceAll(text, token, v.Value)
-		}
+	text, missing, e := renderCardTemplate(c.CardTemplate, f.Fields)
+	if e != nil {
+		return out, e
 	}
-	sep := "·"
-	if f.Fields["gender"].Value == "male" {
-		sep = "-"
-	}
-	if f.Fields["gender"].Value == "female" {
-		sep = "+"
-	}
-	text = strings.ReplaceAll(text, "{separator}", sep)
-	if strings.ContainsAny(text, "{}") {
-		return out, ErrInvalid
+	if len(missing) > 0 {
+		return Result{State: "pending_profile"}, nil
 	}
 	out.Detail = text
 	if text == cmd.Text {

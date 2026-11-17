@@ -29,6 +29,7 @@ type MyGroup struct {
 	MissingConditions []string   `json:"missing_conditions"`
 	UnknownConditions []string   `json:"unknown_conditions"`
 	NextActions       []string   `json:"next_actions"`
+	MissingCardFields []string   `json:"missing_card_fields,omitempty"`
 }
 
 var maskedGroupNumber = regexp.MustCompile(`^\*+[0-9]{4}$`)
@@ -83,6 +84,13 @@ func (s *Service) MyGroups(ctx context.Context, p account.Principal, cursor stri
 			}
 			if item.Eligibility == "eligible" && (!m.Joined || (m.State != "restored" && m.State != "exempt")) {
 				item.NextActions = append(item.NextActions, "refresh")
+			}
+			if c.CheckCard && c.CardTemplate != "" {
+				if facts, ok := cache[factKey{m.Owner, c.School}]; ok {
+					if _, missing, err := renderCardTemplate(c.CardTemplate, facts.Fields); err == nil && len(missing) > 0 {
+						item.MissingCardFields = missing
+					}
+				}
 			}
 			out.Items = append(out.Items, item)
 		}

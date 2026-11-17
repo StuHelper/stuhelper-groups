@@ -15,6 +15,20 @@ type eligibilityAssessment struct {
 func assessment() eligibilityAssessment {
 	return eligibilityAssessment{state: "eligible", missing: []string{}, unknown: []string{}, actions: []string{}}
 }
+func passwordSatisfied(c GroupConfig, m Member) bool {
+	if c.Mode != "password" {
+		return true
+	}
+	// Confirmed joined members already restored keep their qualification across routine password rotations.
+	if m.Joined && m.State == "restored" {
+		return true
+	}
+	if !m.Password {
+		return false
+	}
+	return c.PasswordEpoch == 0 || m.PasswordEpoch >= c.PasswordEpoch
+}
+
 func (a *eligibilityAssessment) action(value string) {
 	if !slices.Contains(a.actions, value) {
 		a.actions = append(a.actions, value)
@@ -76,7 +90,7 @@ func (s *Service) assessEligibility(ctx context.Context, tx Tx, c GroupConfig, m
 			}
 		}
 	}
-	if c.Mode == "password" && !m.Password {
+	if c.Mode == "password" && !passwordSatisfied(c, m) {
 		out.missing = append(out.missing, "password")
 		if c.PasswordSet {
 			out.action("submit_password")

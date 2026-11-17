@@ -139,6 +139,11 @@ func validateConfig(c GroupConfig) error {
 			return ErrInvalid
 		}
 	}
+	if c.CardTemplate != "" {
+		if _, _, e := renderCardTemplate(c.CardTemplate, nil); e != nil {
+			return ErrInvalid
+		}
+	}
 	return nil
 }
 func capability(kind string) string {
@@ -153,7 +158,7 @@ func capability(kind string) string {
 		return "groups.configure"
 	case "feedback", "watch":
 		return "groups.manage"
-	case "analyze", "preview", "card", "recheck":
+	case "analyze", "preview", "card", "card_preview", "recheck":
 		return "groups.read"
 	}
 	return ""
@@ -269,6 +274,7 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 			return out, e
 		}
 		m.Password = true
+		m.PasswordEpoch = stored.PasswordEpoch
 		if e := tx.Put(bucket(c.ID, "members"), cmd.Target, m); e != nil {
 			return out, e
 		}
@@ -338,6 +344,8 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		return s.rule(ctx, tx, p, c, cmd, cmd.Kind == "preview")
 	case "card":
 		return s.card(ctx, tx, p, c, cmd)
+	case "card_preview":
+		return s.cardPreview(ctx, c, cmd)
 	case "subscribe":
 		rows, err := tx.List(bucket(c.ID, "subscriptions"), "", 100)
 		if err != nil {

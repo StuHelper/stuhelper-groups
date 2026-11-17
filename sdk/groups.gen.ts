@@ -292,7 +292,7 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        Command: components["schemas"]["ApplyCommand"] | components["schemas"]["PasswordCommand"] | components["schemas"]["DiceCommand"] | components["schemas"]["SelfMuteCommand"] | components["schemas"]["ReportCommand"] | components["schemas"]["RecheckCommand"] | components["schemas"]["ExtendCommand"] | components["schemas"]["ExemptCommand"] | components["schemas"]["WarnCommand"] | components["schemas"]["MuteCommand"] | components["schemas"]["UnmuteCommand"] | components["schemas"]["KickCommand"] | components["schemas"]["BlacklistCommand"] | components["schemas"]["UnblacklistCommand"] | components["schemas"]["SendCommand"] | components["schemas"]["ForwardCommand"] | components["schemas"]["RecallCommand"] | components["schemas"]["CardCommand"] | components["schemas"]["AnalyzeCommand"] | components["schemas"]["PreviewCommand"] | components["schemas"]["RuleCommand"] | components["schemas"]["SubscribeCommand"] | components["schemas"]["FeedbackCommand"] | components["schemas"]["WatchCommand"] | components["schemas"]["AiExecuteCommand"];
+        Command: components["schemas"]["ApplyCommand"] | components["schemas"]["PasswordCommand"] | components["schemas"]["DiceCommand"] | components["schemas"]["SelfMuteCommand"] | components["schemas"]["ReportCommand"] | components["schemas"]["RecheckCommand"] | components["schemas"]["ExtendCommand"] | components["schemas"]["ExemptCommand"] | components["schemas"]["WarnCommand"] | components["schemas"]["MuteCommand"] | components["schemas"]["UnmuteCommand"] | components["schemas"]["KickCommand"] | components["schemas"]["BlacklistCommand"] | components["schemas"]["UnblacklistCommand"] | components["schemas"]["SendCommand"] | components["schemas"]["ForwardCommand"] | components["schemas"]["RecallCommand"] | components["schemas"]["CardCommand"] | components["schemas"]["CardPreviewCommand"] | components["schemas"]["AnalyzeCommand"] | components["schemas"]["PreviewCommand"] | components["schemas"]["RuleCommand"] | components["schemas"]["SubscribeCommand"] | components["schemas"]["FeedbackCommand"] | components["schemas"]["WatchCommand"] | components["schemas"]["AiExecuteCommand"];
         Result: {
             id: string;
             state: string;
@@ -300,6 +300,8 @@ export interface components {
             /** Format: int64 */
             value: number;
             detail: string;
+            /** @description Optional list of card template field keys not yet disclosed or available. */
+            missing_fields?: ("school" | "grade" | "department" | "name" | "student_id" | "gender" | "nickname")[];
         };
         Problem: {
             /**
@@ -341,6 +343,11 @@ export interface components {
              */
             reminder: string;
             password: boolean;
+            /**
+             * Format: int64
+             * @description Dynamic password generation matched by this member.
+             */
+            password_epoch?: number;
             exempt: boolean;
             extended: boolean;
             /** Format: int64 */
@@ -410,7 +417,7 @@ export interface components {
         };
         ActionCommand: {
             /** @enum {string} */
-            kind: "ai_execute" | "analyze" | "apply" | "approve" | "blacklist" | "card" | "dice" | "exempt" | "extend" | "feedback" | "forward" | "kick" | "mute" | "password" | "preview" | "recall" | "recheck" | "remind" | "report" | "rule" | "self_mute" | "send" | "subscribe" | "unblacklist" | "unmute" | "warn" | "watch" | "welcome";
+            kind: "ai_execute" | "analyze" | "apply" | "approve" | "blacklist" | "card" | "card_preview" | "dice" | "exempt" | "extend" | "feedback" | "forward" | "kick" | "mute" | "password" | "preview" | "recall" | "recheck" | "remind" | "report" | "rule" | "self_mute" | "send" | "subscribe" | "unblacklist" | "unmute" | "warn" | "watch" | "welcome";
             target?: string;
             text?: string;
             /** Format: int64 */
@@ -490,6 +497,11 @@ export interface components {
             /** Format: int64 */
             revision: number;
             password_set: boolean;
+            /**
+             * Format: int64
+             * @description Monotonic generation counter incremented whenever the dynamic password is set, rotated or cleared.
+             */
+            password_epoch?: number;
         };
         GroupConfigInput: {
             id: string;
@@ -797,6 +809,17 @@ export interface components {
             target: string;
             text: string;
         };
+        /** @description Read-only management command; previews expected card rendering and missing profile fields without queuing bot actions. */
+        CardPreviewCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "card_preview";
+            target: string;
+            /** @description Optional candidate card_template override; uses the group's stored card_template when omitted or empty. */
+            text?: string;
+        };
         /** @description Management command; requires current group-scoped capability. */
         AnalyzeCommand: {
             /**
@@ -975,6 +998,8 @@ export interface components {
             unknown_conditions: ("student_eligibility" | "student_stage")[];
             /** @description UI action categories, not authorization grants. Unknown facts suggest refresh. Unsupported stages suggest contacting an administrator rather than repeating verification. */
             next_actions: ("bind_qq" | "verify_student" | "submit_password" | "contact_group_admin" | "refresh")[];
+            /** @description Optional card template field keys not yet disclosed or available for this group's card check; never contains field values. */
+            missing_card_fields?: ("school" | "grade" | "department" | "name" | "student_id" | "gender" | "nickname")[];
         };
         MyGroupPage: {
             items: components["schemas"]["MyGroup"][];
