@@ -150,6 +150,14 @@ func (t *transaction) PendingActions(group string) (int, error) {
 	return n, e
 }
 
+func (t *transaction) DeleteSentOutboxBefore(cutoff time.Time, limit int) (int, error) {
+	if limit < 1 || limit > 100 {
+		return 0, g.ErrInvalid
+	}
+	tag, e := t.tx.Exec(t.ctx, `DELETE FROM groups.outbox WHERE sequence IN (SELECT sequence FROM groups.outbox WHERE sent_at IS NOT NULL AND sent_at<=$1 ORDER BY sent_at,sequence LIMIT $2)`, cutoff, limit)
+	return int(tag.RowsAffected()), e
+}
+
 // GroupCounts computes the requested page's counts in one query. Bucket indexes
 // constrain the scan to these groups; no per-item service query is needed.
 func (t *transaction) GroupCounts(ids []string) (map[string]g.GroupCounts, error) {

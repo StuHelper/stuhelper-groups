@@ -77,8 +77,9 @@ func (s *Service) audit(tx Tx, p account.Principal, g, kind, target, result stri
 }
 
 type receipt struct {
-	Digest string
-	Result json.RawMessage
+	Digest    string
+	Result    json.RawMessage
+	CreatedAt time.Time `json:"created_at,omitempty"`
 }
 
 func replay(tx Tx, owner, key string, input, out any) (bool, error) {
@@ -95,12 +96,12 @@ func replay(tx Tx, owner, key string, input, out any) (bool, error) {
 	}
 	return true, json.Unmarshal(r.Result, out)
 }
-func save(tx Tx, owner, key string, input, out any) error {
+func (s *Service) saveReceipt(tx Tx, owner, key string, input, out any) error {
 	b, e := json.Marshal(out)
 	if e != nil {
 		return e
 	}
-	return tx.Put("receipts", hash([]string{owner, key}), receipt{hash(input), b})
+	return tx.Put("receipts", hash([]string{owner, key}), receipt{Digest: hash(input), Result: b, CreatedAt: s.now()})
 }
 func validateConfig(c GroupConfig) error {
 	if strings.TrimSpace(c.Name) == "" || utf8.RuneCountInString(c.Name) > 128 || strings.ContainsFunc(c.Name, unicode.IsControl) || c.ID == "me" || c.ID == "*" || c.School == "*" || !valid(c.ID, 128) || !valid(c.School, 128) || !slices.Contains([]string{"before", "muted", "password"}, c.Mode) {
@@ -147,7 +148,7 @@ func capability(kind string) string {
 		return "groups.messages.send"
 	case "recall":
 		return "groups.messages.recall"
-	case "extend", "exempt", "warn", "mute", "unmute", "kick", "blacklist", "unblacklist":
+	case "extend", "exempt", "warn", "mute", "unmute", "kick", "blacklist", "unblacklist", "cancel_action", "retry_action":
 		return "groups.manage"
 	case "subscribe", "rule", "ai_execute":
 		return "groups.configure"
@@ -220,7 +221,7 @@ func (s *Service) Command(ctx context.Context, p account.Principal, g, key strin
 		if e != nil {
 			return e
 		}
-		return save(tx, p.Key(), key, input, out)
+		return s.saveReceipt(tx, p.Key(), key, input, out)
 	})
 	return out, e
 }
@@ -338,6 +339,8 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		return s.rule(ctx, tx, p, c, cmd, cmd.Kind == "preview")
 	case "card":
 		return s.card(ctx, tx, p, c, cmd)
+	case "cancel_action", "retry_action":
+		return s.manageAction(ctx, tx, p, c, cmd)
 	case "subscribe":
 		rows, err := tx.List(bucket(c.ID, "subscriptions"), "", 100)
 		if err != nil {

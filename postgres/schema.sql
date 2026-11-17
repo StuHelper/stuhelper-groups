@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS groups.outbox (
  next_attempt timestamptz NOT NULL DEFAULT now(), held boolean NOT NULL DEFAULT false
 );
 CREATE INDEX IF NOT EXISTS groups_outbox_pending ON groups.outbox(sequence) WHERE sent_at IS NULL;
+CREATE INDEX IF NOT EXISTS groups_outbox_sent_at ON groups.outbox(sent_at,sequence) WHERE sent_at IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS groups_pending_actions ON groups.records(bucket,id) WHERE data->>'state' IN ('pending','executing','unknown');
 

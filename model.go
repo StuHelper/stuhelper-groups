@@ -168,6 +168,7 @@ type Tx interface {
 	GroupCounts([]string) (map[string]GroupCounts, error)
 	OwnerGroups(owner, cursor string, limit int, includeApplicants bool) (Page[ManagedGroup], error)
 	OwnerGroupRecords(owner, cursor string, limit int, includeApplicants bool) (Page[OwnerGroupRecord], error)
+	DeleteSentOutboxBefore(cutoff time.Time, limit int) (int, error)
 	Emit(Event) error
 	Accept(Event) (bool, error)
 }

@@ -196,6 +196,15 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		v, e := s.Deliveries(r.Context(), p, r.PathValue("group"), cursor, limit)
 		write(w, v, e)
 	}))
+	mux.HandleFunc("GET /api/v1/groups/{group}/audit", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+		cursor, limit, e := pagination(r)
+		if e != nil {
+			write(w, nil, e)
+			return
+		}
+		v, e := s.Audits(r.Context(), p, r.PathValue("group"), cursor, limit)
+		write(w, v, e)
+	}))
 	return mux
 }
 func pagination(r *http.Request) (string, int, error) {

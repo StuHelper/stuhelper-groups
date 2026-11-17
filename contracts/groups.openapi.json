@@ -1681,6 +1681,103 @@
         "description": "Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering."
       }
     },
+    "/api/v1/groups/{group}/audit": {
+      "get": {
+        "operationId": "listAudit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Group management audit entries; never contains message bodies or recalled content.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Current identity cannot perform this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "groups_not_found: Requested group, member, message or related object does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Ascending record ID in bytewise (C collation) order; requires groups.configure on the target group. Contains only sanitized management audit metadata and never records or exposes recalled message bodies."
+      }
+    },
     "/api/v1/groups/me": {
       "get": {
         "operationId": "listMyGroups",
@@ -1834,6 +1931,12 @@
           },
           {
             "$ref": "#/components/schemas/AiExecuteCommand"
+          },
+          {
+            "$ref": "#/components/schemas/CancelActionCommand"
+          },
+          {
+            "$ref": "#/components/schemas/RetryActionCommand"
           }
         ],
         "discriminator": {
@@ -1863,7 +1966,9 @@
             "subscribe": "#/components/schemas/SubscribeCommand",
             "feedback": "#/components/schemas/FeedbackCommand",
             "watch": "#/components/schemas/WatchCommand",
-            "ai_execute": "#/components/schemas/AiExecuteCommand"
+            "ai_execute": "#/components/schemas/AiExecuteCommand",
+            "cancel_action": "#/components/schemas/CancelActionCommand",
+            "retry_action": "#/components/schemas/RetryActionCommand"
           }
         }
       },
@@ -2283,6 +2388,7 @@
               "apply",
               "approve",
               "blacklist",
+              "cancel_action",
               "card",
               "dice",
               "exempt",
@@ -2297,6 +2403,7 @@
               "recheck",
               "remind",
               "report",
+              "retry_action",
               "rule",
               "self_mute",
               "send",
@@ -3772,6 +3879,60 @@
         ],
         "description": "Management command; requires current group-scoped capability."
       },
+      "CancelActionCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "cancel_action"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "kind",
+          "target"
+        ],
+        "description": "Management command; cancels a pending bot action without affecting executing or unknown actions."
+      },
+      "RetryActionCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "retry_action"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "kind",
+          "target"
+        ],
+        "description": "Management command; queues a controlled retry for a confirmed failed bot action."
+      },
       "WarnBatchCommand": {
         "type": "object",
         "additionalProperties": false,
@@ -4119,6 +4280,59 @@
           "next_cursor": {
             "type": "string",
             "description": "Last returned group ID if another page exists, or empty when exhausted."
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ]
+      },
+      "AuditEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "result": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "actor",
+          "action",
+          "target",
+          "result",
+          "time"
+        ]
+      },
+      "AuditPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEntry"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Opaque cursor for the next scan, or empty when exhausted."
           }
         },
         "required": [

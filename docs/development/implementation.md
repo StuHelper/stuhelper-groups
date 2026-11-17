@@ -1,7 +1,7 @@
 ---
 type: development
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-18
 ---
 
 # Groups 实施状态
@@ -18,7 +18,9 @@ OpenAPI 0.4.0 使用 /api/v1/groups 前缀，Go/TypeScript 客户端、HTTP Hand
 
 娱乐功能提供骰子、自助禁言、冷却和保底，未配置不执行。自助禁言只作用于发起者，不写违规记录。管理员可解禁，普通用户没有自行解禁能力。
 
-消息留存默认关闭，到期读取被拒绝并可分页删除。撤回内容查看不写业务查看审计。其他机器人动作保存授权后的待执行记录及实际执行结果审计。
+消息留存默认关闭，到期读取被拒绝并可分页删除。幂等收据、已确认历史 outbox 与过期频率窗口提供有界定期清理，撤回内容查看不写业务查看审计。
+
+GET /api/v1/groups/{group}/audit 按 groups.configure 分页返回群级管理审计，不含任何消息正文。cancel_action 与 retry_action 分别支持取消 pending 动作与受控重试已确认 failed 动作。
 
 业务写入、审计和 outbox 在同一事务，提交后 pg_notify。inbox 拒绝同 ID 内容变化，忽略重复与旧修订。发送器使用部分索引、LISTEN、60 秒补读及退避队列。
 

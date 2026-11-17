@@ -1,7 +1,7 @@
 ---
 type: guide
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-18
 ---
 
 # Groups 装配指南
@@ -17,7 +17,9 @@ updated: 2026-11-09
 7. backend 的共享 relay 监听 groups.OutboxChannel，在启动、重连与通知后调用 PendingOutbox；每 60 秒兜底补读。传入当前退避和人工处理主题，在数据库中排除后再取最多 100 条。
 8. 宿主维护投递退避：5 秒起，指数增加至 1 小时，累计 24 小时转人工。每个主题按返回顺序串行消费，失败后停止该批同主题后续事件，其他主题继续。所有消费者持久提交后调用 ConfirmOutbox。
 9. groups.action.requested 调用 Execute，groups.action.result 调用 Fanout。verification 与 qq-binding 的资格、绑定事件转为 groups.UpstreamEvent 后调用 Consume(ctx, event)，无需宿主逐群扇出。
-10. 对每群分页调用 Sweep、Recover、Cleanup。每页最多 100，宿主保留游标并安排下一轮。Sweep 用于资格期限和提醒，Recover 处理执行租约，Cleanup 删除到期消息。
+10. 对每群分页调用 Sweep、Recover、Cleanup、CleanupFrequency，并周期性调用 CleanupIdempotency 与 CleanupOutbox。每页最多 100，宿主保留游标并安排下一轮。
+
+Cleanup 删除到期消息，CleanupIdempotency 清理满 24 小时的幂等收据与批量摘要，CleanupOutbox 清理已确认满 24 小时的历史事件，不删除未确认或 held 事件。
 
 宿主按原事件 ID 重试人工队列，并对重试入口执行管理授权和审计。Repository.Relay 是独立运行帮助器，使用本地 Failed/Retry 记录，不与共享 relay 同时启用。它最多处理 1000 个排除主题，超限返回 unavailable。
 
@@ -326,6 +328,7 @@ OpenAPI 与模块版本为 0.4.0，HTTP 路由使用 /api/v1/groups 前缀。SDK
 | GET /api/v1/groups/{group}/warnings | WarningsPage | 警告累计 |
 | GET /api/v1/groups/{group}/watch | WatchPage | 观察名单 |
 | GET /api/v1/groups/{group}/deliveries | DeliveryPage | 各接收目标的动作结果 |
+| GET /api/v1/groups/{group}/audit | AuditPage | 群级管理操作审计（不含消息正文） |
 | GET /api/v1/groups/{group}/progress | Member | 本人申请进度 |
 | POST /api/v1/groups/{group}/commands | Command / Result | 管理或用户命令 |
 | POST /api/v1/groups/{group}/batch | Bulk / BulkResult | 批量预览与逐项执行 |

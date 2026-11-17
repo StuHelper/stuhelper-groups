@@ -389,6 +389,58 @@ func (s *Service) Recover(ctx context.Context, g, cursor string) (string, error)
 	})
 	return next, e
 }
+func (s *Service) manageAction(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, cmd Command) (Result, error) {
+	var out Result
+	if !valid(cmd.Target, 2048) || len(cmd.Text) > 2048 {
+		return out, ErrInvalid
+	}
+	var a Action
+	if e := tx.Get(bucket(c.ID, "actions"), cmd.Target, &a); e != nil {
+		return out, e
+	}
+	if cmd.Kind == "cancel_action" {
+		// Only pending actions may be cancelled; executing/unknown actions may already be in flight.
+		if a.State != "pending" {
+			return out, ErrConflict
+		}
+		a.State = "cancelled"
+		a.LeaseUntil = nil
+		a.Result = "cancelled_by_admin"
+		if e := tx.Put(bucket(c.ID, "actions"), a.ID, a); e != nil {
+			return out, e
+		}
+		if e := s.audit(tx, p, c.ID, "cancel_action", a.ID, "cancelled"); e != nil {
+			return out, e
+		}
+		if e := s.event(tx, c.ID, "action.result", map[string]string{"id": a.ID, "state": "cancelled"}); e != nil {
+			return out, e
+		}
+		return Result{ID: a.ID, State: "cancelled", Action: a.Command.Kind, Detail: "cancelled_by_admin"}, nil
+	}
+	// retry_action only accepts confirmed failed actions not already retried.
+	if a.State != "failed" || strings.HasPrefix(a.Result, "retried:") {
+		return out, ErrConflict
+	}
+	if a.Capability != "" && a.Capability != "admission" && a.Capability != "entertainment" {
+		if e := s.auth(ctx, p, a.Capability, c); e != nil {
+			return out, e
+		}
+	}
+	queued, e := s.queue(tx, p, c, a.Command, a.Capability)
+	if e != nil {
+		return out, e
+	}
+	a.Result = "retried:" + queued.ID
+	if e := tx.Put(bucket(c.ID, "actions"), a.ID, a); e != nil {
+		return out, e
+	}
+	if e := s.audit(tx, p, c.ID, "retry_action", a.ID, queued.ID); e != nil {
+		return out, e
+	}
+	queued.Detail = a.ID
+	return queued, nil
+}
+
 func (s *Service) Cleanup(ctx context.Context, g, cursor string) (string, error) {
 	next := ""
 	e := s.run(ctx, func(tx Tx) error {
@@ -417,5 +469,103 @@ func (s *Service) Cleanup(ctx context.Context, g, cursor string) (string, error)
 		}
 		return nil
 	})
-	return next, e
+	if e != nil {
+		return "", e
+	}
+	return next, nil
+}
+
+// CleanupIdempotency removes bounded pages of expired idempotency receipts or batch_inputs (default 24h).
+func (s *Service) CleanupIdempotency(ctx context.Context, bucketName, cursor string, maxAge time.Duration) (string, error) {
+	if bucketName != "receipts" && bucketName != "batch_inputs" {
+		return "", ErrInvalid
+	}
+	if maxAge <= 0 {
+		maxAge = 24 * time.Hour
+	}
+	next := ""
+	e := s.run(ctx, func(tx Tx) error {
+		rows, e := tx.List(bucketName, cursor, 100)
+		if e != nil {
+			return e
+		}
+		for _, r := range rows {
+			next = r.ID
+			var meta struct {
+				CreatedAt time.Time `json:"created_at"`
+			}
+			if json.Unmarshal(r.Data, &meta) == nil && !meta.CreatedAt.IsZero() && !s.now().Before(meta.CreatedAt.Add(maxAge)) {
+				if e = tx.Delete(bucketName, r.ID); e != nil {
+					return e
+				}
+			}
+		}
+		if len(rows) < 100 {
+			next = ""
+		}
+		return nil
+	})
+	if e != nil {
+		return "", e
+	}
+	return next, nil
+}
+
+// CleanupOutbox deletes at most 100 confirmed historical outbox rows older than maxAge (default 24h).
+// Unsent or held outbox rows are never deleted.
+func (s *Service) CleanupOutbox(ctx context.Context, maxAge time.Duration) (int, error) {
+	if maxAge <= 0 {
+		maxAge = 24 * time.Hour
+	}
+	deleted := 0
+	e := s.run(ctx, func(tx Tx) error {
+		var err error
+		deleted, err = tx.DeleteSentOutboxBefore(s.now().Add(-maxAge), 100)
+		return err
+	})
+	if e != nil {
+		return 0, e
+	}
+	return deleted, nil
+}
+
+// CleanupFrequency removes bounded pages of expired message rate-limit windows for group g.
+func (s *Service) CleanupFrequency(ctx context.Context, g, cursor string) (string, error) {
+	next := ""
+	e := s.run(ctx, func(tx Tx) error {
+		var c GroupConfig
+		if e := tx.Get("config", g, &c); e != nil {
+			return e
+		}
+		ttl := time.Duration(c.FrequencySeconds) * time.Second
+		if ttl <= 0 {
+			ttl = 24 * time.Hour
+		}
+		rows, e := tx.List(bucket(g, "frequency"), cursor, 100)
+		if e != nil {
+			return e
+		}
+		for _, r := range rows {
+			next = r.ID
+			var window struct {
+				Start time.Time
+			}
+			if e = json.Unmarshal(r.Data, &window); e != nil {
+				return e
+			}
+			if c.FrequencyLimit == 0 || c.FrequencySeconds == 0 || !s.now().Before(window.Start.Add(ttl)) {
+				if e = tx.Delete(bucket(g, "frequency"), r.ID); e != nil {
+					return e
+				}
+			}
+		}
+		if len(rows) < 100 {
+			next = ""
+		}
+		return nil
+	})
+	if e != nil {
+		return "", e
+	}
+	return next, nil
 }

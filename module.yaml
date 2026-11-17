@@ -61,6 +61,7 @@ scenario_tests:
     - facts_test.go#TestGroupFactsFiltersFieldsAtServiceBoundary
     - integration_test.go#TestRulesCardsReportAndBatchPreview
   QQ-08:
+    - ops_maintenance_test.go#TestCancelAndRetryActionsQueueRecoveryAndGroupAudit
     - delivery_membership_test.go#TestPendingOutboxExclusionLimitOrderingAndConfirmation
     - delivery_membership_test.go#TestRelayStopsFailedSubjectWithinBatchAndDeliversOthers
     - api_v03_test.go#TestEveryCollectionTypedPaginationAndAuthorization
@@ -70,6 +71,7 @@ scenario_tests:
   QQ-09:
     - integration_test.go#TestAISuggestionsRequireEnabledActionsAndCurrentAuthorization
   QQ-10:
+    - ops_maintenance_test.go#TestPeriodicMaintenanceCleansExpiredReceiptsSentOutboxAndFrequencyWindows
     - contract_test.go#TestAPIPrefixMatchesContractRoutesAndGeneratedClient
     - integration_test.go#TestRetentionInboxRollbackAndNoRecallViewAudit
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
