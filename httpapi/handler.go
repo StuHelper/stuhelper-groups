@@ -76,7 +76,7 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := pagination(r)
+		cursor, limit, e := strictPagination(r)
 		if e != nil {
 			write(w, nil, e)
 			return
@@ -107,52 +107,89 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}/members", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+		if e := allowQuery(r, "cursor", "limit", "state", "joined", "exempt"); e != nil {
+			write(w, nil, e)
+			return
+		}
 		cursor, limit, e := pagination(r)
 		if e != nil {
 			write(w, nil, e)
 			return
 		}
-		v, e := s.Members(r.Context(), p, r.PathValue("group"), cursor, limit)
+		joined, e := optionalBool(r, "joined")
+		if e != nil {
+			write(w, nil, e)
+			return
+		}
+		exempt, e := optionalBool(r, "exempt")
+		if e != nil {
+			write(w, nil, e)
+			return
+		}
+		v, e := s.QueryMembers(r.Context(), p, r.PathValue("group"), g.MemberQuery{Cursor: cursor, Limit: limit, State: r.URL.Query().Get("state"), Joined: joined, Exempt: exempt})
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}/actions", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+		if e := allowQuery(r, "cursor", "limit", "state", "kind", "order"); e != nil {
+			write(w, nil, e)
+			return
+		}
 		cursor, limit, e := pagination(r)
 		if e != nil {
 			write(w, nil, e)
 			return
 		}
-		v, e := s.Actions(r.Context(), p, r.PathValue("group"), cursor, limit)
+		q := r.URL.Query()
+		v, e := s.QueryActions(r.Context(), p, r.PathValue("group"), g.ActionQuery{Cursor: cursor, Limit: limit, Order: q.Get("order"), State: q.Get("state"), Kind: q.Get("kind")})
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}/reports", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+		if e := allowQuery(r, "cursor", "limit", "state", "order"); e != nil {
+			write(w, nil, e)
+			return
+		}
 		cursor, limit, e := pagination(r)
 		if e != nil {
 			write(w, nil, e)
 			return
 		}
-		v, e := s.Reports(r.Context(), p, r.PathValue("group"), cursor, limit)
+		q := r.URL.Query()
+		v, e := s.QueryReports(r.Context(), p, r.PathValue("group"), g.ReportQuery{Cursor: cursor, Limit: limit, Order: q.Get("order"), State: q.Get("state")})
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}/hits", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+		if e := allowQuery(r, "cursor", "limit", "order"); e != nil {
+			write(w, nil, e)
+			return
+		}
 		cursor, limit, e := pagination(r)
 		if e != nil {
 			write(w, nil, e)
 			return
 		}
-		v, e := s.Hits(r.Context(), p, r.PathValue("group"), cursor, limit)
+		v, e := s.QueryHits(r.Context(), p, r.PathValue("group"), g.HitQuery{Cursor: cursor, Limit: limit, Order: r.URL.Query().Get("order")})
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}/messages", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+		if e := allowQuery(r, "cursor", "limit", "recalled", "order"); e != nil {
+			write(w, nil, e)
+			return
+		}
 		cursor, limit, e := pagination(r)
 		if e != nil {
 			write(w, nil, e)
 			return
 		}
-		v, e := s.Messages(r.Context(), p, r.PathValue("group"), cursor, limit)
+		recalled, e := optionalBool(r, "recalled")
+		if e != nil {
+			write(w, nil, e)
+			return
+		}
+		v, e := s.QueryMessages(r.Context(), p, r.PathValue("group"), g.MessageQuery{Cursor: cursor, Limit: limit, Order: r.URL.Query().Get("order"), Recalled: recalled})
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}/subscriptions", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := pagination(r)
+		cursor, limit, e := strictPagination(r)
 		if e != nil {
 			write(w, nil, e)
 			return
@@ -161,7 +198,7 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}/blacklist", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := pagination(r)
+		cursor, limit, e := strictPagination(r)
 		if e != nil {
 			write(w, nil, e)
 			return
@@ -170,7 +207,7 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}/warnings", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := pagination(r)
+		cursor, limit, e := strictPagination(r)
 		if e != nil {
 			write(w, nil, e)
 			return
@@ -179,7 +216,7 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}/watch", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := pagination(r)
+		cursor, limit, e := strictPagination(r)
 		if e != nil {
 			write(w, nil, e)
 			return
@@ -188,7 +225,7 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}/deliveries", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := pagination(r)
+		cursor, limit, e := strictPagination(r)
 		if e != nil {
 			write(w, nil, e)
 			return
@@ -197,6 +234,41 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		write(w, v, e)
 	}))
 	return mux
+}
+
+func allowQuery(r *http.Request, allowed ...string) error {
+	for name, values := range r.URL.Query() {
+		ok := false
+		for _, a := range allowed {
+			if name == a {
+				ok = true
+				break
+			}
+		}
+		if !ok || len(values) != 1 {
+			return g.ErrInvalid
+		}
+	}
+	return nil
+}
+
+func optionalBool(r *http.Request, name string) (*bool, error) {
+	raw, exists := r.URL.Query()[name]
+	if !exists {
+		return nil, nil
+	}
+	if len(raw) != 1 || (raw[0] != "true" && raw[0] != "false") {
+		return nil, g.ErrInvalid
+	}
+	v := raw[0] == "true"
+	return &v, nil
+}
+
+func strictPagination(r *http.Request) (string, int, error) {
+	if e := allowQuery(r, "cursor", "limit"); e != nil {
+		return "", 0, e
+	}
+	return pagination(r)
 }
 func pagination(r *http.Request) (string, int, error) {
 	q := r.URL.Query()

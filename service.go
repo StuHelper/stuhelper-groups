@@ -282,7 +282,13 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		if !valid(cmd.Target, 2048) {
 			return out, ErrInvalid
 		}
-		if e := tx.Put(bucket(c.ID, "blacklist"), cmd.Target, Blacklist{ID: cmd.Target, Reason: cmd.Text, Until: s.now().Add(time.Duration(cmd.Seconds) * time.Second), Permanent: cmd.Seconds == 0}); e != nil {
+		now := s.now()
+		created := now
+		var prior Blacklist
+		if e := tx.Get(bucket(c.ID, "blacklist"), cmd.Target, &prior); e == nil && prior.Created != nil && !prior.Created.IsZero() {
+			created = *prior.Created
+		}
+		if e := tx.Put(bucket(c.ID, "blacklist"), cmd.Target, Blacklist{ID: cmd.Target, Reason: cmd.Text, Until: now.Add(time.Duration(cmd.Seconds) * time.Second), Permanent: cmd.Seconds == 0, Created: &created, Updated: &now}); e != nil {
 			return out, e
 		}
 		return out, s.audit(tx, p, c.ID, cmd.Kind, cmd.Target, "blocked")
@@ -295,8 +301,14 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		if cmd.Message == "" || strings.TrimSpace(cmd.Text) == "" {
 			return out, ErrInvalid
 		}
+		now := s.now()
 		out.ID = uuid.NewString()
-		return out, tx.Put(bucket(c.ID, "reports"), out.ID, map[string]any{"reporter": p.Key(), "message": cmd.Message, "reason": cmd.Text, "state": "open"})
+		record := map[string]any{"reporter": p.Key(), "message": cmd.Message, "reason": cmd.Text, "state": "open", "created": now, "updated": now}
+		var msg Message
+		if e := tx.Get(bucket(c.ID, "messages"), cmd.Message, &msg); e == nil && c.RetentionSeconds > 0 && now.Before(msg.Expires) {
+			record["target"] = msg.Owner
+		}
+		return out, tx.Put(bucket(c.ID, "reports"), out.ID, record)
 	case "analyze":
 		if s.AI == nil {
 			return out, ErrUnavailable
@@ -330,6 +342,7 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		r["analysis"] = text
 		r["suggestions"] = actions
 		r["state"] = "suggested"
+		r["updated"] = s.now()
 		out.Detail = text
 		return out, tx.Put(bucket(c.ID, "reports"), cmd.Target, r)
 	case "feedback", "watch", "ai_execute":
@@ -390,10 +403,12 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 }
 
 type Blacklist struct {
-	ID        string    `json:"id"`
-	Reason    string    `json:"reason"`
-	Until     time.Time `json:"until"`
-	Permanent bool      `json:"permanent"`
+	ID        string     `json:"id"`
+	Reason    string     `json:"reason"`
+	Until     time.Time  `json:"until"`
+	Permanent bool       `json:"permanent"`
+	Created   *time.Time `json:"created,omitempty"`
+	Updated   *time.Time `json:"updated,omitempty"`
 }
 
 func (s *Service) eligible(ctx context.Context, tx Tx, c GroupConfig, m Member) (bool, error) {

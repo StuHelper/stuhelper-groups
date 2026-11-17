@@ -382,17 +382,26 @@ export interface components {
             recalled: boolean;
             /** Format: date-time */
             expires: string;
+            /** Format: date-time */
+            created?: string;
             /** @description Opaque media references. Backend proxy enforces current group access and the same expiry. */
             attachments: string[];
         };
         Report: {
             reporter: string;
+            /** @description Owner key of the reported message author when the message was retained at report creation time; never includes message body. */
+            target?: string;
             message: string;
             reason: string;
             state: string;
             analysis?: string;
             suggestions?: string[];
             feedback?: string;
+            resolved_by?: components["schemas"]["Actor"];
+            /** Format: date-time */
+            created?: string;
+            /** Format: date-time */
+            updated?: string;
             id: string;
         };
         Hit: {
@@ -400,6 +409,8 @@ export interface components {
             message: string;
             rules: string[];
             state: string;
+            /** Format: date-time */
+            created?: string;
             id: string;
         };
         Subscription: {
@@ -425,6 +436,10 @@ export interface components {
             /** Format: date-time */
             until: string;
             permanent: boolean;
+            /** Format: date-time */
+            created?: string;
+            /** Format: date-time */
+            updated?: string;
         };
         Warnings: {
             id: string;
@@ -434,6 +449,10 @@ export interface components {
         Watch: {
             enabled: boolean;
             reason: string;
+            /** Format: date-time */
+            created?: string;
+            /** Format: date-time */
+            updated?: string;
             id: string;
         };
         Delivery: {
@@ -1550,6 +1569,9 @@ export interface operations {
             query?: {
                 cursor?: string;
                 limit?: number;
+                state?: "requested" | "awaiting_verification" | "grace" | "extended" | "exempt" | "restored" | "removal_pending" | "removed";
+                joined?: boolean;
+                exempt?: boolean;
             };
             header?: never;
             path: {
@@ -1620,6 +1642,9 @@ export interface operations {
             query?: {
                 cursor?: string;
                 limit?: number;
+                state?: "pending" | "executing" | "unknown" | "succeeded" | "failed" | "cancelled";
+                kind?: "ai_execute" | "analyze" | "apply" | "approve" | "blacklist" | "card" | "dice" | "exempt" | "extend" | "feedback" | "forward" | "kick" | "mute" | "password" | "preview" | "recall" | "recheck" | "remind" | "report" | "rule" | "self_mute" | "send" | "subscribe" | "unblacklist" | "unmute" | "warn" | "watch" | "welcome";
+                order?: "asc" | "desc";
             };
             header?: never;
             path: {
@@ -1690,6 +1715,8 @@ export interface operations {
             query?: {
                 cursor?: string;
                 limit?: number;
+                state?: "open" | "suggested" | "pending_execution" | "resolved";
+                order?: "asc" | "desc";
             };
             header?: never;
             path: {
@@ -1760,6 +1787,7 @@ export interface operations {
             query?: {
                 cursor?: string;
                 limit?: number;
+                order?: "asc" | "desc";
             };
             header?: never;
             path: {
@@ -1830,6 +1858,8 @@ export interface operations {
             query?: {
                 cursor?: string;
                 limit?: number;
+                recalled?: boolean;
+                order?: "asc" | "desc";
             };
             header?: never;
             path: {

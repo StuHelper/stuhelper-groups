@@ -156,14 +156,27 @@ type Event struct {
 	Data        json.RawMessage `json:"data"`
 }
 type Row struct {
-	ID   string
-	Data json.RawMessage
+	ID        string
+	Data      json.RawMessage
+	CreatedAt time.Time
+}
+type ListQuery struct {
+	Cursor     string
+	CursorTime *time.Time
+	Limit      int
+	Desc       bool
+	State      string
+	Kind       string
+	Joined     *bool
+	Exempt     *bool
+	Recalled   *bool
 }
 type Tx interface {
 	Get(string, string, any) error
 	Put(string, string, any) error
 	Delete(string, string) error
 	List(string, string, int) ([]Row, error)
+	QueryList(string, ListQuery) ([]Row, error)
 	PendingActions(string) (int, error)
 	GroupCounts([]string) (map[string]GroupCounts, error)
 	OwnerGroups(owner, cursor string, limit int, includeApplicants bool) (Page[ManagedGroup], error)
