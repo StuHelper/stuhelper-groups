@@ -49,7 +49,7 @@ func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string,
 			digest := hash(in)
 			if e == nil {
 				if prior != digest {
-					return ErrConflict
+					return NewErrorDetail(ErrConflict, "idempotency_mismatch", "", 0)
 				}
 				return nil
 			}

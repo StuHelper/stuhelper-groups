@@ -60,8 +60,14 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 	if !valid(key, 128) {
 		return out, ErrInvalid
 	}
-	if in.ExpectedRevision < 0 || in.Password != nil && len(*in.Password) > 256 || in.Number != nil && !groupNumber.MatchString(*in.Number) {
-		return out, ErrUnprocessable
+	if in.ExpectedRevision < 0 {
+		return out, NewErrorDetail(ErrUnprocessable, "invalid_field", "expected_revision", 0)
+	}
+	if in.Password != nil && len(*in.Password) > 256 {
+		return out, NewErrorDetail(ErrUnprocessable, "invalid_field", "password", 0)
+	}
+	if in.Number != nil && !groupNumber.MatchString(*in.Number) {
+		return out, NewErrorDetail(ErrUnprocessable, "invalid_field", "number", 0)
 	}
 	if in.Keywords == nil {
 		in.Keywords = []string{}
@@ -80,7 +86,7 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 			return e
 		}
 		if e == nil && old.School != c.School {
-			return ErrConflict
+			return NewErrorDetail(ErrConflict, "school_immutable", "school", 0)
 		}
 		// Authorize against current scope before replay, but replay before revision checks.
 		ok, e := replay(tx, p.Key(), key, in, &out)
@@ -88,7 +94,7 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 			return e
 		}
 		if old.Revision != in.ExpectedRevision {
-			return ErrConflict
+			return NewErrorDetail(ErrConflict, "revision_mismatch", "expected_revision", 0)
 		}
 		record := configRecord{GroupConfig: c, PasswordDigest: old.PasswordDigest}
 		record.Number = old.Number
@@ -108,6 +114,10 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 		record.PasswordSet = record.PasswordDigest != ""
 		record.Revision = old.Revision + 1
 		if e = validateConfig(record.GroupConfig); e != nil {
+			var detail *ErrorDetail
+			if errors.As(e, &detail) {
+				return NewErrorDetail(ErrUnprocessable, detail.Reason, detail.Field, 0)
+			}
 			return ErrUnprocessable
 		}
 		if e = tx.Put("config", c.ID, record); e != nil {

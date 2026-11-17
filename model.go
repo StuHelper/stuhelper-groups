@@ -22,6 +22,20 @@ var (
 	ErrCooldown        = errors.New("groups_cooldown")
 )
 
+type ErrorDetail struct {
+	Base              error
+	Reason            string
+	Field             string
+	RetryAfterSeconds int64
+}
+
+func (e *ErrorDetail) Error() string { return e.Base.Error() }
+func (e *ErrorDetail) Unwrap() error { return e.Base }
+
+func NewErrorDetail(base error, reason, field string, retryAfter int64) error {
+	return &ErrorDetail{Base: base, Reason: reason, Field: field, RetryAfterSeconds: retryAfter}
+}
+
 type GroupSettings struct {
 	Name             string   `json:"name"`
 	BotEnabled       bool     `json:"bot_enabled"`
@@ -97,11 +111,14 @@ type Command struct {
 	Enabled  bool   `json:"enabled,omitempty"`
 }
 type Result struct {
-	ID     string `json:"id"`
-	State  string `json:"state"`
-	Action string `json:"action"`
-	Value  int64  `json:"value"`
-	Detail string `json:"detail"`
+	ID            string `json:"id"`
+	State         string `json:"state"`
+	Action        string `json:"action"`
+	Value         int64  `json:"value"`
+	Detail        string `json:"detail"`
+	MaxValue      *int64 `json:"max_value,omitempty"`
+	Seconds       *int64 `json:"seconds,omitempty"`
+	PityRemaining *int64 `json:"pity_remaining,omitempty"`
 }
 type Member struct {
 	ID         string    `json:"id"`

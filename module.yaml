@@ -74,8 +74,12 @@ scenario_tests:
     - integration_test.go#TestRetentionInboxRollbackAndNoRecallViewAudit
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
   BE-01:
+    - problem_metadata_test.go#TestEntertainmentStructuredResultMetadataAndSDK
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
   BE-02:
+    - problem_metadata_test.go#TestEntertainmentStructuredResultMetadataAndSDK
+    - problem_metadata_test.go#TestProblemSubcodesRetryAfterAndConfigFieldDiagnostics
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
   BE-03:
+    - problem_metadata_test.go#TestProblemSubcodesRetryAfterAndConfigFieldDiagnostics
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
