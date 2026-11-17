@@ -24,8 +24,11 @@ type Message struct {
 // Ingest is a trusted backend boundary, never mounted as a public route.
 // Only authenticated bot adapters may provide the actual group and sender.
 func (s *Service) Ingest(ctx context.Context, g string, event Event, m Message) error {
-	if event.Source != "qq-bot" || event.Subject != g || event.Type != "groups.message" || !valid(m.ID, 128) || !valid(m.Owner, 2048) || len(m.Body) > 8192 {
+	if event.Source != "qq-bot" || event.Subject != g || event.Type != "groups.message" || (event.TraceParent != "" && !validTraceParent(event.TraceParent)) || !valid(m.ID, 128) || !valid(m.Owner, 2048) || len(m.Body) > 8192 {
 		return ErrInvalid
+	}
+	if event.TraceParent != "" && TraceParentFromContext(ctx) == "" {
+		ctx = WithTraceParent(ctx, event.TraceParent)
 	}
 	if len(m.Attachments) > 20 {
 		return ErrInvalid
@@ -71,7 +74,7 @@ func (s *Service) Ingest(ctx context.Context, g string, event Event, m Message) 
 		if e = tx.Put(bucket(g, "messages"), m.ID, m); e != nil {
 			return e
 		}
-		return s.event(tx, g, "message.changed", map[string]string{"id": m.ID})
+		return s.event(ctx, tx, g, "message.changed", map[string]string{"id": m.ID})
 	})
 }
 
@@ -139,7 +142,7 @@ func (s *Service) rule(ctx context.Context, tx Tx, p account.Principal, c GroupC
 				return out, e
 			}
 		} else {
-			if _, e = s.queue(tx, p, c, command, cap); e != nil {
+			if _, e = s.queue(ctx, tx, p, c, command, cap); e != nil {
 				return out, e
 			}
 		}
@@ -190,7 +193,7 @@ func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupC
 		if e = s.auth(ctx, p, "groups.manage", c); e != nil {
 			return out, e
 		}
-		if _, e = s.queue(tx, p, c, Command{Kind: "remind", Target: cmd.Target, Text: "card_noncompliant"}, "groups.manage"); e != nil {
+		if _, e = s.queue(ctx, tx, p, c, Command{Kind: "remind", Target: cmd.Target, Text: "card_noncompliant"}, "groups.manage"); e != nil {
 			return out, e
 		}
 	}
@@ -200,7 +203,7 @@ func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	if e = s.auth(ctx, p, "groups.manage", c); e != nil {
 		return out, e
 	}
-	return s.queue(tx, p, c, Command{Kind: "card", Target: cmd.Target, Text: text}, "groups.manage")
+	return s.queue(ctx, tx, p, c, Command{Kind: "card", Target: cmd.Target, Text: text}, "groups.manage")
 }
 
 // Execute serializes claims before an external call. Interrupted calls remain
@@ -211,6 +214,12 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 	e := s.run(ctx, func(tx Tx) error {
 		if e := tx.Get(bucket(g, "actions"), id, &a); e != nil {
 			return e
+		}
+		if TraceParentFromContext(ctx) == "" {
+			var storedTP string
+			if tx.Get(bucket(g, "action_traces"), id, &storedTP) == nil && validTraceParent(storedTP) {
+				ctx = WithTraceParent(ctx, storedTP)
+			}
 		}
 		if a.State == "succeeded" || a.State == "failed" || a.State == "cancelled" {
 			return nil
@@ -235,6 +244,9 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 			cancel := (a.Command.Kind == "kick" && (ok || m.Exempt || s.now().Before(m.Deadline))) || (a.Command.Kind == "remind" && (ok || m.Exempt)) || (a.Command.Kind == "approve" && !ok) || (a.Command.Kind == "welcome" && !ok) || (a.Command.Kind == "mute" && (ok || m.Exempt)) || (a.Command.Kind == "unmute" && !ok)
 			if cancel {
 				a.State = "cancelled"
+				if e := tx.Delete(bucket(g, "action_traces"), id); e != nil {
+					return e
+				}
 				return tx.Put(bucket(g, "actions"), id, a)
 			}
 		} else if a.Capability == "entertainment" {
@@ -248,6 +260,9 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 			}
 			if !m.Joined || !ok || c.MuteProbability == 0 || a.Command.Target != a.Actor.Key() {
 				a.State = "cancelled"
+				if e := tx.Delete(bucket(g, "action_traces"), id); e != nil {
+					return e
+				}
 				return tx.Put(bucket(g, "actions"), id, a)
 			}
 		} else {
@@ -267,13 +282,16 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 		if !c.BotEnabled {
 			a.State = "cancelled"
 			a.LeaseUntil = nil
+			if e := tx.Delete(bucket(g, "action_traces"), id); e != nil {
+				return e
+			}
 			if e := tx.Put(bucket(g, "actions"), id, a); e != nil {
 				return e
 			}
 			if e := s.audit(tx, a.Actor.Principal(), g, a.Command.Kind, a.Command.Target, a.State); e != nil {
 				return e
 			}
-			return s.event(tx, g, "action.result", map[string]string{"id": id, "state": a.State})
+			return s.event(ctx, tx, g, "action.result", map[string]string{"id": id, "state": a.State})
 		}
 		if s.Bot == nil {
 			return ErrUnavailable
@@ -311,6 +329,11 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 	finish, cancelFinish := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer cancelFinish()
 	err := s.run(finish, func(tx Tx) error {
+		if a.State != "unknown" {
+			if err := tx.Delete(bucket(g, "action_traces"), id); err != nil {
+				return err
+			}
+		}
 		if err := tx.Put(bucket(g, "actions"), id, a); err != nil {
 			return err
 		}
@@ -343,7 +366,7 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 				if err = s.auth(finish, a.Actor.Principal(), "groups.manage", c); err != nil {
 					return err
 				}
-				if _, err = s.queue(tx, a.Actor.Principal(), c, Command{Kind: "mute", Target: a.Command.Target, Seconds: c.MuteSeconds, Text: "warning_limit"}, "groups.manage"); err != nil {
+				if _, err = s.queue(finish, tx, a.Actor.Principal(), c, Command{Kind: "mute", Target: a.Command.Target, Seconds: c.MuteSeconds, Text: "warning_limit"}, "groups.manage"); err != nil {
 					return err
 				}
 			}
@@ -351,7 +374,7 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 		if err := s.audit(tx, a.Actor.Principal(), g, a.Command.Kind, a.Command.Target, a.State); err != nil {
 			return err
 		}
-		return s.event(tx, g, "action.result", map[string]string{"id": id, "state": a.State})
+		return s.event(finish, tx, g, "action.result", map[string]string{"id": id, "state": a.State})
 	})
 	if err != nil {
 		return a, err

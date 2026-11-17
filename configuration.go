@@ -116,7 +116,7 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 		if e = s.audit(tx, p, c.ID, "configure", c.ID, "saved"); e != nil {
 			return e
 		}
-		if e = s.event(tx, c.ID, "configured", map[string]string{"group": c.ID}); e != nil {
+		if e = s.event(ctx, tx, c.ID, "configured", map[string]string{"group": c.ID}); e != nil {
 			return e
 		}
 		out = record.GroupConfig

@@ -47,6 +47,21 @@ type Delivery struct {
 	State    string `json:"state"`
 }
 
+type idSetter interface {
+	setID(string)
+}
+
+func (x *Member) setID(id string)       { x.ID = id }
+func (x *Action) setID(id string)       { x.ID = id }
+func (x *Report) setID(id string)       { x.ID = id }
+func (x *Hit) setID(id string)          { x.ID = id }
+func (x *Message) setID(id string)      { x.ID = id }
+func (x *Subscription) setID(id string) { x.ID = id }
+func (x *Blacklist) setID(id string)    { x.ID = id }
+func (x *Warnings) setID(id string)     { x.ID = id }
+func (x *Watch) setID(id string)        { x.ID = id }
+func (x *Delivery) setID(id string)     { x.ID = id }
+
 // Pages use the last scanned ID, so authorization/retention filtering may yield
 // an empty page with a nonempty cursor. Each request examines at most limit rows.
 func listRecords[T any](s *Service, ctx context.Context, p account.Principal, g, collection, cursor string, limit int) (Page[T], error) {
@@ -75,44 +90,24 @@ func listRecords[T any](s *Service, ctx context.Context, p account.Principal, g,
 		}
 		for _, r := range rows {
 			out.NextCursor = r.ID
-			if collection == "messages" {
-				var m Message
-				if e = json.Unmarshal(r.Data, &m); e != nil {
-					return e
-				}
-				if c.RetentionSeconds == 0 || !s.now().Before(m.Expires) {
+			var item T
+			if e = json.Unmarshal(r.Data, &item); e != nil {
+				return e
+			}
+			if setter, ok := any(&item).(idSetter); ok {
+				setter.setID(r.ID)
+			}
+			switch v := any(&item).(type) {
+			case *Message:
+				if c.RetentionSeconds == 0 || !s.now().Before(v.Expires) {
 					continue
 				}
-			}
-			var record map[string]json.RawMessage
-			if e = json.Unmarshal(r.Data, &record); e != nil {
-				return e
-			}
-			record["id"], e = json.Marshal(r.ID)
-			if e != nil {
-				return e
-			}
-			if collection == "deliveries" {
-				var d Delivery
-				if e = json.Unmarshal(r.Data, &d); e != nil {
-					return e
-				}
+			case *Delivery:
 				var action Action
-				if e = tx.Get(bucket(d.Receiver, "actions"), d.Action, &action); e != nil {
+				if e = tx.Get(bucket(v.Receiver, "actions"), v.Action, &action); e != nil {
 					return e
 				}
-				record["state"], e = json.Marshal(action.State)
-				if e != nil {
-					return e
-				}
-			}
-			data, e := json.Marshal(record)
-			if e != nil {
-				return e
-			}
-			var item T
-			if e = json.Unmarshal(data, &item); e != nil {
-				return e
+				v.State = action.State
 			}
 			out.Items = append(out.Items, item)
 		}

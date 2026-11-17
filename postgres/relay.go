@@ -41,7 +41,7 @@ func (r *Repository) Relay(ctx context.Context, deliver func(context.Context, g.
 			if failed[event.Subject] {
 				continue
 			}
-			call, cancel := context.WithTimeout(ctx, 10*time.Second)
+			call, cancel := context.WithTimeout(g.WithTraceParent(ctx, event.TraceParent), 10*time.Second)
 			err := deliver(call, event)
 			cancel()
 			if err == nil {

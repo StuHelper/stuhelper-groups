@@ -42,6 +42,7 @@ type UpstreamEvent struct {
 	Source          string            `json:"source"`
 	Type            string            `json:"type"`
 	Subject         string            `json:"subject"`
+	TraceParent     string            `json:"traceparent,omitempty"`
 	Time            time.Time         `json:"time"`
 	DataContentType string            `json:"datacontenttype"`
 	SchoolID        string            `json:"schoolid,omitempty"`
@@ -59,7 +60,7 @@ const MaxEventGroups = 1000
 var upstreamType = regexp.MustCompile(`^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+\.v1$`)
 
 func validUpstream(e UpstreamEvent) bool {
-	if e.SpecVersion != "1.0" || e.DataContentType != "application/json" || e.Time.IsZero() || e.Data.Revision < 1 || !eventText(e.ID, 256) || !eventText(e.Subject, 2048) || !eventText(e.Type, 128) || (e.SchoolID != "" && !eventText(e.SchoolID, 128)) {
+	if e.SpecVersion != "1.0" || e.DataContentType != "application/json" || e.Time.IsZero() || e.Data.Revision < 1 || !eventText(e.ID, 256) || !eventText(e.Subject, 2048) || !eventText(e.Type, 128) || (e.SchoolID != "" && !eventText(e.SchoolID, 128)) || (e.TraceParent != "" && !validTraceParent(e.TraceParent)) {
 		return false
 	}
 	if _, err := account.Parse(e.Data.Owner); err != nil {
@@ -101,7 +102,10 @@ func (s *Service) Consume(ctx context.Context, event UpstreamEvent) error {
 	if e != nil {
 		return ErrInvalid
 	}
-	envelope := Event{SpecVersion: event.SpecVersion, ID: event.ID, Source: event.Source, Type: event.Type, Subject: event.Subject, Time: event.Time, Revision: event.Data.Revision, Data: payload}
+	envelope := Event{SpecVersion: event.SpecVersion, ID: event.ID, Source: event.Source, Type: event.Type, Subject: event.Subject, TraceParent: event.TraceParent, Time: event.Time, Revision: event.Data.Revision, Data: payload}
+	if event.TraceParent != "" {
+		ctx = WithTraceParent(ctx, event.TraceParent)
+	}
 	call, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	return s.run(call, func(tx Tx) error {

@@ -46,8 +46,11 @@ func (s *Service) Sweep(ctx context.Context, g, cursor string) (string, error) {
 // Fanout consumes committed disposition events, independently queuing each
 // enabled recipient. Delivery state is the recipient action's actual state.
 func (s *Service) Fanout(ctx context.Context, e Event) error {
-	if e.Source != "groups" || e.Type != "groups.action.result" {
+	if e.Source != "groups" || e.Type != "groups.action.result" || (e.TraceParent != "" && !validTraceParent(e.TraceParent)) {
 		return ErrInvalid
+	}
+	if e.TraceParent != "" {
+		ctx = WithTraceParent(ctx, e.TraceParent)
 	}
 	return s.run(ctx, func(tx Tx) error {
 		copy := e
@@ -89,7 +92,7 @@ func (s *Service) Fanout(ctx context.Context, e Event) error {
 			if err = tx.Get("config", sub.Receiver, &c); err != nil {
 				return err
 			}
-			result, err := s.queue(tx, sub.Actor.Principal(), c, Command{Kind: "send", Receiver: e.Subject, Text: "group_event:" + origin.ID + ":" + origin.State}, "groups.messages.send")
+			result, err := s.queue(ctx, tx, sub.Actor.Principal(), c, Command{Kind: "send", Receiver: e.Subject, Text: "group_event:" + origin.ID + ":" + origin.State}, "groups.messages.send")
 			if err != nil {
 				return err
 			}
@@ -128,8 +131,11 @@ func (s *Service) frequency(tx Tx, c GroupConfig, cmd Command, preview bool) (bo
 // MemberEvent receives verified group membership from the host bot adapter.
 // A web application alone cannot claim that a QQ user has already joined.
 func (s *Service) MemberEvent(ctx context.Context, g string, event Event, owner string) error {
-	if event.Source != "qq-bot" || event.Subject != g || !valid(owner, 2048) || !slices.Contains([]string{"groups.member_joined", "groups.member_left"}, event.Type) {
+	if event.Source != "qq-bot" || event.Subject != g || (event.TraceParent != "" && !validTraceParent(event.TraceParent)) || !valid(owner, 2048) || !slices.Contains([]string{"groups.member_joined", "groups.member_left"}, event.Type) {
 		return ErrInvalid
+	}
+	if event.TraceParent != "" && TraceParentFromContext(ctx) == "" {
+		ctx = WithTraceParent(ctx, event.TraceParent)
 	}
 	return s.run(ctx, func(tx Tx) error {
 		payload, e := json.Marshal(struct {

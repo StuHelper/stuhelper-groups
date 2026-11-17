@@ -105,7 +105,7 @@ func (t *transaction) Emit(event g.Event) error {
 	return e
 }
 func (t *transaction) Accept(event g.Event) (bool, error) {
-	if event.SpecVersion != "1.0" || event.ID == "" || event.Source == "" || event.Subject == "" || event.Revision < 1 || event.Time.IsZero() {
+	if event.SpecVersion != "1.0" || event.ID == "" || event.Source == "" || event.Subject == "" || event.Revision < 1 || event.Time.IsZero() || len(event.TraceParent) > 256 {
 		return false, g.ErrInvalid
 	}
 	b, e := json.Marshal(event)

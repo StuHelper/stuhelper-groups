@@ -31,17 +31,12 @@ scenario_tests:
     - accountquery/query_test.go#TestAccountQueryAuthorizationAndFailures
     - postgres/account_query_test.go#TestAccountQueryScopePaginationAndRuntime
   QQ-01:
-    - my_groups_test.go#TestMyGroupsOwnIsolationPaginationAndReadOnly
-    - my_groups_test.go#TestMyGroupsGeneratedClientAndRouteReservation
     - delivery_membership_test.go#TestGroupsForOwnerPaginationAndBounds
     - api_v03_test.go#TestGroupSummaryCountsMaskingAndScope
     - api_v03_test.go#TestConfigurationRevisionPasswordAndReplay
     - api_v03_test.go#TestFinalSchemaInitializationAndLeaseRecovery
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-02:
-    - my_groups_test.go#TestMyGroupsMissingConditionsAndUnknownFacts
-    - my_groups_test.go#TestMyGroupsDependencyFailureReturnsNoPartialPage
-    - my_groups_test.go#TestMyGroupsPasswordRestrictionAndPublicProjection
     - facts_test.go#TestGroupFactsRejectsUnknownContradictoryAndFailedFacts
     - integration_test.go#TestPasswordDoesNotGrantStudentEligibilityAndBlacklistScope
   QQ-03:
@@ -67,12 +62,23 @@ scenario_tests:
     - api_v03_test.go#TestCommandDiscriminatorRequiresKindSpecificFields
     - api_v03_test.go#TestExplicitErrorResponsesAndBulkDiscriminator
     - integration_test.go#TestRulesCardsReportAndBatchPreview
+    - observability_pagination_test.go#TestTypedCollectionDecodingAndGenericPageRoutes
+    - observability_pagination_test.go#TestTraceParentPropagationAcrossHTTPOutboxBotFanoutAndUpstream
   QQ-09:
     - integration_test.go#TestAISuggestionsRequireEnabledActionsAndCurrentAuthorization
   QQ-10:
     - contract_test.go#TestAPIPrefixMatchesContractRoutesAndGeneratedClient
     - integration_test.go#TestRetentionInboxRollbackAndNoRecallViewAudit
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
+  QQ-11:
+    - my_groups_test.go#TestMyGroupsOwnIsolationPaginationAndReadOnly
+    - my_groups_test.go#TestMyGroupsPasswordRestrictionAndPublicProjection
+    - my_groups_test.go#TestMyGroupsGeneratedClientAndRouteReservation
+  QQ-12:
+    - my_groups_test.go#TestMyGroupsMissingConditionsAndUnknownFacts
+    - my_groups_test.go#TestMyGroupsDependencyFailureReturnsNoPartialPage
+  MP-07:
+    - observability_pagination_test.go#TestTraceParentPropagationAcrossHTTPOutboxBotFanoutAndUpstream
   BE-01:
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
   BE-02:

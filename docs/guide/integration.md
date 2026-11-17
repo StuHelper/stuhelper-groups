@@ -1,7 +1,7 @@
 ---
 type: guide
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-18
 ---
 
 # Groups 装配指南
@@ -179,7 +179,7 @@ ConfirmOutbox 在首次确认时保存时间，重复确认成功且保持原时
 
 公开读取端口与 verification 796b76f 一致，不按提供方时钟或本地 Failed/Retry 状态隐式过滤。backend 必须把自己的退避与人工主题传入 excludeSubjects，不能先取 100 条再在内存中排除。
 
-groups 自有 outbox 仍使用 Event：revision 在封套顶层，data 是该事件的业务 JSON。backend 的 Source 继续把 Event.Revision 映射到 relay 修订字段，其他字段按原值传递。
+groups 自有 outbox 仍使用 Event：revision 在封套顶层，traceparent 可选，data 是该事件的业务 JSON。HTTP Traceparent 请求头经校验后透传到 outbox、Execute 与 Fanout。
 
 ### owner 反向查询
 
@@ -214,6 +214,7 @@ type UpstreamEvent struct {
     Source          string            `json:"source"`
     Type            string            `json:"type"`
     Subject         string            `json:"subject"`
+    TraceParent     string            `json:"traceparent,omitempty"`
     Time            time.Time         `json:"time"`
     DataContentType string            `json:"datacontenttype"`
     SchoolID        string            `json:"schoolid,omitempty"`

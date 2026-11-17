@@ -5,9 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
+	"time"
+
 	"github.com/StuHelper/stuhelper-platform/account"
 	"github.com/StuHelper/stuhelper-platform/admin"
-	"time"
 )
 
 var (
@@ -151,10 +153,48 @@ type Event struct {
 	Source      string          `json:"source"`
 	Type        string          `json:"type"`
 	Subject     string          `json:"subject"`
+	TraceParent string          `json:"traceparent,omitempty"`
 	Time        time.Time       `json:"time"`
 	Revision    int64           `json:"revision"`
 	Data        json.RawMessage `json:"data"`
 }
+
+type traceParentKey struct{}
+
+func validTraceParent(tp string) bool {
+	if tp == "" || len(tp) > 256 {
+		return false
+	}
+	for i := 0; i < len(tp); i++ {
+		if tp[i] < 0x21 || tp[i] > 0x7E {
+			return false
+		}
+	}
+	return true
+}
+
+// WithTraceParent attaches a sanitized W3C traceparent token to ctx. Malformed,
+// oversized or control-character headers are ignored so envelopes stay valid.
+func WithTraceParent(ctx context.Context, tp string) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	tp = strings.TrimSpace(tp)
+	if !validTraceParent(tp) {
+		return ctx
+	}
+	return context.WithValue(ctx, traceParentKey{}, tp)
+}
+
+// TraceParentFromContext returns the active traceparent attached to ctx, if any.
+func TraceParentFromContext(ctx context.Context) string {
+	if ctx == nil {
+		return ""
+	}
+	v, _ := ctx.Value(traceParentKey{}).(string)
+	return v
+}
+
 type Row struct {
 	ID   string
 	Data json.RawMessage
