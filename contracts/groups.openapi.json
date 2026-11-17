@@ -1785,6 +1785,9 @@
             "$ref": "#/components/schemas/ExemptCommand"
           },
           {
+            "$ref": "#/components/schemas/UnexemptCommand"
+          },
+          {
             "$ref": "#/components/schemas/WarnCommand"
           },
           {
@@ -1847,6 +1850,7 @@
             "recheck": "#/components/schemas/RecheckCommand",
             "extend": "#/components/schemas/ExtendCommand",
             "exempt": "#/components/schemas/ExemptCommand",
+            "unexempt": "#/components/schemas/UnexemptCommand",
             "warn": "#/components/schemas/WarnCommand",
             "mute": "#/components/schemas/MuteCommand",
             "unmute": "#/components/schemas/UnmuteCommand",
@@ -2302,6 +2306,7 @@
               "send",
               "subscribe",
               "unblacklist",
+              "unexempt",
               "unmute",
               "warn",
               "watch",
@@ -3315,6 +3320,34 @@
         ],
         "description": "Management command; requires current group-scoped capability."
       },
+      "UnexemptCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "unexempt"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "target",
+          "text"
+        ],
+        "description": "Management command; revokes member exemption and re-evaluates current admission eligibility."
+      },
       "WarnCommand": {
         "type": "object",
         "additionalProperties": false,
@@ -3926,6 +3959,28 @@
         ],
         "description": "Management command; requires current group-scoped capability."
       },
+      "UnexemptBatchCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "unexempt"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "text"
+        ],
+        "description": "Management command; revokes member exemption and re-evaluates current admission eligibility."
+      },
       "CardBatchCommand": {
         "type": "object",
         "additionalProperties": false,
@@ -3972,6 +4027,9 @@
             "$ref": "#/components/schemas/ExemptBatchCommand"
           },
           {
+            "$ref": "#/components/schemas/UnexemptBatchCommand"
+          },
+          {
             "$ref": "#/components/schemas/CardBatchCommand"
           }
         ],
@@ -3985,6 +4043,7 @@
             "recheck": "#/components/schemas/RecheckBatchCommand",
             "extend": "#/components/schemas/ExtendBatchCommand",
             "exempt": "#/components/schemas/ExemptBatchCommand",
+            "unexempt": "#/components/schemas/UnexemptBatchCommand",
             "card": "#/components/schemas/CardBatchCommand"
           }
         }

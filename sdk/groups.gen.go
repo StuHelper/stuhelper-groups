@@ -74,6 +74,7 @@ const (
 	ActionCommandKindSend        ActionCommandKind = "send"
 	ActionCommandKindSubscribe   ActionCommandKind = "subscribe"
 	ActionCommandKindUnblacklist ActionCommandKind = "unblacklist"
+	ActionCommandKindUnexempt    ActionCommandKind = "unexempt"
 	ActionCommandKindUnmute      ActionCommandKind = "unmute"
 	ActionCommandKindWarn        ActionCommandKind = "warn"
 	ActionCommandKindWatch       ActionCommandKind = "watch"
@@ -130,6 +131,8 @@ func (e ActionCommandKind) Valid() bool {
 	case ActionCommandKindSubscribe:
 		return true
 	case ActionCommandKindUnblacklist:
+		return true
+	case ActionCommandKindUnexempt:
 		return true
 	case ActionCommandKindUnmute:
 		return true
@@ -822,6 +825,36 @@ const (
 func (e UnblacklistCommandKind) Valid() bool {
 	switch e {
 	case UnblacklistCommandKindUnblacklist:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UnexemptBatchCommandKind.
+const (
+	UnexemptBatchCommandKindUnexempt UnexemptBatchCommandKind = "unexempt"
+)
+
+// Valid indicates whether the value is a known member of the UnexemptBatchCommandKind enum.
+func (e UnexemptBatchCommandKind) Valid() bool {
+	switch e {
+	case UnexemptBatchCommandKindUnexempt:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UnexemptCommandKind.
+const (
+	UnexemptCommandKindUnexempt UnexemptCommandKind = "unexempt"
+)
+
+// Valid indicates whether the value is a known member of the UnexemptCommandKind enum.
+func (e UnexemptCommandKind) Valid() bool {
+	switch e {
+	case UnexemptCommandKindUnexempt:
 		return true
 	default:
 		return false
@@ -1579,6 +1612,25 @@ type UnblacklistCommand struct {
 // UnblacklistCommandKind defines model for UnblacklistCommand.Kind.
 type UnblacklistCommandKind string
 
+// UnexemptBatchCommand Management command; revokes member exemption and re-evaluates current admission eligibility.
+type UnexemptBatchCommand struct {
+	Kind UnexemptBatchCommandKind `json:"kind"`
+	Text string                   `json:"text"`
+}
+
+// UnexemptBatchCommandKind defines model for UnexemptBatchCommand.Kind.
+type UnexemptBatchCommandKind string
+
+// UnexemptCommand Management command; revokes member exemption and re-evaluates current admission eligibility.
+type UnexemptCommand struct {
+	Kind   UnexemptCommandKind `json:"kind"`
+	Target string              `json:"target"`
+	Text   string              `json:"text"`
+}
+
+// UnexemptCommandKind defines model for UnexemptCommand.Kind.
+type UnexemptCommandKind string
+
 // UnmuteBatchCommand Management command; requires current group-scoped capability.
 type UnmuteBatchCommand struct {
 	Kind UnmuteBatchCommandKind `json:"kind"`
@@ -1997,6 +2049,40 @@ func (t *BatchCommand) MergeExemptBatchCommand(v ExemptBatchCommand) error {
 	return err
 }
 
+// AsUnexemptBatchCommand returns the union data inside the BatchCommand as a UnexemptBatchCommand
+func (t BatchCommand) AsUnexemptBatchCommand() (UnexemptBatchCommand, error) {
+	var body UnexemptBatchCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromUnexemptBatchCommand overwrites any union data inside the BatchCommand as the provided UnexemptBatchCommand
+func (t *BatchCommand) FromUnexemptBatchCommand(v UnexemptBatchCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"unexempt"}`))
+	t.union = b
+	return err
+}
+
+// MergeUnexemptBatchCommand performs a merge with any union data inside the BatchCommand, using the provided UnexemptBatchCommand
+func (t *BatchCommand) MergeUnexemptBatchCommand(v UnexemptBatchCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"unexempt"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 // AsCardBatchCommand returns the union data inside the BatchCommand as a CardBatchCommand
 func (t BatchCommand) AsCardBatchCommand() (CardBatchCommand, error) {
 	var body CardBatchCommand
@@ -2057,6 +2143,8 @@ func (t BatchCommand) ValueByDiscriminator() (interface{}, error) {
 		return t.AsMuteBatchCommand()
 	case "recheck":
 		return t.AsRecheckBatchCommand()
+	case "unexempt":
+		return t.AsUnexemptBatchCommand()
 	case "unmute":
 		return t.AsUnmuteBatchCommand()
 	case "warn":
@@ -2339,6 +2427,40 @@ func (t *Command) MergeExemptCommand(v ExemptCommand) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"kind":"exempt"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsUnexemptCommand returns the union data inside the Command as a UnexemptCommand
+func (t Command) AsUnexemptCommand() (UnexemptCommand, error) {
+	var body UnexemptCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromUnexemptCommand overwrites any union data inside the Command as the provided UnexemptCommand
+func (t *Command) FromUnexemptCommand(v UnexemptCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"unexempt"}`))
+	t.union = b
+	return err
+}
+
+// MergeUnexemptCommand performs a merge with any union data inside the Command, using the provided UnexemptCommand
+func (t *Command) MergeUnexemptCommand(v UnexemptCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"unexempt"}`))
 	if err != nil {
 		return err
 	}
@@ -2984,6 +3106,8 @@ func (t Command) ValueByDiscriminator() (interface{}, error) {
 		return t.AsSubscribeCommand()
 	case "unblacklist":
 		return t.AsUnblacklistCommand()
+	case "unexempt":
+		return t.AsUnexemptCommand()
 	case "unmute":
 		return t.AsUnmuteCommand()
 	case "warn":

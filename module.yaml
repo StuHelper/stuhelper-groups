@@ -54,10 +54,12 @@ scenario_tests:
     - delivery_membership_test.go#TestConsumeApplicantsNoMembershipInvalidAndBoundedFanout
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-05:
+    - batch_exemption_test.go#TestUnexemptLifecycleAndExtendAntiShrinkProtection
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-06:
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-07:
+    - batch_exemption_test.go#TestBatchDryRunPreviewAccuracyAuthorizationAndLongIdempotencyKey
     - facts_test.go#TestGroupFactsFiltersFieldsAtServiceBoundary
     - integration_test.go#TestRulesCardsReportAndBatchPreview
   QQ-08:

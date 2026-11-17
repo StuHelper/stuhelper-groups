@@ -147,7 +147,7 @@ func capability(kind string) string {
 		return "groups.messages.send"
 	case "recall":
 		return "groups.messages.recall"
-	case "extend", "exempt", "warn", "mute", "unmute", "kick", "blacklist", "unblacklist":
+	case "extend", "exempt", "unexempt", "warn", "mute", "unmute", "kick", "blacklist", "unblacklist":
 		return "groups.manage"
 	case "subscribe", "rule", "ai_execute":
 		return "groups.configure"
@@ -229,7 +229,7 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 	switch cmd.Kind {
 	case "apply", "recheck":
 		return s.admission(ctx, tx, p, c, cmd.Target, cmd.Kind == "apply")
-	case "extend", "exempt":
+	case "extend", "exempt", "unexempt":
 		var m Member
 		if e := tx.Get(bucket(c.ID, "members"), cmd.Target, &m); e != nil {
 			return out, e
@@ -237,16 +237,68 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		if strings.TrimSpace(cmd.Text) == "" {
 			return out, ErrInvalid
 		}
-		if cmd.Kind == "extend" {
+		if m.State == "removed" {
+			return out, ErrConflict
+		}
+		switch cmd.Kind {
+		case "extend":
 			if cmd.Seconds == 0 {
 				return out, ErrInvalid
 			}
-			m.Deadline = s.now().Add(time.Duration(cmd.Seconds) * time.Second)
+			base := s.now()
+			if m.Deadline.After(base) {
+				base = m.Deadline
+			}
+			m.Deadline = base.Add(time.Duration(cmd.Seconds) * time.Second)
 			m.Extended = true
 			m.State = "extended"
-		} else {
+		case "exempt":
 			m.Exempt = true
+			m.Extended = false
+			m.Deadline = time.Time{}
 			m.State = "exempt"
+		case "unexempt":
+			m.Exempt = false
+			m.Extended = false
+			m.Deadline = time.Time{}
+			if m.State == "exempt" {
+				if !m.Joined && c.Mode == "before" {
+					m.State = "awaiting_verification"
+				} else {
+					m.State = "grace"
+				}
+			}
+			if e := tx.Put(bucket(c.ID, "members"), cmd.Target, m); e != nil {
+				return out, e
+			}
+			var adm Result
+			if c.BotEnabled {
+				var e error
+				adm, e = s.admission(ctx, tx, p, c, cmd.Target, false)
+				if e != nil {
+					return out, e
+				}
+			} else {
+				ok, e := s.eligible(ctx, tx, c, m)
+				if e != nil {
+					return out, e
+				}
+				switch {
+				case ok:
+					m.State = "restored"
+				case !m.Joined && c.Mode == "before":
+					m.State = "awaiting_verification"
+				default:
+					m.State = "grace"
+					m.Deadline = s.now().Add(time.Duration(c.GraceSeconds) * time.Second)
+				}
+				if e := tx.Put(bucket(c.ID, "members"), cmd.Target, m); e != nil {
+					return out, e
+				}
+				adm = Result{State: m.State}
+			}
+			adm.Action = "unexempt"
+			return adm, s.audit(tx, p, c.ID, "unexempt", cmd.Target, adm.State)
 		}
 		out.State = m.State
 		if e := tx.Put(bucket(c.ID, "members"), cmd.Target, m); e != nil {

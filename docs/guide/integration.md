@@ -1,7 +1,7 @@
 ---
 type: guide
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-18
 ---
 
 # Groups 装配指南
@@ -396,7 +396,9 @@ Command 是以 kind 为判别字段的 oneOf，每个分支禁止无关字段并
 
 apply、password、dice、self_mute、report 属于用户命令，从认证身份取得操作者，不接受 target。其余命令用于管理端，按群和操作能力授权。前端应按 OpenAPI 的分支类型构造请求。
 
-批量命令使用独立 BatchCommand，支持 warn、mute、unmute、kick、recheck、extend、exempt、card。target 由 targets 数组逐项填入，命令中不接收 target。每批最多 100 个对象，preview 不写业务数据，执行逐项返回结果。
+批量命令使用独立 BatchCommand，支持 warn、mute、unmute、kick、recheck、extend、exempt、unexempt、card。target 由 targets 数组逐项填入，命令中不接收 target。每批最多 100 个对象，preview 在单次只读事务内校验群权限并计算各目标当前状态与预期变更结果，不写业务数据；执行逐项返回结果。
+
+extend 以当前时间与既有截止时间的较大值为基准顺延秒数，不会缩短剩余宽限期。unexempt 撤销成员豁免后立即按当前真实资格重算，转入 restored、awaiting_verification 或新的 grace 宽限期并记录审计。
 
 Problem.code 是固定枚举，所有操作明确列出响应码。HTTP 400 表示 JSON、分页或幂等键格式错误；401 表示未认证，403 表示越权，404 表示对象不存在。HTTP 409 包括修订或幂等冲突以及冷却/容量限制。
 

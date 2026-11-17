@@ -146,14 +146,22 @@ func (s *Service) rule(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	}
 	return out, nil
 }
-func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, cmd Command) (Result, error) {
-	out := Result{State: "unavailable"}
+func (s *Service) evaluateCard(ctx context.Context, c GroupConfig, target, current string, cache map[factKey]Facts) (Result, error) {
+	out := Result{State: "unavailable", Action: "card"}
 	if s.Facts == nil {
 		return out, ErrUnavailable
 	}
-	f, e := s.currentFacts(ctx, cmd.Target, c.School)
-	if e != nil {
-		return out, ErrUnavailable
+	key := factKey{target, c.School}
+	f, found := cache[key]
+	if !found {
+		var e error
+		f, e = s.currentFacts(ctx, target, c.School)
+		if e != nil {
+			return out, ErrUnavailable
+		}
+		if cache != nil {
+			cache[key] = f
+		}
 	}
 	if !c.CheckCard || c.CardTemplate == "" {
 		return out, ErrDisabled
@@ -164,7 +172,7 @@ func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupC
 		if strings.Contains(text, token) {
 			v, ok := f.Fields[field]
 			if !ok {
-				return Result{State: "pending_profile"}, nil
+				return Result{State: "pending_profile", Action: "card"}, nil
 			}
 			text = strings.ReplaceAll(text, token, v.Value)
 		}
@@ -181,11 +189,19 @@ func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupC
 		return out, ErrInvalid
 	}
 	out.Detail = text
-	if text == cmd.Text {
+	if text == current {
 		out.State = "compliant"
 		return out, nil
 	}
 	out.State = "noncompliant"
+	return out, nil
+}
+
+func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, cmd Command) (Result, error) {
+	out, e := s.evaluateCard(ctx, c, cmd.Target, cmd.Text, nil)
+	if e != nil || out.State != "noncompliant" {
+		return out, e
+	}
 	if c.RemindCard {
 		if e = s.auth(ctx, p, "groups.manage", c); e != nil {
 			return out, e
@@ -200,7 +216,7 @@ func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	if e = s.auth(ctx, p, "groups.manage", c); e != nil {
 		return out, e
 	}
-	return s.queue(tx, p, c, Command{Kind: "card", Target: cmd.Target, Text: text}, "groups.manage")
+	return s.queue(tx, p, c, Command{Kind: "card", Target: cmd.Target, Text: out.Detail}, "groups.manage")
 }
 
 // Execute serializes claims before an external call. Interrupted calls remain
