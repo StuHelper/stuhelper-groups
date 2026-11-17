@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"time"
 )
 
 type factKey struct{ owner, school string }
@@ -21,27 +22,51 @@ func (a *eligibilityAssessment) action(value string) {
 	}
 }
 
-// assessEligibility is the single prerequisite decision used by admission,
-// execution-time checks and the user's read-only progress view. No write occurs.
-func (s *Service) assessEligibility(ctx context.Context, tx Tx, c GroupConfig, m Member, cache map[factKey]Facts) (eligibilityAssessment, error) {
-	out := assessment()
-	for _, group := range []string{c.ID, "*"} {
+type factCacheContextKey struct{}
+
+func withFactCache(ctx context.Context, cache map[factKey]Facts) context.Context {
+	return context.WithValue(ctx, factCacheContextKey{}, cache)
+}
+
+func factCacheFromContext(ctx context.Context) map[factKey]Facts {
+	cache, _ := ctx.Value(factCacheContextKey{}).(map[factKey]Facts)
+	return cache
+}
+
+func isRestrictedByBlacklist(tx ReadTx, groupID, owner string, now time.Time) (bool, error) {
+	for _, group := range []string{groupID, "*"} {
 		var block Blacklist
-		e := tx.Get(bucket(group, "blacklist"), m.Owner, &block)
-		if e == nil && (block.Permanent || s.now().Before(block.Until)) {
-			out.state = "ineligible"
-			out.missing = append(out.missing, "restricted")
-			out.action("contact_group_admin")
-			return out, nil
+		e := tx.Get(bucket(group, "blacklist"), owner, &block)
+		if e == nil && (block.Permanent || now.Before(block.Until)) {
+			return true, nil
 		}
 		if e != nil && !errors.Is(e, ErrNotFound) {
-			return out, e
+			return false, e
 		}
+	}
+	return false, nil
+}
+
+// assessEligibility is the single prerequisite decision used by admission,
+// execution-time checks and the user's read-only progress view. No write occurs.
+func (s *Service) assessEligibility(ctx context.Context, tx ReadTx, c GroupConfig, m Member, cache map[factKey]Facts) (eligibilityAssessment, error) {
+	out := assessment()
+	restricted, e := isRestrictedByBlacklist(tx, c.ID, m.Owner, s.now())
+	if e != nil {
+		return out, e
+	}
+	if restricted {
+		out.state = "ineligible"
+		out.missing = append(out.missing, "restricted")
+		out.action("contact_group_admin")
+		return out, nil
+	}
+	if cache == nil {
+		cache = factCacheFromContext(ctx)
 	}
 	key := factKey{m.Owner, c.School}
 	facts, found := cache[key]
 	if !found {
-		var e error
 		facts, e = s.currentFacts(ctx, m.Owner, c.School)
 		if e != nil {
 			return assessment(), ErrUnavailable

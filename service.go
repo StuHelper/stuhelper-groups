@@ -35,12 +35,23 @@ func hash(v any) string {
 }
 func bucket(g, k string) string { return g + "/" + k }
 func (s *Service) run(ctx context.Context, fn func(Tx) error) error {
+	return s.runScoped(ctx, nil, fn)
+}
+func (s *Service) runScoped(ctx context.Context, scopes []string, fn func(Tx) error) error {
 	if s.Repo == nil {
 		return ErrUnavailable
 	}
 	c, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	return s.Repo.Transaction(c, fn)
+	return s.Repo.ScopedTransaction(c, scopes, fn)
+}
+func (s *Service) runRead(ctx context.Context, fn func(ReadTx) error) error {
+	if s.Repo == nil {
+		return ErrUnavailable
+	}
+	c, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	return s.Repo.ReadOnly(c, fn)
 }
 func (s *Service) auth(ctx context.Context, p account.Principal, c string, g GroupConfig) error {
 	if !p.Valid() {
@@ -81,7 +92,7 @@ type receipt struct {
 	Result json.RawMessage
 }
 
-func replay(tx Tx, owner, key string, input, out any) (bool, error) {
+func replay(tx ReadTx, owner, key string, input, out any) (bool, error) {
 	var r receipt
 	e := tx.Get("receipts", hash([]string{owner, key}), &r)
 	if errors.Is(e, ErrNotFound) {
@@ -189,35 +200,228 @@ func (s *Service) Command(ctx context.Context, p account.Principal, g, key strin
 	if !valid(key, 128) || !valid(g, 128) || len(cmd.Text) > 8192 || cmd.Seconds < 0 || cmd.Seconds > 31536000 {
 		return out, ErrInvalid
 	}
-	e := s.run(ctx, func(tx Tx) error {
+	cap := capability(cmd.Kind)
+	normalized := cmd
+	if cap == "" {
+		if !slices.Contains([]string{"apply", "password", "dice", "self_mute", "report"}, cmd.Kind) {
+			return out, ErrInvalid
+		}
+		if cmd.Target != "" && cmd.Target != p.Key() {
+			return out, ErrForbidden
+		}
+		normalized.Target = p.Key()
+	}
+	input := struct {
+		Group   string
+		Command Command
+	}{g, normalized}
+
+	if normalized.Kind == "analyze" {
+		return s.executeAnalyze(ctx, p, g, key, normalized, input)
+	}
+
+	// Pre-check replay, authorization and whether external facts are needed without taking any write lock.
+	var replayed bool
+	var school, factOwner string
+	var needFacts bool
+	preErr := s.runRead(ctx, func(tx ReadTx) error {
 		var c GroupConfig
 		if e := tx.Get("config", g, &c); e != nil {
 			return e
 		}
-		cap := capability(cmd.Kind)
 		if cap != "" {
 			if e := s.auth(ctx, p, cap, c); e != nil {
 				return e
 			}
-		} else {
-			if !slices.Contains([]string{"apply", "password", "dice", "self_mute", "report"}, cmd.Kind) {
-				return ErrInvalid
-			}
-			if cmd.Target != "" && cmd.Target != p.Key() {
-				return ErrForbidden
-			}
-			cmd.Target = p.Key()
 		}
-		input := struct {
-			Group   string
-			Command Command
-		}{g, cmd}
+		ok, e := replay(tx, p.Key(), key, input, &out)
+		if e != nil || ok {
+			replayed = ok
+			return e
+		}
+		school = c.School
+		switch normalized.Kind {
+		case "card":
+			if valid(normalized.Target, 2048) {
+				factOwner = normalized.Target
+				needFacts = true
+			}
+		case "apply", "recheck":
+			if valid(normalized.Target, 2048) {
+				if normalized.Kind == "recheck" {
+					var m Member
+					if e := tx.Get(bucket(c.ID, "members"), normalized.Target, &m); e != nil || m.State == "removed" {
+						return nil
+					}
+				}
+				restricted, e := isRestrictedByBlacklist(tx, c.ID, normalized.Target, s.now())
+				if e != nil {
+					return e
+				}
+				if !restricted {
+					factOwner = normalized.Target
+					needFacts = true
+				}
+			}
+		case "password":
+			if c.Mode == "password" {
+				var stored configRecord
+				var m Member
+				if tx.Get("config", c.ID, &stored) == nil && checkPassword(normalized.Text, stored.PasswordDigest) && tx.Get(bucket(c.ID, "members"), normalized.Target, &m) == nil {
+					restricted, e := isRestrictedByBlacklist(tx, c.ID, normalized.Target, s.now())
+					if e != nil {
+						return e
+					}
+					if !restricted {
+						factOwner = normalized.Target
+						needFacts = true
+					}
+				}
+			}
+		case "dice", "self_mute":
+			if c.BotEnabled {
+				var m Member
+				if tx.Get(bucket(c.ID, "members"), p.Key(), &m) == nil {
+					restricted, e := isRestrictedByBlacklist(tx, c.ID, p.Key(), s.now())
+					if e != nil {
+						return e
+					}
+					if !restricted {
+						factOwner = p.Key()
+						needFacts = true
+					}
+				}
+			}
+		}
+		return nil
+	})
+	if preErr != nil || replayed {
+		return out, preErr
+	}
+	if needFacts {
+		facts, e := s.currentFacts(ctx, factOwner, school)
+		if e != nil {
+			return out, ErrUnavailable
+		}
+		ctx = withFactCache(ctx, map[factKey]Facts{{factOwner, school}: facts})
+	}
+
+	scopes := []string{"group:" + g, "receipt:" + p.Key() + ":" + key}
+	if normalized.Kind == "subscribe" && normalized.Receiver != "" {
+		scopes = append(scopes, "group:"+normalized.Receiver)
+	}
+	e := s.runScoped(ctx, scopes, func(tx Tx) error {
+		var c GroupConfig
+		if e := tx.Get("config", g, &c); e != nil {
+			return e
+		}
+		if cap != "" {
+			if e := s.auth(ctx, p, cap, c); e != nil {
+				return e
+			}
+		}
 		ok, e := replay(tx, p.Key(), key, input, &out)
 		if e != nil || ok {
 			return e
 		}
-		out, e = s.command(ctx, tx, p, c, cmd, cap)
+		out, e = s.command(ctx, tx, p, c, normalized, cap)
 		if e != nil {
+			return e
+		}
+		return save(tx, p.Key(), key, input, out)
+	})
+	return out, e
+}
+
+func (s *Service) executeAnalyze(ctx context.Context, p account.Principal, g, key string, cmd Command, input any) (Result, error) {
+	out := Result{State: "completed"}
+	var replayed bool
+	var payload []byte
+	preErr := s.runRead(ctx, func(tx ReadTx) error {
+		var c GroupConfig
+		if e := tx.Get("config", g, &c); e != nil {
+			return e
+		}
+		if e := s.auth(ctx, p, "groups.read", c); e != nil {
+			return e
+		}
+		ok, e := replay(tx, p.Key(), key, input, &out)
+		if e != nil || ok {
+			replayed = ok
+			return e
+		}
+		if s.AI == nil {
+			return ErrUnavailable
+		}
+		var r map[string]any
+		if e := tx.Get(bucket(c.ID, "reports"), cmd.Target, &r); e != nil {
+			return e
+		}
+		messageID, _ := r["message"].(string)
+		var message Message
+		if e := tx.Get(bucket(c.ID, "messages"), messageID, &message); e != nil {
+			return e
+		}
+		if !s.now().Before(message.Expires) || c.RetentionSeconds == 0 {
+			return ErrNotFound
+		}
+		if e := s.auth(ctx, p, "groups.messages.read", c); e != nil {
+			return e
+		}
+		var marshalErr error
+		payload, marshalErr = json.Marshal(struct {
+			Report  map[string]any
+			Message Message
+		}{r, message})
+		return marshalErr
+	})
+	if preErr != nil || replayed {
+		return out, preErr
+	}
+
+	// Invoke external AI outside any database transaction or advisory lock with a bounded 5s timeout.
+	aiCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	text, actions, err := s.AI.Analyze(aiCtx, string(payload))
+	if err != nil {
+		return out, ErrUnavailable
+	}
+
+	e := s.runScoped(ctx, []string{"group:" + g, "receipt:" + p.Key() + ":" + key}, func(tx Tx) error {
+		var c GroupConfig
+		if e := tx.Get("config", g, &c); e != nil {
+			return e
+		}
+		if e := s.auth(ctx, p, "groups.read", c); e != nil {
+			return e
+		}
+		ok, e := replay(tx, p.Key(), key, input, &out)
+		if e != nil || ok {
+			return e
+		}
+		var r map[string]any
+		if e := tx.Get(bucket(c.ID, "reports"), cmd.Target, &r); e != nil {
+			return e
+		}
+		if state, _ := r["state"].(string); state == "resolved" || state == "pending_execution" {
+			return ErrConflict
+		}
+		messageID, _ := r["message"].(string)
+		var message Message
+		if e := tx.Get(bucket(c.ID, "messages"), messageID, &message); e != nil {
+			return e
+		}
+		if !s.now().Before(message.Expires) || c.RetentionSeconds == 0 {
+			return ErrNotFound
+		}
+		if e := s.auth(ctx, p, "groups.messages.read", c); e != nil {
+			return e
+		}
+		r["analysis"] = text
+		r["suggestions"] = actions
+		r["state"] = "suggested"
+		out.Detail = text
+		if e := tx.Put(bucket(c.ID, "reports"), cmd.Target, r); e != nil {
 			return e
 		}
 		return save(tx, p.Key(), key, input, out)

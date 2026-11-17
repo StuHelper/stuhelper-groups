@@ -27,7 +27,11 @@ func (s *Service) GroupsForOwner(ctx context.Context, owner account.Principal, c
 	if !owner.Valid() || len(cursor) > 128 || limit < 1 || limit > 100 {
 		return out, ErrInvalid
 	}
-	e := s.run(ctx, func(tx Tx) error { var e error; out, e = tx.OwnerGroups(owner.Key(), cursor, limit, false); return e })
+	e := s.runRead(ctx, func(tx ReadTx) error {
+		var e error
+		out, e = tx.OwnerGroups(owner.Key(), cursor, limit, false)
+		return e
+	})
 	if e != nil {
 		return Page[ManagedGroup]{Items: []ManagedGroup{}}, e
 	}
@@ -104,7 +108,30 @@ func (s *Service) Consume(ctx context.Context, event UpstreamEvent) error {
 	envelope := Event{SpecVersion: event.SpecVersion, ID: event.ID, Source: event.Source, Type: event.Type, Subject: event.Subject, Time: event.Time, Revision: event.Data.Revision, Data: payload}
 	call, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	return s.run(call, func(tx Tx) error {
+	scopes := []string{"upstream:" + event.Source + ":" + event.Subject, "owner:" + event.Data.Owner}
+	e = s.runRead(call, func(tx ReadTx) error {
+		cursor := ""
+		seen := 0
+		for {
+			page, err := tx.OwnerGroups(event.Data.Owner, cursor, 100, true)
+			if err != nil {
+				return err
+			}
+			for _, grp := range page.Items {
+				scopes = append(scopes, "group:"+grp.ID)
+			}
+			seen += len(page.Items)
+			if seen > MaxEventGroups || page.NextCursor == "" || seen == MaxEventGroups {
+				break
+			}
+			cursor = page.NextCursor
+		}
+		return nil
+	})
+	if e != nil {
+		return e
+	}
+	return s.runScoped(call, scopes, func(tx Tx) error {
 		accepted, e := tx.Accept(envelope)
 		if e != nil || !accepted {
 			return e

@@ -57,7 +57,7 @@ func listRecords[T any](s *Service, ctx context.Context, p account.Principal, g,
 	if limit < 1 || limit > 100 || len(cursor) > 4096 {
 		return out, ErrInvalid
 	}
-	e := s.run(ctx, func(tx Tx) error {
+	e := s.runRead(ctx, func(tx ReadTx) error {
 		var c GroupConfig
 		if e := tx.Get("config", g, &c); e != nil {
 			return e
@@ -175,7 +175,7 @@ func (s *Service) Groups(ctx context.Context, p account.Principal, cursor string
 	if limit < 1 || limit > 100 || len(cursor) > 4096 {
 		return out, ErrInvalid
 	}
-	e := s.run(ctx, func(tx Tx) error {
+	e := s.runRead(ctx, func(tx ReadTx) error {
 		rows, e := tx.List("config", cursor, limit)
 		if e != nil {
 			return e

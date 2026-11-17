@@ -61,6 +61,7 @@ scenario_tests:
     - facts_test.go#TestGroupFactsFiltersFieldsAtServiceBoundary
     - integration_test.go#TestRulesCardsReportAndBatchPreview
   QQ-08:
+    - concurrency_test.go#TestSweepPreFetchesFactsOutsideLockAndMultiGroupLocksNeverDeadlock
     - delivery_membership_test.go#TestPendingOutboxExclusionLimitOrderingAndConfirmation
     - delivery_membership_test.go#TestRelayStopsFailedSubjectWithinBatchAndDeliversOthers
     - api_v03_test.go#TestEveryCollectionTypedPaginationAndAuthorization
@@ -68,6 +69,7 @@ scenario_tests:
     - api_v03_test.go#TestExplicitErrorResponsesAndBulkDiscriminator
     - integration_test.go#TestRulesCardsReportAndBatchPreview
   QQ-09:
+    - concurrency_test.go#TestReadOnlyLockFreePreFetchAndCrossGroupIsolation
     - integration_test.go#TestAISuggestionsRequireEnabledActionsAndCurrentAuthorization
   QQ-10:
     - contract_test.go#TestAPIPrefixMatchesContractRoutesAndGeneratedClient

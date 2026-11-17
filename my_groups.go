@@ -56,18 +56,48 @@ func (s *Service) MyGroups(ctx context.Context, p account.Principal, cursor stri
 	}
 	call, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	e := s.run(call, func(tx Tx) error {
-		page, e := tx.OwnerGroupRecords(p.Key(), cursor, limit, true)
-		if e != nil {
-			return e
+	var page Page[OwnerGroupRecord]
+	blocked := map[string]bool{}
+	e := s.runRead(call, func(tx ReadTx) error {
+		var err error
+		page, err = tx.OwnerGroupRecords(p.Key(), cursor, limit, true)
+		if err != nil {
+			return err
 		}
-		// Facts depend on owner/school, not on group. Cache within this request only.
-		cache := map[factKey]Facts{}
 		for _, record := range page.Items {
 			c, m := record.Config, record.Member
 			if m.Owner != p.Key() || !slices.Contains([]string{"requested", "awaiting_verification", "grace", "extended", "exempt", "restored", "removal_pending"}, m.State) {
 				return ErrUnavailable
 			}
+			isBlocked, err := isRestrictedByBlacklist(tx, c.ID, m.Owner, s.now())
+			if err != nil {
+				return err
+			}
+			blocked[c.ID] = isBlocked
+		}
+		return nil
+	})
+	if e != nil {
+		return Page[MyGroup]{Items: []MyGroup{}}, ErrUnavailable
+	}
+	// Pre-fetch unique school facts outside any database transaction or advisory lock.
+	cache := map[factKey]Facts{}
+	for _, record := range page.Items {
+		if blocked[record.Config.ID] {
+			continue
+		}
+		key := factKey{p.Key(), record.Config.School}
+		if _, exists := cache[key]; !exists {
+			facts, err := s.currentFacts(call, p.Key(), record.Config.School)
+			if err != nil {
+				return Page[MyGroup]{Items: []MyGroup{}}, ErrUnavailable
+			}
+			cache[key] = facts
+		}
+	}
+	e = s.runRead(call, func(tx ReadTx) error {
+		for _, record := range page.Items {
+			c, m := record.Config, record.Member
 			assessment, e := s.assessEligibility(call, tx, c, m, cache)
 			if e != nil {
 				return ErrUnavailable

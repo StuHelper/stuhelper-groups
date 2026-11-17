@@ -38,7 +38,7 @@ func (s *Service) Ingest(ctx context.Context, g string, event Event, m Message) 
 	if m.Attachments == nil {
 		m.Attachments = []string{}
 	}
-	return s.run(ctx, func(tx Tx) error {
+	return s.runScoped(ctx, []string{"group:" + g}, func(tx Tx) error {
 		var c GroupConfig
 		if e := tx.Get("config", g, &c); e != nil {
 			return e
@@ -151,9 +151,17 @@ func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	if s.Facts == nil {
 		return out, ErrUnavailable
 	}
-	f, e := s.currentFacts(ctx, cmd.Target, c.School)
-	if e != nil {
-		return out, ErrUnavailable
+	var f Facts
+	cache := factCacheFromContext(ctx)
+	key := factKey{cmd.Target, c.School}
+	if cached, ok := cache[key]; ok {
+		f = cached
+	} else {
+		var e error
+		f, e = s.currentFacts(ctx, cmd.Target, c.School)
+		if e != nil {
+			return out, ErrUnavailable
+		}
 	}
 	if !c.CheckCard || c.CardTemplate == "" {
 		return out, ErrDisabled
@@ -187,17 +195,17 @@ func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	}
 	out.State = "noncompliant"
 	if c.RemindCard {
-		if e = s.auth(ctx, p, "groups.manage", c); e != nil {
+		if e := s.auth(ctx, p, "groups.manage", c); e != nil {
 			return out, e
 		}
-		if _, e = s.queue(tx, p, c, Command{Kind: "remind", Target: cmd.Target, Text: "card_noncompliant"}, "groups.manage"); e != nil {
+		if _, e := s.queue(tx, p, c, Command{Kind: "remind", Target: cmd.Target, Text: "card_noncompliant"}, "groups.manage"); e != nil {
 			return out, e
 		}
 	}
 	if !c.AutoCard {
 		return out, nil
 	}
-	if e = s.auth(ctx, p, "groups.manage", c); e != nil {
+	if e := s.auth(ctx, p, "groups.manage", c); e != nil {
 		return out, e
 	}
 	return s.queue(tx, p, c, Command{Kind: "card", Target: cmd.Target, Text: text}, "groups.manage")
@@ -208,7 +216,50 @@ func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupC
 func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 	var a Action
 	var lookup bool
-	e := s.run(ctx, func(tx Tx) error {
+	var needFacts bool
+	var factOwner, school string
+	scopes := []string{"group:" + g}
+	preErr := s.runRead(ctx, func(tx ReadTx) error {
+		if e := tx.Get(bucket(g, "actions"), id, &a); e != nil {
+			return e
+		}
+		if a.State == "succeeded" || a.State == "failed" || a.State == "cancelled" {
+			return nil
+		}
+		var c GroupConfig
+		if e := tx.Get("config", g, &c); e != nil {
+			return e
+		}
+		if a.Command.Kind == "send" && a.Command.Receiver != "" {
+			scopes = append(scopes, "group:"+a.Command.Receiver)
+		}
+		if a.Capability == "admission" || a.Capability == "entertainment" {
+			restricted, e := isRestrictedByBlacklist(tx, c.ID, a.Command.Target, s.now())
+			if e != nil {
+				return e
+			}
+			if !restricted {
+				needFacts = true
+				factOwner = a.Command.Target
+				school = c.School
+			}
+		}
+		return nil
+	})
+	if preErr != nil {
+		return Action{}, preErr
+	}
+	if a.State == "succeeded" || a.State == "failed" || a.State == "cancelled" {
+		return a, nil
+	}
+	if needFacts {
+		facts, e := s.currentFacts(ctx, factOwner, school)
+		if e != nil {
+			return Action{}, ErrUnavailable
+		}
+		ctx = withFactCache(ctx, map[factKey]Facts{{factOwner, school}: facts})
+	}
+	e := s.runScoped(ctx, scopes, func(tx Tx) error {
 		if e := tx.Get(bucket(g, "actions"), id, &a); e != nil {
 			return e
 		}
@@ -310,7 +361,7 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 	}
 	finish, cancelFinish := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer cancelFinish()
-	err := s.run(finish, func(tx Tx) error {
+	err := s.runScoped(finish, []string{"group:" + g}, func(tx Tx) error {
 		if err := tx.Put(bucket(g, "actions"), id, a); err != nil {
 			return err
 		}
@@ -362,7 +413,7 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 // Recover is called by the host for expired execution leases, with bounded pages.
 func (s *Service) Recover(ctx context.Context, g, cursor string) (string, error) {
 	next := ""
-	e := s.run(ctx, func(tx Tx) error {
+	e := s.runScoped(ctx, []string{"group:" + g}, func(tx Tx) error {
 		rows, e := tx.List(bucket(g, "actions"), cursor, 100)
 		if e != nil {
 			return e
@@ -391,7 +442,7 @@ func (s *Service) Recover(ctx context.Context, g, cursor string) (string, error)
 }
 func (s *Service) Cleanup(ctx context.Context, g, cursor string) (string, error) {
 	next := ""
-	e := s.run(ctx, func(tx Tx) error {
+	e := s.runScoped(ctx, []string{"group:" + g}, func(tx Tx) error {
 		var c GroupConfig
 		if e := tx.Get("config", g, &c); e != nil {
 			return e
