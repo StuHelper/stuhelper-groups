@@ -31,6 +31,8 @@ scenario_tests:
     - accountquery/query_test.go#TestAccountQueryAuthorizationAndFailures
     - postgres/account_query_test.go#TestAccountQueryScopePaginationAndRuntime
   QQ-01:
+    - directory_test.go#TestGroupDirectoryDiscoveryFilteringVisibilityAndPasswordHint
+    - directory_test.go#TestGroupDirectoryValidationSDKAndFailureBoundaries
     - my_groups_test.go#TestMyGroupsOwnIsolationPaginationAndReadOnly
     - my_groups_test.go#TestMyGroupsGeneratedClientAndRouteReservation
     - delivery_membership_test.go#TestGroupsForOwnerPaginationAndBounds

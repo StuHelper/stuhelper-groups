@@ -25,6 +25,7 @@ type MyGroup struct {
 	State             string     `json:"state"`
 	Deadline          *time.Time `json:"deadline"`
 	RequiresPassword  bool       `json:"requires_password"`
+	PasswordHint      string     `json:"password_hint,omitempty"`
 	Eligibility       string     `json:"eligibility"`
 	MissingConditions []string   `json:"missing_conditions"`
 	UnknownConditions []string   `json:"unknown_conditions"`
@@ -77,6 +78,9 @@ func (s *Service) MyGroups(ctx context.Context, p account.Principal, cursor stri
 				return e
 			}
 			item := MyGroup{ID: c.ID, Name: c.Name, School: c.School, Number: number, Joined: m.Joined, State: m.State, RequiresPassword: c.Mode == "password", Eligibility: assessment.state, MissingConditions: assessment.missing, UnknownConditions: assessment.unknown, NextActions: assessment.actions}
+			if item.RequiresPassword && c.PasswordHint != "" {
+				item.PasswordHint = c.PasswordHint
+			}
 			if !m.Deadline.IsZero() {
 				deadline := m.Deadline.UTC()
 				item.Deadline = &deadline

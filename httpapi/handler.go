@@ -49,6 +49,22 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		v, e := s.MyGroups(r.Context(), p, cursor, limit)
 		write(w, v, e)
 	}))
+	mux.HandleFunc("GET /api/v1/groups/directory", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+		q := r.URL.Query()
+		for name, values := range q {
+			if (name != "school" && name != "category" && name != "cursor" && name != "limit") || len(values) != 1 {
+				write(w, nil, g.ErrInvalid)
+				return
+			}
+		}
+		cursor, limit, e := pagination(r)
+		if e != nil {
+			write(w, nil, e)
+			return
+		}
+		v, e := s.Directory(r.Context(), p, g.DirectoryQuery{School: q.Get("school"), Category: q.Get("category"), Cursor: cursor, Limit: limit})
+		write(w, v, e)
+	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
 		v, e := s.Configuration(r.Context(), p, r.PathValue("group"))
 		write(w, v, e)

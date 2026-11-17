@@ -1748,6 +1748,107 @@
         },
         "description": "Authenticated user only; no owner/issuer/subject parameter or management role is accepted. Includes joined memberships and active applications in configured groups; excludes removed or unmanaged groups. Ordered by group ID in bytewise ascending order. Read-only: no admission, punishment, inbox or audit writes."
       }
+    },
+    "/api/v1/groups/directory": {
+      "get": {
+        "operationId": "listGroupDirectory",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "school",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "school",
+                "department",
+                "grade",
+                "course",
+                "club"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 128
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Discoverable public group cards within the caller's campus eligibility or public visibility policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectoryGroupPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "groups_invalid_request: Invalid school, category or pagination query parameters.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Caller is restricted from discovering groups in the requested scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database or fact provider is unavailable, or an upstream result cannot be verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Authenticated user discovery directory for managed QQ groups with discoverable=true. Groups requiring student verification are visible only when the caller currently holds valid campus eligibility in that school; groups without student requirement remain publicly discoverable to authenticated users. Discloses only masked group numbers, admission summary and the caller's own joined/state."
+      }
     }
   },
   "components": {
@@ -2582,6 +2683,29 @@
           "bot_enabled": {
             "type": "boolean"
           },
+          "discoverable": {
+            "type": "boolean",
+            "description": "Whether the group appears in the student-facing directory."
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "",
+              "school",
+              "department",
+              "grade",
+              "course",
+              "club"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "password_hint": {
+            "type": "string",
+            "maxLength": 256
+          },
           "number": {
             "type": "string",
             "description": "Masked QQ group number; only its final four digits are shown."
@@ -2625,6 +2749,10 @@
           "warning_limit",
           "name",
           "bot_enabled",
+          "discoverable",
+          "category",
+          "description",
+          "password_hint",
           "number",
           "revision",
           "password_set"
@@ -2640,7 +2768,8 @@
             "minLength": 1,
             "not": {
               "enum": [
-                "me"
+                "me",
+                "directory"
               ]
             }
           },
@@ -2791,6 +2920,32 @@
           },
           "bot_enabled": {
             "type": "boolean"
+          },
+          "discoverable": {
+            "type": "boolean",
+            "description": "Optional directory visibility flag; defaults to false when omitted."
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "",
+              "school",
+              "department",
+              "grade",
+              "course",
+              "club"
+            ],
+            "description": "Optional directory category; empty when uncategorized."
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 512,
+            "description": "Optional public group summary shown in the directory."
+          },
+          "password_hint": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "Optional hint telling applicants where to obtain the dynamic password."
           },
           "number": {
             "type": "string",
@@ -4035,6 +4190,11 @@
             "type": "boolean",
             "description": "The group uses password mode. A previously accepted password is not listed as missing."
           },
+          "password_hint": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "Optional hint describing where to locate the dynamic password; present only when requires_password is true and a hint is configured."
+          },
           "eligibility": {
             "type": "string",
             "enum": [
@@ -4119,6 +4279,120 @@
           "next_cursor": {
             "type": "string",
             "description": "Last returned group ID if another page exists, or empty when exhausted."
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ]
+      },
+      "DirectoryGroup": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Internal group ID."
+          },
+          "school": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "pattern": "^(?:|\\*+[0-9]{4})$",
+            "description": "Masked group number showing at most the final four digits; empty when not recorded."
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "",
+              "school",
+              "department",
+              "grade",
+              "course",
+              "club"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "before",
+              "muted",
+              "password"
+            ]
+          },
+          "require_student": {
+            "type": "boolean"
+          },
+          "accept_alumni": {
+            "type": "boolean"
+          },
+          "accept_temporary": {
+            "type": "boolean"
+          },
+          "requires_password": {
+            "type": "boolean"
+          },
+          "password_hint": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "Optional hint describing where to locate the dynamic password when requires_password is true."
+          },
+          "joined": {
+            "type": "boolean",
+            "description": "True only when the caller's own membership has been confirmed by the bot."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "",
+              "requested",
+              "awaiting_verification",
+              "grace",
+              "extended",
+              "exempt",
+              "restored",
+              "removal_pending"
+            ],
+            "description": "Caller's own active membership or application state, or empty when none."
+          }
+        },
+        "required": [
+          "id",
+          "school",
+          "name",
+          "number",
+          "category",
+          "description",
+          "mode",
+          "require_student",
+          "accept_alumni",
+          "accept_temporary",
+          "requires_password",
+          "joined",
+          "state"
+        ]
+      },
+      "DirectoryGroupPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DirectoryGroup"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Last scanned group ID if another page may exist, or empty when exhausted."
           }
         },
         "required": [

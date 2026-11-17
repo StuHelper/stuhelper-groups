@@ -103,7 +103,10 @@ func save(tx Tx, owner, key string, input, out any) error {
 	return tx.Put("receipts", hash([]string{owner, key}), receipt{hash(input), b})
 }
 func validateConfig(c GroupConfig) error {
-	if strings.TrimSpace(c.Name) == "" || utf8.RuneCountInString(c.Name) > 128 || strings.ContainsFunc(c.Name, unicode.IsControl) || c.ID == "me" || c.ID == "*" || c.School == "*" || !valid(c.ID, 128) || !valid(c.School, 128) || !slices.Contains([]string{"before", "muted", "password"}, c.Mode) {
+	if strings.TrimSpace(c.Name) == "" || utf8.RuneCountInString(c.Name) > 128 || strings.ContainsFunc(c.Name, unicode.IsControl) || c.ID == "me" || c.ID == "directory" || c.ID == "*" || c.School == "*" || !valid(c.ID, 128) || !valid(c.School, 128) || !slices.Contains([]string{"before", "muted", "password"}, c.Mode) {
+		return ErrInvalid
+	}
+	if !slices.Contains([]string{"", "school", "department", "grade", "course", "club"}, c.Category) || !utf8.ValidString(c.Description) || utf8.RuneCountInString(c.Description) > 512 || strings.ContainsFunc(c.Description, func(r rune) bool { return unicode.IsControl(r) && r != '\n' }) || !utf8.ValidString(c.PasswordHint) || utf8.RuneCountInString(c.PasswordHint) > 256 || strings.ContainsFunc(c.PasswordHint, unicode.IsControl) {
 		return ErrInvalid
 	}
 	for _, n := range []int64{c.GraceSeconds, c.ReminderSeconds, c.RetentionSeconds, c.CooldownSeconds} {

@@ -288,6 +288,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/groups/directory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Authenticated user discovery directory for managed QQ groups with discoverable=true. Groups requiring student verification are visible only when the caller currently holds valid campus eligibility in that school; groups without student requirement remain publicly discoverable to authenticated users. Discloses only masked group numbers, admission summary and the caller's own joined/state. */
+        get: operations["listGroupDirectory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -485,6 +502,12 @@ export interface components {
             warning_limit: number;
             name: string;
             bot_enabled: boolean;
+            /** @description Whether the group appears in the student-facing directory. */
+            discoverable: boolean;
+            /** @enum {string} */
+            category: "" | "school" | "department" | "grade" | "course" | "club";
+            description: string;
+            password_hint: string;
             /** @description Masked QQ group number; only its final four digits are shown. */
             number: string;
             /** Format: int64 */
@@ -534,6 +557,17 @@ export interface components {
             warning_limit: number;
             name: string;
             bot_enabled: boolean;
+            /** @description Optional directory visibility flag; defaults to false when omitted. */
+            discoverable?: boolean;
+            /**
+             * @description Optional directory category; empty when uncategorized.
+             * @enum {string}
+             */
+            category?: "" | "school" | "department" | "grade" | "course" | "club";
+            /** @description Optional public group summary shown in the directory. */
+            description?: string;
+            /** @description Optional hint telling applicants where to obtain the dynamic password. */
+            password_hint?: string;
             /** @description Optional real group number for create/update; omitted preserves the stored masked number. */
             number?: string;
             /**
@@ -964,6 +998,8 @@ export interface components {
             deadline: string | null;
             /** @description The group uses password mode. A previously accepted password is not listed as missing. */
             requires_password: boolean;
+            /** @description Optional hint describing where to locate the dynamic password; present only when requires_password is true and a hint is configured. */
+            password_hint?: string;
             /**
              * @description Current prerequisite assessment, separate from recorded membership/approval or exemption. Any required unknown fact prevents eligible.
              * @enum {string}
@@ -979,6 +1015,37 @@ export interface components {
         MyGroupPage: {
             items: components["schemas"]["MyGroup"][];
             /** @description Last returned group ID if another page exists, or empty when exhausted. */
+            next_cursor: string;
+        };
+        DirectoryGroup: {
+            /** @description Internal group ID. */
+            id: string;
+            school: string;
+            name: string;
+            /** @description Masked group number showing at most the final four digits; empty when not recorded. */
+            number: string;
+            /** @enum {string} */
+            category: "" | "school" | "department" | "grade" | "course" | "club";
+            description: string;
+            /** @enum {string} */
+            mode: "before" | "muted" | "password";
+            require_student: boolean;
+            accept_alumni: boolean;
+            accept_temporary: boolean;
+            requires_password: boolean;
+            /** @description Optional hint describing where to locate the dynamic password when requires_password is true. */
+            password_hint?: string;
+            /** @description True only when the caller's own membership has been confirmed by the bot. */
+            joined: boolean;
+            /**
+             * @description Caller's own active membership or application state, or empty when none.
+             * @enum {string}
+             */
+            state: "" | "requested" | "awaiting_verification" | "grace" | "extended" | "exempt" | "restored" | "removal_pending";
+        };
+        DirectoryGroupPage: {
+            items: components["schemas"]["DirectoryGroup"][];
+            /** @description Last scanned group ID if another page may exist, or empty when exhausted. */
             next_cursor: string;
         };
     };
@@ -2285,6 +2352,67 @@ export interface operations {
                 };
             };
             /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listGroupDirectory: {
+        parameters: {
+            query?: {
+                school?: string;
+                category?: "school" | "department" | "grade" | "course" | "club";
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Discoverable public group cards within the caller's campus eligibility or public visibility policy. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DirectoryGroupPage"];
+                };
+            };
+            /** @description groups_invalid_request: Invalid school, category or pagination query parameters. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Caller is restricted from discovering groups in the requested scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database or fact provider is unavailable, or an upstream result cannot be verified. */
             503: {
                 headers: {
                     [name: string]: unknown;

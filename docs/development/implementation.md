@@ -1,7 +1,7 @@
 ---
 type: development
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-18
 ---
 
 # Groups 实施状态
@@ -26,7 +26,7 @@ OpenAPI 0.4.0 使用 /api/v1/groups 前缀，Go/TypeScript 客户端、HTTP Hand
 
 outbox 提供带排除主题和 limit 的 PendingOutbox，以及幂等 ConfirmOutbox。GroupsForOwner 提供有界成员反查，Consume 按上游 owner 在同一事务内重算关联群，Sweep 保留为周期性核对与期限处理。
 
-Web 通过 GET /api/v1/groups/me 查询自己的成员和申请记录。本人查询复用 owner 反向索引和资格判定，区分缺失条件、未知事实和依赖失败，不返回管理信息，不触发业务写入。
+Web 通过 GET /api/v1/groups/directory 查找公开群目录，并通过 GET /api/v1/groups/me 查询本人成员和申请记录。两端均复用资格判定，返回动态口令提示，不暴露管理计数或触发业务写入。
 
 Consume 接受 qq-binding.owner-bindings.changed.v1，并按提供方实际封套检查 subject、owner、十进制 ID 与 int64 修订的一致性。已有去重和旧修订规则不变，不支持的类型继续返回 ErrInvalid。
 
