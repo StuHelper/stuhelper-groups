@@ -112,12 +112,17 @@ func validKey(v string) bool {
 }
 
 func replay(tx ReadTx, owner, operation, object, key string, input, out any) (bool, error) {
-	var r receipt
-	e := tx.Get("receipts", hash([]string{owner, operation, object, key}), &r)
-	if errors.Is(e, ErrNotFound) {
-		// Legacy receipts have only the digest to identify the original operation.
-		e = tx.Get("receipts", hash([]string{owner, key}), &r)
+	hit, err := replayReceipt(tx, hash([]string{owner, operation, object, key}), input, out)
+	if hit || err != nil {
+		return hit, err
 	}
+	// Legacy receipts have only the digest to identify the original operation.
+	return replayReceipt(tx, hash([]string{owner, key}), input, out)
+}
+
+func replayReceipt(tx ReadTx, id string, input, out any) (bool, error) {
+	var r receipt
+	e := tx.Get("receipts", id, &r)
 	if errors.Is(e, ErrNotFound) {
 		return false, nil
 	}

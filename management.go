@@ -20,11 +20,19 @@ type BulkItem struct {
 	Result Result `json:"result"`
 }
 type BulkResult struct {
-	Items []BulkItem `json:"items"`
+	Items    []BulkItem        `json:"items"`
+	Executed []BulkItem        `json:"executed"`
+	Skipped  []BulkSkippedItem `json:"skipped"`
+}
+
+type BulkSkippedItem struct {
+	Target     string `json:"target"`
+	ReasonCode string `json:"reason_code"`
+	Reason     string `json:"reason"`
 }
 
 func validBatchCommand(cmd Command) bool {
-	if !validText(cmd.Text, 8192) || cmd.Seconds < 0 || cmd.Seconds > 31536000 {
+	if !validText(cmd.Text, 8192) || !validText(cmd.Message, 128) || !validText(cmd.Receiver, 128) || cmd.Seconds < 0 || cmd.Seconds > 31536000 {
 		return false
 	}
 	switch cmd.Kind {
@@ -59,7 +67,7 @@ func decodeBatchDigest(raw json.RawMessage) (string, error) {
 }
 
 func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string, in Bulk) (BulkResult, error) {
-	out := BulkResult{Items: []BulkItem{}}
+	out := newBulkResult()
 	if !p.Valid() {
 		return out, ErrUnauthenticated
 	}
@@ -78,12 +86,8 @@ func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string,
 		return s.previewBatch(ctx, p, g, in)
 	}
 	err := s.runScoped(ctx, []string{"group:" + g, "batch:" + p.Key() + ":" + g + ":" + key}, func(tx Tx) error {
-		var c GroupConfig
-		if e := tx.Get("config", g, &c); e != nil {
-			return e
-		}
-		if e := s.auth(ctx, p, "groups.manage", c); e != nil {
-			return e
+		if _, err := s.batchConfig(ctx, tx, p, g, in.Command.Kind); err != nil {
+			return err
 		}
 		var rawPrior json.RawMessage
 		id := hash([]string{p.Key(), g, key})
@@ -111,20 +115,11 @@ func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string,
 	for _, target := range in.Targets {
 		cmd := in.Command
 		cmd.Target = target
-		r, e := s.Command(ctx, p, g, batchChildKey(g, key, target), cmd)
-		if e != nil {
-			r = Result{State: "rejected"}
-			for _, known := range []error{ErrInvalid, ErrForbidden, ErrUnauthenticated, ErrNotFound, ErrConflict, ErrDisabled, ErrUnprocessable, ErrCooldown} {
-				if errors.Is(e, known) {
-					r.Detail = known.Error()
-					break
-				}
-			}
-			if r.Detail == "" {
-				return BulkResult{}, e
-			}
+		outcome, err := s.executeBatchTarget(ctx, p, g, batchChildKey(g, key, target), cmd)
+		if err != nil {
+			return BulkResult{}, err
 		}
-		out.Items = append(out.Items, BulkItem{target, r})
+		out.add(target, outcome)
 	}
 	return out, nil
 }

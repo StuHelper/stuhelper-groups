@@ -376,11 +376,11 @@ export interface components {
             command: components["schemas"]["BatchCommand"];
             preview: boolean;
         };
+        /** @description items contains every target in request order. executed contains accepted commands (pending means queued) or projected commands in preview. skipped lists all other targets with a stable code and a display reason. Both lists preserve request order and may be empty. */
         BulkResult: {
-            items: {
-                target: string;
-                result: components["schemas"]["Result"];
-            }[];
+            items: components["schemas"]["BulkItems"];
+            executed: components["schemas"]["BulkItems"];
+            skipped: components["schemas"]["BulkSkippedItem"][];
         };
         BlacklistInput: {
             groups: string[];
@@ -1188,6 +1188,17 @@ export interface components {
             items: components["schemas"]["DirectoryGroup"][];
             /** @description Last scanned group ID if another page may exist, or empty when exhausted. */
             next_cursor: string;
+        };
+        BulkItems: {
+            target: string;
+            result: components["schemas"]["Result"];
+        }[];
+        BulkSkippedItem: {
+            target: string;
+            /** @description Stable reason for localization, e.g. not_found (no member record), not_joined, bot_disabled or action_queue_full. */
+            reason_code: string;
+            /** @description Human-readable explanation in Chinese. */
+            reason: string;
         };
     };
     responses: never;

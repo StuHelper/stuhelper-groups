@@ -1688,12 +1688,27 @@ type Bulk struct {
 	Targets []string     `json:"targets"`
 }
 
-// BulkResult defines model for BulkResult.
+// BulkItems defines model for BulkItems.
+type BulkItems = []struct {
+	Result Result `json:"result"`
+	Target string `json:"target"`
+}
+
+// BulkResult items contains every target in request order. executed contains accepted commands (pending means queued) or projected commands in preview. skipped lists all other targets with a stable code and a display reason. Both lists preserve request order and may be empty.
 type BulkResult struct {
-	Items []struct {
-		Result Result `json:"result"`
-		Target string `json:"target"`
-	} `json:"items"`
+	Executed BulkItems         `json:"executed"`
+	Items    BulkItems         `json:"items"`
+	Skipped  []BulkSkippedItem `json:"skipped"`
+}
+
+// BulkSkippedItem defines model for BulkSkippedItem.
+type BulkSkippedItem struct {
+	// Reason Human-readable explanation in Chinese.
+	Reason string `json:"reason"`
+
+	// ReasonCode Stable reason for localization, e.g. not_found (no member record), not_joined, bot_disabled or action_queue_full.
+	ReasonCode string `json:"reason_code"`
+	Target     string `json:"target"`
 }
 
 // CancelActionCommand Management command; cancels a pending bot action without affecting executing or unknown actions.

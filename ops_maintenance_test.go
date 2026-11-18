@@ -167,6 +167,7 @@ func TestPeriodicMaintenanceCleansExpiredReceiptsSentOutboxAndFrequencyWindows(t
 
 	// Create old receipt, batch_input, confirmed outbox event, unsent outbox event, and frequency window at t0.
 	command(t, f, manager, "old-cmd", g.Command{Kind: "rule", Target: user.Key(), Message: "m1", Text: "hello"})
+	putBatchMember(t, f, user.Key(), "restored", true)
 	if _, e := f.s.Batch(ctx, manager, "g", "old-batch", g.Bulk{Targets: []string{user.Key()}, Command: g.Command{Kind: "warn", Text: "old"}}); e != nil {
 		t.Fatal(e)
 	}
