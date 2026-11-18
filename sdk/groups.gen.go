@@ -1257,6 +1257,264 @@ func (e ListGroupDirectoryParamsCategory) Valid() bool {
 	}
 }
 
+// Defines values for ListActionsParamsState.
+const (
+	ListActionsParamsStateCancelled ListActionsParamsState = "cancelled"
+	ListActionsParamsStateExecuting ListActionsParamsState = "executing"
+	ListActionsParamsStateFailed    ListActionsParamsState = "failed"
+	ListActionsParamsStatePending   ListActionsParamsState = "pending"
+	ListActionsParamsStateSucceeded ListActionsParamsState = "succeeded"
+	ListActionsParamsStateUnknown   ListActionsParamsState = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the ListActionsParamsState enum.
+func (e ListActionsParamsState) Valid() bool {
+	switch e {
+	case ListActionsParamsStateCancelled:
+		return true
+	case ListActionsParamsStateExecuting:
+		return true
+	case ListActionsParamsStateFailed:
+		return true
+	case ListActionsParamsStatePending:
+		return true
+	case ListActionsParamsStateSucceeded:
+		return true
+	case ListActionsParamsStateUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListActionsParamsKind.
+const (
+	ListActionsParamsKindAiExecute   ListActionsParamsKind = "ai_execute"
+	ListActionsParamsKindAnalyze     ListActionsParamsKind = "analyze"
+	ListActionsParamsKindApply       ListActionsParamsKind = "apply"
+	ListActionsParamsKindApprove     ListActionsParamsKind = "approve"
+	ListActionsParamsKindBlacklist   ListActionsParamsKind = "blacklist"
+	ListActionsParamsKindCard        ListActionsParamsKind = "card"
+	ListActionsParamsKindDice        ListActionsParamsKind = "dice"
+	ListActionsParamsKindExempt      ListActionsParamsKind = "exempt"
+	ListActionsParamsKindExtend      ListActionsParamsKind = "extend"
+	ListActionsParamsKindFeedback    ListActionsParamsKind = "feedback"
+	ListActionsParamsKindForward     ListActionsParamsKind = "forward"
+	ListActionsParamsKindKick        ListActionsParamsKind = "kick"
+	ListActionsParamsKindMute        ListActionsParamsKind = "mute"
+	ListActionsParamsKindPassword    ListActionsParamsKind = "password"
+	ListActionsParamsKindPreview     ListActionsParamsKind = "preview"
+	ListActionsParamsKindRecall      ListActionsParamsKind = "recall"
+	ListActionsParamsKindRecheck     ListActionsParamsKind = "recheck"
+	ListActionsParamsKindRemind      ListActionsParamsKind = "remind"
+	ListActionsParamsKindReport      ListActionsParamsKind = "report"
+	ListActionsParamsKindRule        ListActionsParamsKind = "rule"
+	ListActionsParamsKindSelfMute    ListActionsParamsKind = "self_mute"
+	ListActionsParamsKindSend        ListActionsParamsKind = "send"
+	ListActionsParamsKindSubscribe   ListActionsParamsKind = "subscribe"
+	ListActionsParamsKindUnblacklist ListActionsParamsKind = "unblacklist"
+	ListActionsParamsKindUnmute      ListActionsParamsKind = "unmute"
+	ListActionsParamsKindWarn        ListActionsParamsKind = "warn"
+	ListActionsParamsKindWatch       ListActionsParamsKind = "watch"
+	ListActionsParamsKindWelcome     ListActionsParamsKind = "welcome"
+)
+
+// Valid indicates whether the value is a known member of the ListActionsParamsKind enum.
+func (e ListActionsParamsKind) Valid() bool {
+	switch e {
+	case ListActionsParamsKindAiExecute:
+		return true
+	case ListActionsParamsKindAnalyze:
+		return true
+	case ListActionsParamsKindApply:
+		return true
+	case ListActionsParamsKindApprove:
+		return true
+	case ListActionsParamsKindBlacklist:
+		return true
+	case ListActionsParamsKindCard:
+		return true
+	case ListActionsParamsKindDice:
+		return true
+	case ListActionsParamsKindExempt:
+		return true
+	case ListActionsParamsKindExtend:
+		return true
+	case ListActionsParamsKindFeedback:
+		return true
+	case ListActionsParamsKindForward:
+		return true
+	case ListActionsParamsKindKick:
+		return true
+	case ListActionsParamsKindMute:
+		return true
+	case ListActionsParamsKindPassword:
+		return true
+	case ListActionsParamsKindPreview:
+		return true
+	case ListActionsParamsKindRecall:
+		return true
+	case ListActionsParamsKindRecheck:
+		return true
+	case ListActionsParamsKindRemind:
+		return true
+	case ListActionsParamsKindReport:
+		return true
+	case ListActionsParamsKindRule:
+		return true
+	case ListActionsParamsKindSelfMute:
+		return true
+	case ListActionsParamsKindSend:
+		return true
+	case ListActionsParamsKindSubscribe:
+		return true
+	case ListActionsParamsKindUnblacklist:
+		return true
+	case ListActionsParamsKindUnmute:
+		return true
+	case ListActionsParamsKindWarn:
+		return true
+	case ListActionsParamsKindWatch:
+		return true
+	case ListActionsParamsKindWelcome:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListActionsParamsOrder.
+const (
+	ListActionsParamsOrderAsc  ListActionsParamsOrder = "asc"
+	ListActionsParamsOrderDesc ListActionsParamsOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ListActionsParamsOrder enum.
+func (e ListActionsParamsOrder) Valid() bool {
+	switch e {
+	case ListActionsParamsOrderAsc:
+		return true
+	case ListActionsParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListHitsParamsOrder.
+const (
+	ListHitsParamsOrderAsc  ListHitsParamsOrder = "asc"
+	ListHitsParamsOrderDesc ListHitsParamsOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ListHitsParamsOrder enum.
+func (e ListHitsParamsOrder) Valid() bool {
+	switch e {
+	case ListHitsParamsOrderAsc:
+		return true
+	case ListHitsParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListMembersParamsState.
+const (
+	ListMembersParamsStateAwaitingVerification ListMembersParamsState = "awaiting_verification"
+	ListMembersParamsStateExempt               ListMembersParamsState = "exempt"
+	ListMembersParamsStateExtended             ListMembersParamsState = "extended"
+	ListMembersParamsStateGrace                ListMembersParamsState = "grace"
+	ListMembersParamsStateRemovalPending       ListMembersParamsState = "removal_pending"
+	ListMembersParamsStateRemoved              ListMembersParamsState = "removed"
+	ListMembersParamsStateRequested            ListMembersParamsState = "requested"
+	ListMembersParamsStateRestored             ListMembersParamsState = "restored"
+)
+
+// Valid indicates whether the value is a known member of the ListMembersParamsState enum.
+func (e ListMembersParamsState) Valid() bool {
+	switch e {
+	case ListMembersParamsStateAwaitingVerification:
+		return true
+	case ListMembersParamsStateExempt:
+		return true
+	case ListMembersParamsStateExtended:
+		return true
+	case ListMembersParamsStateGrace:
+		return true
+	case ListMembersParamsStateRemovalPending:
+		return true
+	case ListMembersParamsStateRemoved:
+		return true
+	case ListMembersParamsStateRequested:
+		return true
+	case ListMembersParamsStateRestored:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListMessagesParamsOrder.
+const (
+	ListMessagesParamsOrderAsc  ListMessagesParamsOrder = "asc"
+	ListMessagesParamsOrderDesc ListMessagesParamsOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ListMessagesParamsOrder enum.
+func (e ListMessagesParamsOrder) Valid() bool {
+	switch e {
+	case ListMessagesParamsOrderAsc:
+		return true
+	case ListMessagesParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListReportsParamsState.
+const (
+	Open             ListReportsParamsState = "open"
+	PendingExecution ListReportsParamsState = "pending_execution"
+	Resolved         ListReportsParamsState = "resolved"
+	Suggested        ListReportsParamsState = "suggested"
+)
+
+// Valid indicates whether the value is a known member of the ListReportsParamsState enum.
+func (e ListReportsParamsState) Valid() bool {
+	switch e {
+	case Open:
+		return true
+	case PendingExecution:
+		return true
+	case Resolved:
+		return true
+	case Suggested:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListReportsParamsOrder.
+const (
+	ListReportsParamsOrderAsc  ListReportsParamsOrder = "asc"
+	ListReportsParamsOrderDesc ListReportsParamsOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ListReportsParamsOrder enum.
+func (e ListReportsParamsOrder) Valid() bool {
+	switch e {
+	case ListReportsParamsOrderAsc:
+		return true
+	case ListReportsParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
 // Action defines model for Action.
 type Action struct {
 	Actor      Actor         `json:"actor"`
@@ -1354,10 +1612,12 @@ type BatchCommand struct {
 
 // Blacklist defines model for Blacklist.
 type Blacklist struct {
-	Id        string    `json:"id"`
-	Permanent bool      `json:"permanent"`
-	Reason    string    `json:"reason"`
-	Until     time.Time `json:"until"`
+	Created   *time.Time `json:"created,omitempty"`
+	Id        string     `json:"id"`
+	Permanent bool       `json:"permanent"`
+	Reason    string     `json:"reason"`
+	Until     time.Time  `json:"until"`
+	Updated   *time.Time `json:"updated,omitempty"`
 }
 
 // BlacklistCommand Management command; requires current group-scoped capability.
@@ -1725,11 +1985,12 @@ type GroupSummaryPage struct {
 
 // Hit defines model for Hit.
 type Hit struct {
-	Id      string   `json:"id"`
-	Message string   `json:"message"`
-	Owner   string   `json:"owner"`
-	Rules   []string `json:"rules"`
-	State   string   `json:"state"`
+	Created *time.Time `json:"created,omitempty"`
+	Id      string     `json:"id"`
+	Message string     `json:"message"`
+	Owner   string     `json:"owner"`
+	Rules   []string   `json:"rules"`
+	State   string     `json:"state"`
 }
 
 // HitPage defines model for HitPage.
@@ -1796,12 +2057,13 @@ type MemberPage struct {
 // Message defines model for Message.
 type Message struct {
 	// Attachments Opaque media references. Backend proxy enforces current group access and the same expiry.
-	Attachments []string  `json:"attachments"`
-	Body        string    `json:"body"`
-	Expires     time.Time `json:"expires"`
-	Id          string    `json:"id"`
-	Owner       string    `json:"owner"`
-	Recalled    bool      `json:"recalled"`
+	Attachments []string   `json:"attachments"`
+	Body        string     `json:"body"`
+	Created     *time.Time `json:"created,omitempty"`
+	Expires     time.Time  `json:"expires"`
+	Id          string     `json:"id"`
+	Owner       string     `json:"owner"`
+	Recalled    bool       `json:"recalled"`
 }
 
 // MessagePage defines model for MessagePage.
@@ -1969,14 +2231,20 @@ type RecheckCommandKind string
 
 // Report defines model for Report.
 type Report struct {
-	Analysis    *string   `json:"analysis,omitempty"`
-	Feedback    *string   `json:"feedback,omitempty"`
-	Id          string    `json:"id"`
-	Message     string    `json:"message"`
-	Reason      string    `json:"reason"`
-	Reporter    string    `json:"reporter"`
-	State       string    `json:"state"`
-	Suggestions *[]string `json:"suggestions,omitempty"`
+	Analysis    *string    `json:"analysis,omitempty"`
+	Created     *time.Time `json:"created,omitempty"`
+	Feedback    *string    `json:"feedback,omitempty"`
+	Id          string     `json:"id"`
+	Message     string     `json:"message"`
+	Reason      string     `json:"reason"`
+	Reporter    string     `json:"reporter"`
+	ResolvedBy  *Actor     `json:"resolved_by,omitempty"`
+	State       string     `json:"state"`
+	Suggestions *[]string  `json:"suggestions,omitempty"`
+
+	// Target Owner key of the reported message author when the message was retained at report creation time; never includes message body.
+	Target  *string    `json:"target,omitempty"`
+	Updated *time.Time `json:"updated,omitempty"`
 }
 
 // ReportCommand User command; caller only.
@@ -2146,9 +2414,11 @@ type WarningsPage struct {
 
 // Watch defines model for Watch.
 type Watch struct {
-	Enabled bool   `json:"enabled"`
-	Id      string `json:"id"`
-	Reason  string `json:"reason"`
+	Created *time.Time `json:"created,omitempty"`
+	Enabled bool       `json:"enabled"`
+	Id      string     `json:"id"`
+	Reason  string     `json:"reason"`
+	Updated *time.Time `json:"updated,omitempty"`
 }
 
 // WatchCommand Management command; requires current group-scoped capability.
@@ -2205,9 +2475,21 @@ type ConfigureGroupParams struct {
 
 // ListActionsParams defines parameters for ListActions.
 type ListActionsParams struct {
-	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
-	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor *string                 `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int                    `form:"limit,omitempty" json:"limit,omitempty"`
+	State  *ListActionsParamsState `form:"state,omitempty" json:"state,omitempty"`
+	Kind   *ListActionsParamsKind  `form:"kind,omitempty" json:"kind,omitempty"`
+	Order  *ListActionsParamsOrder `form:"order,omitempty" json:"order,omitempty"`
 }
+
+// ListActionsParamsState defines parameters for ListActions.
+type ListActionsParamsState string
+
+// ListActionsParamsKind defines parameters for ListActions.
+type ListActionsParamsKind string
+
+// ListActionsParamsOrder defines parameters for ListActions.
+type ListActionsParamsOrder string
 
 // ListAuditParams defines parameters for ListAudit.
 type ListAuditParams struct {
@@ -2239,27 +2521,50 @@ type ListDeliverysParams struct {
 
 // ListHitsParams defines parameters for ListHits.
 type ListHitsParams struct {
-	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
-	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor *string              `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int                 `form:"limit,omitempty" json:"limit,omitempty"`
+	Order  *ListHitsParamsOrder `form:"order,omitempty" json:"order,omitempty"`
 }
+
+// ListHitsParamsOrder defines parameters for ListHits.
+type ListHitsParamsOrder string
 
 // ListMembersParams defines parameters for ListMembers.
 type ListMembersParams struct {
-	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
-	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor *string                 `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int                    `form:"limit,omitempty" json:"limit,omitempty"`
+	State  *ListMembersParamsState `form:"state,omitempty" json:"state,omitempty"`
+	Joined *bool                   `form:"joined,omitempty" json:"joined,omitempty"`
+	Exempt *bool                   `form:"exempt,omitempty" json:"exempt,omitempty"`
 }
+
+// ListMembersParamsState defines parameters for ListMembers.
+type ListMembersParamsState string
 
 // ListMessagesParams defines parameters for ListMessages.
 type ListMessagesParams struct {
-	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
-	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor   *string                  `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit    *int                     `form:"limit,omitempty" json:"limit,omitempty"`
+	Recalled *bool                    `form:"recalled,omitempty" json:"recalled,omitempty"`
+	Order    *ListMessagesParamsOrder `form:"order,omitempty" json:"order,omitempty"`
 }
+
+// ListMessagesParamsOrder defines parameters for ListMessages.
+type ListMessagesParamsOrder string
 
 // ListReportsParams defines parameters for ListReports.
 type ListReportsParams struct {
-	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
-	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor *string                 `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int                    `form:"limit,omitempty" json:"limit,omitempty"`
+	State  *ListReportsParamsState `form:"state,omitempty" json:"state,omitempty"`
+	Order  *ListReportsParamsOrder `form:"order,omitempty" json:"order,omitempty"`
 }
+
+// ListReportsParamsState defines parameters for ListReports.
+type ListReportsParamsState string
+
+// ListReportsParamsOrder defines parameters for ListReports.
+type ListReportsParamsOrder string
 
 // ListSubscriptionsParams defines parameters for ListSubscriptions.
 type ListSubscriptionsParams struct {
@@ -4604,6 +4909,42 @@ func NewListActionsRequest(server string, group string, params *ListActionsParam
 
 		}
 
+		if params.State != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "state", *params.State, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Kind != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "kind", *params.Kind, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Order != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "order", *params.Order, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
 		if encoded := queryValues.Encode(); encoded != "" {
 			rawQueryFragments = append(rawQueryFragments, encoded)
 		}
@@ -5016,6 +5357,18 @@ func NewListHitsRequest(server string, group string, params *ListHitsParams) (*h
 
 		}
 
+		if params.Order != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "order", *params.Order, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
 		if encoded := queryValues.Encode(); encoded != "" {
 			rawQueryFragments = append(rawQueryFragments, encoded)
 		}
@@ -5089,6 +5442,42 @@ func NewListMembersRequest(server string, group string, params *ListMembersParam
 
 		}
 
+		if params.State != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "state", *params.State, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Joined != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "joined", *params.Joined, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Exempt != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "exempt", *params.Exempt, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
 		if encoded := queryValues.Encode(); encoded != "" {
 			rawQueryFragments = append(rawQueryFragments, encoded)
 		}
@@ -5153,6 +5542,30 @@ func NewListMessagesRequest(server string, group string, params *ListMessagesPar
 		if params.Limit != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Recalled != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "recalled", *params.Recalled, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Order != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "order", *params.Order, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -5260,6 +5673,30 @@ func NewListReportsRequest(server string, group string, params *ListReportsParam
 		if params.Limit != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.State != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "state", *params.State, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Order != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "order", *params.Order, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {

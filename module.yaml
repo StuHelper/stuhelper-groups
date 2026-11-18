@@ -85,6 +85,8 @@ scenario_tests:
     - ops_maintenance_test.go#TestSelfMuteRetryPreservesMemberConsent
     - ops_maintenance_test.go#TestCleanupRetainsConfirmedHeldOutbox
     - ops_maintenance_test.go#TestCancelAndRetryActionsQueueRecoveryAndGroupAudit
+    - lists_filter_test.go#TestMigrateLegacyCollectionAndPagePrefixedMessageIDs
+    - lists_filter_test.go#TestCollectionFiltersDescendingCursorsAndReportContext
     - delivery_membership_test.go#TestPendingOutboxExclusionLimitOrderingAndConfirmation
     - delivery_membership_test.go#TestRelayStopsFailedSubjectWithinBatchAndDeliversOthers
     - api_v03_test.go#TestEveryCollectionTypedPaginationAndAuthorization

@@ -745,6 +745,37 @@
               "maximum": 100,
               "default": 50
             }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "requested",
+                "awaiting_verification",
+                "grace",
+                "extended",
+                "exempt",
+                "restored",
+                "removal_pending",
+                "removed"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "joined",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "exempt",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -841,6 +872,70 @@
               "minimum": 1,
               "maximum": 100,
               "default": 50
+            }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "executing",
+                "unknown",
+                "succeeded",
+                "failed",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ai_execute",
+                "analyze",
+                "apply",
+                "approve",
+                "blacklist",
+                "card",
+                "dice",
+                "exempt",
+                "extend",
+                "feedback",
+                "forward",
+                "kick",
+                "mute",
+                "password",
+                "preview",
+                "recall",
+                "recheck",
+                "remind",
+                "report",
+                "rule",
+                "self_mute",
+                "send",
+                "subscribe",
+                "unblacklist",
+                "unmute",
+                "warn",
+                "watch",
+                "welcome"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
             }
           }
         ],
@@ -939,6 +1034,31 @@
               "maximum": 100,
               "default": 50
             }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "suggested",
+                "pending_execution",
+                "resolved"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            }
           }
         ],
         "responses": {
@@ -1036,6 +1156,18 @@
               "maximum": 100,
               "default": 50
             }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            }
           }
         ],
         "responses": {
@@ -1132,6 +1264,25 @@
               "minimum": 1,
               "maximum": 100,
               "default": 50
+            }
+          },
+          {
+            "in": "query",
+            "name": "recalled",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
             }
           }
         ],
@@ -2446,6 +2597,10 @@
             "type": "string",
             "format": "date-time"
           },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
           "attachments": {
             "type": "array",
             "maxItems": 20,
@@ -2472,6 +2627,10 @@
           "reporter": {
             "type": "string"
           },
+          "target": {
+            "type": "string",
+            "description": "Owner key of the reported message author when the message was retained at report creation time; never includes message body."
+          },
           "message": {
             "type": "string"
           },
@@ -2492,6 +2651,17 @@
           },
           "feedback": {
             "type": "string"
+          },
+          "resolved_by": {
+            "$ref": "#/components/schemas/Actor"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time"
           },
           "id": {
             "type": "string"
@@ -2523,6 +2693,10 @@
           },
           "state": {
             "type": "string"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
           },
           "id": {
             "type": "string"
@@ -2646,6 +2820,14 @@
           },
           "permanent": {
             "type": "boolean"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "required": [
@@ -2682,6 +2864,14 @@
           },
           "reason": {
             "type": "string"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time"
           },
           "id": {
             "type": "string"

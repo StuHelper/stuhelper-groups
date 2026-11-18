@@ -175,7 +175,13 @@ func (s *Service) Blacklists(ctx context.Context, p account.Principal, key strin
 			if in.Remove {
 				e = tx.Delete(bucket(id, "blacklist"), in.Target)
 			} else {
-				e = tx.Put(bucket(id, "blacklist"), in.Target, Blacklist{ID: in.Target, Reason: in.Reason, Until: s.now().Add(time.Duration(in.Seconds) * time.Second), Permanent: in.Seconds == 0})
+				now := s.now()
+				created := now
+				var prior Blacklist
+				if err := tx.Get(bucket(id, "blacklist"), in.Target, &prior); err == nil && prior.Created != nil && !prior.Created.IsZero() {
+					created = *prior.Created
+				}
+				e = tx.Put(bucket(id, "blacklist"), in.Target, Blacklist{ID: in.Target, Reason: in.Reason, Until: now.Add(time.Duration(in.Seconds) * time.Second), Permanent: in.Seconds == 0, Created: &created, Updated: &now})
 			}
 			if e != nil {
 				return e
@@ -210,7 +216,13 @@ func (s *Service) manageRecord(ctx context.Context, tx Tx, p account.Principal, 
 		if !valid(cmd.Target, 2048) {
 			return out, ErrInvalid
 		}
-		if e := tx.Put(bucket(c.ID, "watch"), cmd.Target, map[string]any{"enabled": cmd.Enabled, "reason": cmd.Text}); e != nil {
+		now := s.now()
+		created := now
+		var prior Watch
+		if e := tx.Get(bucket(c.ID, "watch"), cmd.Target, &prior); e == nil && prior.Created != nil && !prior.Created.IsZero() {
+			created = *prior.Created
+		}
+		if e := tx.Put(bucket(c.ID, "watch"), cmd.Target, map[string]any{"enabled": cmd.Enabled, "reason": cmd.Text, "created": created, "updated": now}); e != nil {
 			return out, e
 		}
 		return out, s.audit(tx, p, c.ID, "watch", cmd.Target, "updated")
@@ -225,6 +237,8 @@ func (s *Service) manageRecord(ctx context.Context, tx Tx, p account.Principal, 
 		}
 		report["feedback"] = cmd.Text
 		report["state"] = "resolved"
+		report["resolved_by"] = Actor(p)
+		report["updated"] = s.now()
 		if e := tx.Put(bucket(c.ID, "reports"), cmd.Target, report); e != nil {
 			return out, e
 		}
@@ -277,5 +291,6 @@ func (s *Service) manageRecord(ctx context.Context, tx Tx, p account.Principal, 
 	if len(executed) == 1 && executed["blacklist"] {
 		report["state"] = "resolved"
 	}
+	report["updated"] = s.now()
 	return out, tx.Put(bucket(c.ID, "reports"), cmd.Target, report)
 }

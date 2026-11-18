@@ -14,12 +14,13 @@ import (
 )
 
 type Message struct {
-	Attachments []string  `json:"attachments"`
-	ID          string    `json:"id"`
-	Owner       string    `json:"owner"`
-	Body        string    `json:"body"`
-	Recalled    bool      `json:"recalled"`
-	Expires     time.Time `json:"expires"`
+	Attachments []string   `json:"attachments"`
+	ID          string     `json:"id"`
+	Owner       string     `json:"owner"`
+	Body        string     `json:"body"`
+	Recalled    bool       `json:"recalled"`
+	Expires     time.Time  `json:"expires"`
+	Created     *time.Time `json:"created,omitempty"`
 }
 
 // Ingest is a trusted backend boundary, never mounted as a public route.
@@ -64,13 +65,18 @@ func (s *Service) Ingest(ctx context.Context, g string, event Event, m Message) 
 		if c.RetentionSeconds == 0 {
 			return nil
 		}
-		m.Expires = s.now().Add(time.Duration(c.RetentionSeconds) * time.Second)
+		now := s.now()
+		m.Created = &now
+		m.Expires = now.Add(time.Duration(c.RetentionSeconds) * time.Second)
 		var previous Message
 		if err := tx.Get(bucket(g, "messages"), m.ID, &previous); err == nil {
 			if !s.now().Before(previous.Expires) {
 				return tx.Delete(bucket(g, "messages"), m.ID)
 			}
 			m.Expires = previous.Expires
+			if previous.Created != nil && !previous.Created.IsZero() {
+				m.Created = previous.Created
+			}
 			if m.Recalled {
 				m.Owner = previous.Owner
 				if m.Body == "" {
@@ -145,7 +151,7 @@ func (s *Service) rule(ctx context.Context, tx Tx, p account.Principal, c GroupC
 		return out, nil
 	}
 	out.ID = uuid.NewString()
-	if e = tx.Put(bucket(c.ID, "hits"), out.ID, map[string]any{"owner": cmd.Target, "message": cmd.Message, "rules": hits, "state": "matched"}); e != nil {
+	if e = tx.Put(bucket(c.ID, "hits"), out.ID, map[string]any{"owner": cmd.Target, "message": cmd.Message, "rules": hits, "state": "matched", "created": s.now()}); e != nil {
 		return out, e
 	}
 	for i, a := range c.AutoActions {

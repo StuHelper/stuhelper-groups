@@ -60,6 +60,8 @@ GET /api/v1/groups/{group}/audit 按 groups.configure 分页返回群级管理�
 
 配置采用 expected_revision 比较更新，口令只在请求中接收并保存带盐摘要。命令按 kind 验证必填字段，错误码采用 groups_ 枚举。
 
+集合可按状态、类型和撤回标记筛选，并按时间倒序分页。举报保留关联作者、结案人与时间戳，不复制消息正文。
+
 outbox 提供带排除主题和 limit 的 PendingOutbox，以及幂等 ConfirmOutbox。GroupsForOwner 提供有界成员反查，Consume 按上游 owner 在同一事务内重算关联群，Sweep 保留为周期性核对与期限处理。
 
 Web 通过 GET /api/v1/groups/directory 查找公开群目录，并通过 GET /api/v1/groups/me 查询本人成员和申请记录。两端均复用资格判定，返回动态口令提示，不暴露管理计数或触发业务写入。

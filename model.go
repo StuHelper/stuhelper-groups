@@ -231,12 +231,25 @@ func TraceParentFromContext(ctx context.Context) string {
 }
 
 type Row struct {
-	ID   string
-	Data json.RawMessage
+	ID        string
+	Data      json.RawMessage
+	CreatedAt time.Time
+}
+type ListQuery struct {
+	Cursor     string
+	CursorTime *time.Time
+	Limit      int
+	Desc       bool
+	State      string
+	Kind       string
+	Joined     *bool
+	Exempt     *bool
+	Recalled   *bool
 }
 type ReadTx interface {
 	Get(string, string, any) error
 	List(string, string, int) ([]Row, error)
+	QueryList(string, ListQuery) ([]Row, error)
 	PendingActions(string) (int, error)
 	PendingAdmissionKick(group, owner string) (bool, error)
 	GroupCounts([]string) (map[string]GroupCounts, error)

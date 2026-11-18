@@ -384,11 +384,11 @@ GroupSummary 包含 id、school、name、number、member_count、bot_enabled、r
 
 member_count 统计 joined=true 的成员。pending_count 是待处理资格记录数与 pending/executing/unknown 动作数之和，同一成员可能同时贡献两项。revision 是配置修订号，成员与动作变化不递增配置修订号。
 
-所有列表返回明确类型的 items 与 next_cursor，limit 默认 50，范围 1–100。按记录 ID 的字节顺序升序排列，cursor 为上页最后扫描的 ID。读取每页时重新检查权限与留存期限。
+所有列表返回明确类型的 items 与 next_cursor，limit 默认 50，范围 1–100，未知查询参数返回 400。默认按记录 ID 的字节顺序升序排列；actions、reports、hits、messages 支持 order=desc 按 (created_at, id) 组合游标倒序分页。
 
-权限或到期过滤后可能出现 items 为空而 next_cursor 非空，客户端应继续翻页。next_cursor 为空表示扫描结束。单页最多扫描 limit 条记录，不读取全表后在内存分页。
+members 支持按 state、joined、exempt 筛选，actions 支持按 state、kind 筛选，reports 支持按 state 筛选，messages 支持按 recalled 筛选。读取每页时重新检查权限与留存期限。
 
-成员 ID 对应 owner，其他 ID 为记录键。Action.actor 和 Subscription.actor 使用 issuer、subject；Warnings 使用 count，Blacklist 使用 reason、until、permanent。所有时间字段为 UTC date-time。
+成员 ID 对应 owner，其他 ID 为记录键。Report 记录 created、updated、结案操作者 resolved_by，并在留存有效时记录被举报消息作者 target（不含消息正文）；Hit、Blacklist、Watch 与 Message 持久化 UTC 时间戳。
 
 Member 中尚未设置的 deadline、reminder、last_play、muted_until 使用 0001-01-01T00:00:00Z。Action.lease_until 只在 executing 时存在，result 保存实际结果码或 lookup_required，不承载租约时间。
 
