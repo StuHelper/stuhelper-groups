@@ -369,8 +369,8 @@ func TestRetentionInboxRollbackAndNoRecallViewAudit(t *testing.T) {
 		t.Fatal(err)
 	}
 	old := event("old", "qq-bot", "g", "groups.message", 1)
-	m.ID = "old"
-	if err := f.s.Ingest(ctx, "g", old, m); err != nil {
+	stale := g.Message{ID: "m1", Owner: user.Key(), Body: "stale body", Recalled: false}
+	if err := f.s.Ingest(ctx, "g", old, stale); err != nil {
 		t.Fatal(err)
 	}
 	if count(t, f, "g/messages") != 1 {
@@ -378,7 +378,7 @@ func TestRetentionInboxRollbackAndNoRecallViewAudit(t *testing.T) {
 	}
 	before := count(t, f, "g/audit")
 	page, err := f.s.Messages(ctx, manager, "g", "", 10)
-	if err != nil || len(page.Items) != 1 {
+	if err != nil || len(page.Items) != 1 || page.Items[0].Body != "private recalled body" || !page.Items[0].Recalled {
 		t.Fatalf("%+v %v", page, err)
 	}
 	if count(t, f, "g/audit") != before {

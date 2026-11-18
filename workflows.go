@@ -128,7 +128,8 @@ func (s *Service) frequency(tx Tx, c GroupConfig, cmd Command, preview bool) (bo
 // MemberEvent receives verified group membership from the host bot adapter.
 // A web application alone cannot claim that a QQ user has already joined.
 func (s *Service) MemberEvent(ctx context.Context, g string, event Event, owner string) error {
-	if event.Source != "qq-bot" || event.Subject != g || !valid(owner, 2048) || !slices.Contains([]string{"groups.member_joined", "groups.member_left"}, event.Type) {
+	stream := g + "/members/" + owner
+	if !valid(g, 128) || event.Source != "qq-bot" || (event.Subject != g && event.Subject != stream) || !valid(owner, 2048) || !slices.Contains([]string{"groups.member_joined", "groups.member_left"}, event.Type) {
 		return ErrInvalid
 	}
 	return s.run(ctx, func(tx Tx) error {
@@ -139,6 +140,7 @@ func (s *Service) MemberEvent(ctx context.Context, g string, event Event, owner 
 		if e != nil {
 			return e
 		}
+		event.revisionSubject = stream
 		event.Data = payload
 		ok, e := tx.Accept(event)
 		if e != nil || !ok {
