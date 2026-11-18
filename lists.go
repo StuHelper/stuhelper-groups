@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/StuHelper/stuhelper-platform/account"
 )
@@ -46,6 +47,16 @@ type Delivery struct {
 	Action   string `json:"action"`
 	State    string `json:"state"`
 }
+type AuditEntry struct {
+	ID     string    `json:"id"`
+	Actor  string    `json:"actor"`
+	Action string    `json:"action"`
+	Target string    `json:"target"`
+	Result string    `json:"result"`
+	Time   time.Time `json:"time"`
+}
+
+func (x *AuditEntry) setID(id string) { x.ID = id }
 
 type idSetter interface {
 	setID(string)
@@ -80,6 +91,8 @@ func listRecords[T any](s *Service, ctx context.Context, p account.Principal, g,
 		cap := "groups.read"
 		if collection == "messages" {
 			cap = "groups.messages.read"
+		} else if collection == "audit" {
+			cap = "groups.configure"
 		}
 		if e := s.auth(ctx, p, cap, c); e != nil {
 			return e
@@ -163,6 +176,10 @@ func (s *Service) Watch(ctx context.Context, p account.Principal, g, cursor stri
 
 func (s *Service) Deliveries(ctx context.Context, p account.Principal, g, cursor string, limit int) (Page[Delivery], error) {
 	return listRecords[Delivery](s, ctx, p, g, "deliveries", cursor, limit)
+}
+
+func (s *Service) Audits(ctx context.Context, p account.Principal, g, cursor string, limit int) (Page[AuditEntry], error) {
+	return listRecords[AuditEntry](s, ctx, p, g, "audit", cursor, limit)
 }
 
 func (s *Service) Groups(ctx context.Context, p account.Principal, cursor string, limit int) (Page[GroupSummary], error) {

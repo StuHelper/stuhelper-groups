@@ -79,6 +79,10 @@ scenario_tests:
     - concurrency_test.go#TestDuplicateAndOldMemberEventsIgnoreFactsOutage
     - concurrency_test.go#TestSweepDiscardsFactsFetchedBeforeRevocation
     - concurrency_test.go#TestSweepPreFetchesFactsOutsideLockAndMultiGroupLocksNeverDeadlock
+    - ops_maintenance_test.go#TestForwardRetryRechecksCurrentReadPermission
+    - ops_maintenance_test.go#TestSelfMuteRetryPreservesMemberConsent
+    - ops_maintenance_test.go#TestCleanupRetainsConfirmedHeldOutbox
+    - ops_maintenance_test.go#TestCancelAndRetryActionsQueueRecoveryAndGroupAudit
     - delivery_membership_test.go#TestPendingOutboxExclusionLimitOrderingAndConfirmation
     - delivery_membership_test.go#TestRelayStopsFailedSubjectWithinBatchAndDeliversOthers
     - api_v03_test.go#TestEveryCollectionTypedPaginationAndAuthorization
@@ -95,6 +99,7 @@ scenario_tests:
     - integration_test.go#TestAISuggestionsRequireEnabledActionsAndCurrentAuthorization
   QQ-10:
     - bot_ingress_test.go#TestBotIngressReplaysLegacyInbox
+    - ops_maintenance_test.go#TestPeriodicMaintenanceCleansExpiredReceiptsSentOutboxAndFrequencyWindows
     - contract_test.go#TestAPIPrefixMatchesContractRoutesAndGeneratedClient
     - integration_test.go#TestRetentionInboxRollbackAndNoRecallViewAudit
     - bot_ingress_test.go#TestBotIngressObjectStreamsAndRecalledAttachments

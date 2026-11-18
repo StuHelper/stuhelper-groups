@@ -94,8 +94,9 @@ func (s *Service) audit(tx Tx, p account.Principal, g, kind, target, result stri
 }
 
 type receipt struct {
-	Digest string
-	Result json.RawMessage
+	Digest    string
+	Result    json.RawMessage
+	CreatedAt time.Time `json:"created_at,omitempty"`
 }
 
 func validKey(v string) bool {
@@ -128,12 +129,12 @@ func replay(tx ReadTx, owner, operation, object, key string, input, out any) (bo
 	}
 	return true, json.Unmarshal(r.Result, out)
 }
-func save(tx Tx, owner, operation, object, key string, input, out any) error {
+func (s *Service) saveReceipt(tx Tx, owner, operation, object, key string, input, out any) error {
 	b, e := json.Marshal(out)
 	if e != nil {
 		return e
 	}
-	return tx.Put("receipts", hash([]string{owner, operation, object, key}), receipt{hash(input), b})
+	return tx.Put("receipts", hash([]string{owner, operation, object, key}), receipt{Digest: hash(input), Result: b, CreatedAt: s.now()})
 }
 func validateConfig(c GroupConfig) error {
 	if c.ID == "me" || c.ID == "*" || !valid(c.ID, 128) {
@@ -232,7 +233,7 @@ func capability(kind string) string {
 		return "groups.messages.send"
 	case "recall":
 		return "groups.messages.recall"
-	case "extend", "exempt", "warn", "mute", "unmute", "kick", "blacklist", "unblacklist":
+	case "extend", "exempt", "warn", "mute", "unmute", "kick", "blacklist", "unblacklist", "cancel_action", "retry_action":
 		return "groups.manage"
 	case "subscribe", "rule", "ai_execute":
 		return "groups.configure"
@@ -340,7 +341,7 @@ func (s *Service) Command(ctx context.Context, p account.Principal, g, key strin
 		if e != nil {
 			return e
 		}
-		return save(tx, p.Key(), "command", g, key, input, out)
+		return s.saveReceipt(tx, p.Key(), "command", g, key, input, out)
 	})
 	return out, e
 }
@@ -439,7 +440,7 @@ func (s *Service) executeAnalyze(ctx context.Context, p account.Principal, g, ke
 		if e := tx.Put(bucket(c.ID, "reports"), cmd.Target, r); e != nil {
 			return e
 		}
-		return save(tx, p.Key(), "command", g, key, input, out)
+		return s.saveReceipt(tx, p.Key(), "command", g, key, input, out)
 	})
 	return out, e
 }
@@ -529,6 +530,8 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		return s.rule(ctx, tx, p, c, cmd, cmd.Kind == "preview")
 	case "card":
 		return s.card(ctx, tx, p, c, cmd)
+	case "cancel_action", "retry_action":
+		return s.manageAction(ctx, tx, p, c, cmd)
 	case "card_preview":
 		return s.cardPreview(ctx, tx, c, cmd)
 	case "subscribe":

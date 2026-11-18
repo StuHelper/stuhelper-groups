@@ -133,6 +133,7 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/warnings", s.Warnings)
 	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/watch", s.Watch)
 	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/deliveries", s.Deliveries)
+	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/audit", s.Audits)
 	return mux
 }
 func pagination(r *http.Request) (string, int, error) {

@@ -288,11 +288,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/groups/{group}/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Ascending record ID in bytewise (C collation) order; requires groups.configure on the target group. Contains only sanitized management audit metadata and never records or exposes recalled message bodies. */
+        get: operations["listAudit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        Command: components["schemas"]["ApplyCommand"] | components["schemas"]["PasswordCommand"] | components["schemas"]["DiceCommand"] | components["schemas"]["SelfMuteCommand"] | components["schemas"]["ReportCommand"] | components["schemas"]["RecheckCommand"] | components["schemas"]["ExtendCommand"] | components["schemas"]["ExemptCommand"] | components["schemas"]["WarnCommand"] | components["schemas"]["MuteCommand"] | components["schemas"]["UnmuteCommand"] | components["schemas"]["KickCommand"] | components["schemas"]["BlacklistCommand"] | components["schemas"]["UnblacklistCommand"] | components["schemas"]["SendCommand"] | components["schemas"]["ForwardCommand"] | components["schemas"]["RecallCommand"] | components["schemas"]["CardCommand"] | components["schemas"]["CardPreviewCommand"] | components["schemas"]["AnalyzeCommand"] | components["schemas"]["PreviewCommand"] | components["schemas"]["RuleCommand"] | components["schemas"]["SubscribeCommand"] | components["schemas"]["FeedbackCommand"] | components["schemas"]["WatchCommand"] | components["schemas"]["AiExecuteCommand"];
+        Command: components["schemas"]["ApplyCommand"] | components["schemas"]["PasswordCommand"] | components["schemas"]["DiceCommand"] | components["schemas"]["SelfMuteCommand"] | components["schemas"]["ReportCommand"] | components["schemas"]["RecheckCommand"] | components["schemas"]["ExtendCommand"] | components["schemas"]["ExemptCommand"] | components["schemas"]["WarnCommand"] | components["schemas"]["MuteCommand"] | components["schemas"]["UnmuteCommand"] | components["schemas"]["KickCommand"] | components["schemas"]["BlacklistCommand"] | components["schemas"]["UnblacklistCommand"] | components["schemas"]["SendCommand"] | components["schemas"]["ForwardCommand"] | components["schemas"]["RecallCommand"] | components["schemas"]["CardCommand"] | components["schemas"]["CardPreviewCommand"] | components["schemas"]["AnalyzeCommand"] | components["schemas"]["PreviewCommand"] | components["schemas"]["RuleCommand"] | components["schemas"]["SubscribeCommand"] | components["schemas"]["FeedbackCommand"] | components["schemas"]["WatchCommand"] | components["schemas"]["AiExecuteCommand"] | components["schemas"]["CancelActionCommand"] | components["schemas"]["RetryActionCommand"];
         Result: {
             id: string;
             state: string;
@@ -444,7 +461,7 @@ export interface components {
         };
         ActionCommand: {
             /** @enum {string} */
-            kind: "ai_execute" | "analyze" | "apply" | "approve" | "blacklist" | "card" | "card_preview" | "dice" | "exempt" | "extend" | "feedback" | "forward" | "kick" | "mute" | "password" | "preview" | "recall" | "recheck" | "remind" | "report" | "rule" | "self_mute" | "send" | "subscribe" | "unblacklist" | "unmute" | "warn" | "watch" | "welcome";
+            kind: "ai_execute" | "analyze" | "apply" | "approve" | "blacklist" | "card" | "card_preview" | "dice" | "exempt" | "extend" | "feedback" | "forward" | "kick" | "mute" | "password" | "preview" | "recall" | "recheck" | "remind" | "report" | "rule" | "self_mute" | "send" | "subscribe" | "unblacklist" | "unmute" | "warn" | "watch" | "welcome" | "cancel_action" | "retry_action";
             target?: string;
             text?: string;
             /** Format: int64 */
@@ -1032,6 +1049,40 @@ export interface components {
             target: string;
             /** @description Optional candidate card_template override; uses the group's stored card_template when omitted or empty. */
             text?: string;
+        };
+        /** @description Management command; cancels a pending bot action without affecting executing or unknown actions. */
+        CancelActionCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "cancel_action";
+            target: string;
+            text?: string;
+        };
+        /** @description Management command; queues a controlled retry for a confirmed failed bot action. */
+        RetryActionCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "retry_action";
+            target: string;
+            text?: string;
+        };
+        AuditEntry: {
+            id: string;
+            actor: string;
+            action: string;
+            target: string;
+            result: string;
+            /** Format: date-time */
+            time: string;
+        };
+        AuditPage: {
+            items: components["schemas"]["AuditEntry"][];
+            /** @description Opaque cursor for the next scan, or empty when exhausted. */
+            next_cursor: string;
         };
     };
     responses: never;
@@ -2329,6 +2380,76 @@ export interface operations {
             };
             /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listAudit: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Group management audit entries; never contains message bodies or recalled content. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditPage"];
+                };
+            };
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Current identity cannot perform this operation. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_not_found: Requested group, member, message or related object does not exist. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

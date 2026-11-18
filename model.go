@@ -243,6 +243,7 @@ type Tx interface {
 	ReadTx
 	Put(string, string, any) error
 	Delete(string, string) error
+	DeleteSentOutboxBefore(cutoff time.Time, limit int) (int, error)
 	Emit(Event) error
 	Accept(Event) (bool, error)
 }

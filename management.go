@@ -2,6 +2,7 @@ package groups
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"github.com/StuHelper/stuhelper-platform/account"
 	"slices"
@@ -20,6 +21,23 @@ type BulkItem struct {
 }
 type BulkResult struct {
 	Items []BulkItem `json:"items"`
+}
+
+type batchInputRecord struct {
+	Digest    string    `json:"digest"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+}
+
+func decodeBatchDigest(raw json.RawMessage) (string, error) {
+	var rec batchInputRecord
+	if err := json.Unmarshal(raw, &rec); err == nil && rec.Digest != "" {
+		return rec.Digest, nil
+	}
+	var legacy string
+	if err := json.Unmarshal(raw, &legacy); err == nil && legacy != "" {
+		return legacy, nil
+	}
+	return "", ErrInvalid
 }
 
 func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string, in Bulk) (BulkResult, error) {
@@ -45,11 +63,15 @@ func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string,
 		if in.Preview {
 			return nil
 		}
-		var prior string
+		var rawPrior json.RawMessage
 		id := hash([]string{p.Key(), g, key})
-		e := tx.Get("batch_inputs", id, &prior)
+		e := tx.Get("batch_inputs", id, &rawPrior)
 		digest := hash(in)
 		if e == nil {
+			prior, err := decodeBatchDigest(rawPrior)
+			if err != nil {
+				return err
+			}
 			if prior != digest {
 				return NewErrorDetail(ErrConflict, "idempotency_mismatch", "", 0)
 			}
@@ -58,7 +80,7 @@ func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string,
 		if !errors.Is(e, ErrNotFound) {
 			return e
 		}
-		return tx.Put("batch_inputs", id, digest)
+		return tx.Put("batch_inputs", id, batchInputRecord{Digest: digest, CreatedAt: s.now()})
 	})
 	if err != nil {
 		return out, err
@@ -166,7 +188,7 @@ func (s *Service) Blacklists(ctx context.Context, p account.Principal, key strin
 				return e
 			}
 		}
-		return save(tx, p.Key(), "blacklists", object, key, in, out)
+		return s.saveReceipt(tx, p.Key(), "blacklists", object, key, in, out)
 	})
 	return out, e
 }

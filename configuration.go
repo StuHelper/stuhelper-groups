@@ -138,7 +138,7 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 			return e
 		}
 		out = record.GroupConfig
-		return save(tx, p.Key(), "configure", c.ID, key, in, out)
+		return s.saveReceipt(tx, p.Key(), "configure", c.ID, key, in, out)
 	})
 	if e != nil {
 		return GroupConfig{}, e
