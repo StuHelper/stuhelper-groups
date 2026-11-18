@@ -45,14 +45,13 @@ func (s *Service) Ingest(ctx context.Context, g string, event Event, m Message) 
 			return e
 		}
 		payload, err := json.Marshal(struct {
-			Subject   string
 			EventData json.RawMessage
 			Message   Message
-		}{event.Subject, event.Data, m})
+		}{event.Data, m})
 		if err != nil {
 			return err
 		}
-		event.Subject = stream
+		event.revisionSubject = stream
 		event.Data = payload
 		ok, e := tx.Accept(event)
 		if e != nil || !ok {

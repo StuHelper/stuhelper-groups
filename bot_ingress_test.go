@@ -1,6 +1,7 @@
 package groups_test
 
 import (
+	"encoding/json"
 	"errors"
 	"reflect"
 	"testing"
@@ -113,5 +114,30 @@ func TestBotIngressObjectStreamsAndRecalledAttachments(t *testing.T) {
 	afterExpiry, err := f.s.Messages(ctx, manager, "g", "", 10)
 	if err != nil || len(afterExpiry.Items) != 0 {
 		t.Fatalf("expired message exposed: %+v err=%v", afterExpiry, err)
+	}
+}
+
+func TestBotIngressReplaysLegacyInbox(t *testing.T) {
+	f := setup(t)
+	ev := event("legacy", "qq-bot", "g", "groups.message", 9)
+	msg := g.Message{ID: "m", Owner: user.Key(), Attachments: []string{}}
+	data, err := json.Marshal(struct {
+		EventData json.RawMessage
+		Message   g.Message
+	}{ev.Data, msg})
+	if err != nil {
+		t.Fatal(err)
+	}
+	legacy := ev
+	legacy.Data = data
+	if err = f.r.Transaction(ctx, func(tx g.Tx) error { _, err := tx.Accept(legacy); return err }); err != nil {
+		t.Fatal(err)
+	}
+	if err = f.s.Ingest(ctx, "g", ev, msg); err != nil || count(t, f, "g/messages") != 0 {
+		t.Fatal("legacy event was not recognized", err)
+	}
+	msg.Body = "different"
+	if err = f.s.Ingest(ctx, "g", ev, msg); !errors.Is(err, g.ErrConflict) {
+		t.Fatal("changed legacy event accepted", err)
 	}
 }

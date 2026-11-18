@@ -134,14 +134,13 @@ func (s *Service) MemberEvent(ctx context.Context, g string, event Event, owner 
 	}
 	return s.run(ctx, func(tx Tx) error {
 		payload, e := json.Marshal(struct {
-			Subject string
-			Owner   string
-			Data    json.RawMessage
-		}{event.Subject, owner, event.Data})
+			Owner string
+			Data  json.RawMessage
+		}{owner, event.Data})
 		if e != nil {
 			return e
 		}
-		event.Subject = stream
+		event.revisionSubject = stream
 		event.Data = payload
 		ok, e := tx.Accept(event)
 		if e != nil || !ok {
