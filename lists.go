@@ -59,6 +59,31 @@ type Delivery struct {
 	Action   string `json:"action"`
 	State    string `json:"state"`
 }
+type AuditEntry struct {
+	ID     string    `json:"id"`
+	Actor  string    `json:"actor"`
+	Action string    `json:"action"`
+	Target string    `json:"target"`
+	Result string    `json:"result"`
+	Time   time.Time `json:"time"`
+}
+
+func (x *AuditEntry) setID(id string) { x.ID = id }
+
+type idSetter interface {
+	setID(string)
+}
+
+func (x *Member) setID(id string)       { x.ID = id }
+func (x *Action) setID(id string)       { x.ID = id }
+func (x *Report) setID(id string)       { x.ID = id }
+func (x *Hit) setID(id string)          { x.ID = id }
+func (x *Message) setID(id string)      { x.ID = id }
+func (x *Subscription) setID(id string) { x.ID = id }
+func (x *Blacklist) setID(id string)    { x.ID = id }
+func (x *Warnings) setID(id string)     { x.ID = id }
+func (x *Watch) setID(id string)        { x.ID = id }
+func (x *Delivery) setID(id string)     { x.ID = id }
 
 type MemberQuery struct {
 	Cursor string
@@ -105,11 +130,14 @@ type descCursorPayload struct {
 
 func encodeDescCursor(at time.Time, id string) string {
 	b, _ := json.Marshal(descCursorPayload{Time: at.UTC().Truncate(time.Microsecond).Format(descCursorTimeLayout), ID: id})
-	return "d1:" + base64.RawURLEncoding.EncodeToString(b)
+	return "/d1/" + base64.RawURLEncoding.EncodeToString(b)
 }
 
 func decodeDescCursor(raw string) (time.Time, string, error) {
-	encoded, ok := strings.CutPrefix(raw, "d1:")
+	encoded, ok := strings.CutPrefix(raw, "/d1/")
+	if !ok {
+		encoded, ok = strings.CutPrefix(raw, "d1:")
+	}
 	if !ok || encoded == "" {
 		return time.Time{}, "", ErrInvalid
 	}
@@ -155,7 +183,7 @@ func listRecords[T any](s *Service, ctx context.Context, p account.Principal, g,
 	if !p.Valid() {
 		return out, ErrUnauthenticated
 	}
-	if q.Limit < 1 || q.Limit > 100 || len(q.Cursor) > 4096 || !utf8.ValidString(q.Cursor) || strings.ContainsFunc(q.Cursor, unicode.IsControl) {
+	if !valid(g, 128) || q.Limit < 1 || q.Limit > 100 || len(q.Cursor) > 4096 || !utf8.ValidString(q.Cursor) || strings.ContainsFunc(q.Cursor, unicode.IsControl) {
 		return out, ErrInvalid
 	}
 	if q.Desc {
@@ -167,10 +195,10 @@ func listRecords[T any](s *Service, ctx context.Context, p account.Principal, g,
 			q.CursorTime = &curTime
 			q.Cursor = curID
 		}
-	} else if strings.HasPrefix(q.Cursor, "d1:") {
+	} else if slices.Contains([]string{"actions", "reports", "hits", "messages"}, collection) && strings.HasPrefix(q.Cursor, "/d1/") {
 		return out, ErrInvalid
 	}
-	e := s.run(ctx, func(tx Tx) error {
+	e := s.runRead(ctx, func(tx ReadTx) error {
 		var c GroupConfig
 		if e := tx.Get("config", g, &c); e != nil {
 			return e
@@ -178,6 +206,8 @@ func listRecords[T any](s *Service, ctx context.Context, p account.Principal, g,
 		cap := "groups.read"
 		if collection == "messages" {
 			cap = "groups.messages.read"
+		} else if collection == "audit" {
+			cap = "groups.configure"
 		}
 		if e := s.auth(ctx, p, cap, c); e != nil {
 			return e
@@ -192,44 +222,27 @@ func listRecords[T any](s *Service, ctx context.Context, p account.Principal, g,
 			} else {
 				out.NextCursor = r.ID
 			}
-			if collection == "messages" {
-				var m Message
-				if e = json.Unmarshal(r.Data, &m); e != nil {
-					return e
-				}
-				if c.RetentionSeconds == 0 || !s.now().Before(m.Expires) {
+			var item T
+			if e = json.Unmarshal(r.Data, &item); e != nil {
+				return e
+			}
+			if setter, ok := any(&item).(idSetter); ok {
+				setter.setID(r.ID)
+			}
+			switch v := any(&item).(type) {
+			case *Message:
+				if c.RetentionSeconds == 0 || !s.now().Before(v.Expires) {
 					continue
 				}
-			}
-			var record map[string]json.RawMessage
-			if e = json.Unmarshal(r.Data, &record); e != nil {
-				return e
-			}
-			record["id"], e = json.Marshal(r.ID)
-			if e != nil {
-				return e
-			}
-			if collection == "deliveries" {
-				var d Delivery
-				if e = json.Unmarshal(r.Data, &d); e != nil {
-					return e
+			case *Delivery:
+				if v.Action != "" {
+					var action Action
+					if err := tx.Get(bucket(v.Receiver, "actions"), v.Action, &action); err == nil {
+						v.State = action.State
+					} else if !errors.Is(err, ErrNotFound) || v.State == "" {
+						return err
+					}
 				}
-				var action Action
-				if e = tx.Get(bucket(d.Receiver, "actions"), d.Action, &action); e != nil {
-					return e
-				}
-				record["state"], e = json.Marshal(action.State)
-				if e != nil {
-					return e
-				}
-			}
-			data, e := json.Marshal(record)
-			if e != nil {
-				return e
-			}
-			var item T
-			if e = json.Unmarshal(data, &item); e != nil {
-				return e
 			}
 			out.Items = append(out.Items, item)
 		}
@@ -332,15 +345,19 @@ func (s *Service) Deliveries(ctx context.Context, p account.Principal, g, cursor
 	return listRecords[Delivery](s, ctx, p, g, "deliveries", ListQuery{Cursor: cursor, Limit: limit})
 }
 
+func (s *Service) Audits(ctx context.Context, p account.Principal, g, cursor string, limit int) (Page[AuditEntry], error) {
+	return listRecords[AuditEntry](s, ctx, p, g, "audit", ListQuery{Cursor: cursor, Limit: limit})
+}
+
 func (s *Service) Groups(ctx context.Context, p account.Principal, cursor string, limit int) (Page[GroupSummary], error) {
 	out := Page[GroupSummary]{Items: []GroupSummary{}}
 	if !p.Valid() {
 		return out, ErrUnauthenticated
 	}
-	if limit < 1 || limit > 100 || len(cursor) > 4096 || !utf8.ValidString(cursor) || strings.ContainsFunc(cursor, unicode.IsControl) {
+	if limit < 1 || limit > 100 || !validCursor(cursor, 4096) {
 		return out, ErrInvalid
 	}
-	e := s.run(ctx, func(tx Tx) error {
+	e := s.runRead(ctx, func(tx ReadTx) error {
 		rows, e := tx.List("config", cursor, limit)
 		if e != nil {
 			return e

@@ -90,6 +90,9 @@ func TestCollectionFiltersDescendingCursorsAndReportContext(t *testing.T) {
 
 	// Report creation records target author & timestamps without copying message body; feedback records resolved_by.
 	f.now = t0.Add(30 * time.Second)
+	if err := f.s.MemberEvent(ctx, "g", event("reporter-joined", "qq-bot", "g", "groups.member_joined", 1), user.Key()); err != nil {
+		t.Fatal(err)
+	}
 	rep1 := command(t, f, user, "rep-1", g.Command{Kind: "report", Message: "msg-1", Text: "harassment"})
 	f.now = t0.Add(40 * time.Second)
 	rep2 := command(t, f, user, "rep-2", g.Command{Kind: "report", Message: "missing-msg", Text: "other"})
@@ -208,5 +211,41 @@ func TestCollectionFiltersDescendingCursorsAndReportContext(t *testing.T) {
 	sdkRes, e := client.ListActionsWithResponse(ctx, "g", &sdk.ListActionsParams{State: &state, Kind: &kind, Order: &order})
 	if e != nil || sdkRes.StatusCode() != http.StatusOK || sdkRes.JSON200 == nil || len(sdkRes.JSON200.Items) != 1 {
 		t.Fatalf("sdk filtered actions failed: %+v %v", sdkRes, e)
+	}
+}
+
+func TestMigrateLegacyCollectionAndPagePrefixedMessageIDs(t *testing.T) {
+	f := setup(t)
+	older := f.now
+	for i, id := range []string{"d1:001", "d1:002"} {
+		f.now = older.Add(time.Duration(i) * time.Second)
+		if err := f.s.Ingest(ctx, "g", event("event-"+id, "qq-bot", "g", "groups.message", 1), g.Message{ID: id, Owner: user.Key(), Body: "fixture"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := f.pool.Exec(ctx, "ALTER TABLE groups.records DROP COLUMN created_at"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.pool.Exec(ctx, "UPDATE groups.records SET data=data-'created', query_changed_at=$1 WHERE bucket='g/messages' AND id='d1:002'", f.now); err != nil {
+		t.Fatal(err)
+	}
+	for range 2 {
+		if err := f.r.Migrate(ctx); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for i, id := range []string{"d1:001", "d1:002"} {
+		var at time.Time
+		if err := f.pool.QueryRow(ctx, "SELECT created_at FROM groups.records WHERE bucket='g/messages' AND id=$1", id).Scan(&at); err != nil || !at.Equal(older.Add(time.Duration(i)*time.Second)) {
+			t.Fatal(id, at, err)
+		}
+	}
+	first, err := f.s.QueryMessages(ctx, manager, "g", g.MessageQuery{Limit: 1})
+	if err != nil || len(first.Items) != 1 || first.Items[0].ID != "d1:001" || first.NextCursor == "" {
+		t.Fatal(first, err)
+	}
+	second, err := f.s.QueryMessages(ctx, manager, "g", g.MessageQuery{Limit: 1, Cursor: first.NextCursor})
+	if err != nil || len(second.Items) != 1 || second.Items[0].ID != "d1:002" {
+		t.Fatal(second, err)
 	}
 }

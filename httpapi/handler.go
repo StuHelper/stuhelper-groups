@@ -3,12 +3,16 @@ package httpapi
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
+	"net/url"
+	"slices"
 	"strconv"
 	"sync"
+	"unicode/utf8"
 
 	g "github.com/StuHelper/stuhelper-groups"
 	"github.com/StuHelper/stuhelper-platform/account"
@@ -17,6 +21,23 @@ import (
 )
 
 type Identity func(*http.Request) (account.Principal, error)
+
+func handleGroupPage[T any](
+	mux *http.ServeMux,
+	wrap func(func(http.ResponseWriter, *http.Request, account.Principal)) http.HandlerFunc,
+	pattern string,
+	fn func(context.Context, account.Principal, string, string, int) (g.Page[T], error),
+) {
+	mux.HandleFunc(pattern, wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+		cursor, limit, e := pagination(r)
+		if e != nil {
+			write(w, nil, e)
+			return
+		}
+		v, e := fn(r.Context(), p, r.PathValue("group"), cursor, limit)
+		write(w, v, e)
+	}))
+}
 
 func Handler(s *g.Service, identity Identity) http.Handler {
 	mux := http.NewServeMux()
@@ -31,22 +52,29 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 				write(w, nil, g.ErrUnauthenticated)
 				return
 			}
+			if tp := r.Header.Get("Traceparent"); tp != "" {
+				r = r.WithContext(g.WithTraceParent(r.Context(), tp))
+			}
 			fn(w, r, p)
 		}
 	}
 	mux.HandleFunc("GET /api/v1/groups/me", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		for name := range r.URL.Query() {
-			if name != "cursor" && name != "limit" {
-				write(w, nil, g.ErrInvalid)
-				return
-			}
-		}
 		cursor, limit, e := pagination(r)
 		if e != nil {
 			write(w, nil, e)
 			return
 		}
 		v, e := s.MyGroups(r.Context(), p, cursor, limit)
+		write(w, v, e)
+	}))
+	mux.HandleFunc("GET /api/v1/groups/directory", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+		q := r.URL.Query()
+		cursor, limit, e := pagination(r, "school", "category")
+		if e != nil {
+			write(w, nil, e)
+			return
+		}
+		v, e := s.Directory(r.Context(), p, g.DirectoryQuery{School: q.Get("school"), Category: q.Get("category"), Cursor: cursor, Limit: limit})
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
@@ -76,7 +104,7 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := strictPagination(r)
+		cursor, limit, e := pagination(r)
 		if e != nil {
 			write(w, nil, e)
 			return
@@ -107,11 +135,7 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}/members", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		if e := allowQuery(r, "cursor", "limit", "state", "joined", "exempt"); e != nil {
-			write(w, nil, e)
-			return
-		}
-		cursor, limit, e := pagination(r)
+		cursor, limit, e := pagination(r, "state", "joined", "exempt")
 		if e != nil {
 			write(w, nil, e)
 			return
@@ -130,11 +154,7 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}/actions", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		if e := allowQuery(r, "cursor", "limit", "state", "kind", "order"); e != nil {
-			write(w, nil, e)
-			return
-		}
-		cursor, limit, e := pagination(r)
+		cursor, limit, e := pagination(r, "state", "kind", "order")
 		if e != nil {
 			write(w, nil, e)
 			return
@@ -144,11 +164,7 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}/reports", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		if e := allowQuery(r, "cursor", "limit", "state", "order"); e != nil {
-			write(w, nil, e)
-			return
-		}
-		cursor, limit, e := pagination(r)
+		cursor, limit, e := pagination(r, "state", "order")
 		if e != nil {
 			write(w, nil, e)
 			return
@@ -158,11 +174,7 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}/hits", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		if e := allowQuery(r, "cursor", "limit", "order"); e != nil {
-			write(w, nil, e)
-			return
-		}
-		cursor, limit, e := pagination(r)
+		cursor, limit, e := pagination(r, "order")
 		if e != nil {
 			write(w, nil, e)
 			return
@@ -171,11 +183,7 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}/messages", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		if e := allowQuery(r, "cursor", "limit", "recalled", "order"); e != nil {
-			write(w, nil, e)
-			return
-		}
-		cursor, limit, e := pagination(r)
+		cursor, limit, e := pagination(r, "recalled", "order")
 		if e != nil {
 			write(w, nil, e)
 			return
@@ -188,70 +196,14 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		v, e := s.QueryMessages(r.Context(), p, r.PathValue("group"), g.MessageQuery{Cursor: cursor, Limit: limit, Order: r.URL.Query().Get("order"), Recalled: recalled})
 		write(w, v, e)
 	}))
-	mux.HandleFunc("GET /api/v1/groups/{group}/subscriptions", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := strictPagination(r)
-		if e != nil {
-			write(w, nil, e)
-			return
-		}
-		v, e := s.Subscriptions(r.Context(), p, r.PathValue("group"), cursor, limit)
-		write(w, v, e)
-	}))
-	mux.HandleFunc("GET /api/v1/groups/{group}/blacklist", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := strictPagination(r)
-		if e != nil {
-			write(w, nil, e)
-			return
-		}
-		v, e := s.Blacklist(r.Context(), p, r.PathValue("group"), cursor, limit)
-		write(w, v, e)
-	}))
-	mux.HandleFunc("GET /api/v1/groups/{group}/warnings", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := strictPagination(r)
-		if e != nil {
-			write(w, nil, e)
-			return
-		}
-		v, e := s.Warnings(r.Context(), p, r.PathValue("group"), cursor, limit)
-		write(w, v, e)
-	}))
-	mux.HandleFunc("GET /api/v1/groups/{group}/watch", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := strictPagination(r)
-		if e != nil {
-			write(w, nil, e)
-			return
-		}
-		v, e := s.Watch(r.Context(), p, r.PathValue("group"), cursor, limit)
-		write(w, v, e)
-	}))
-	mux.HandleFunc("GET /api/v1/groups/{group}/deliveries", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := strictPagination(r)
-		if e != nil {
-			write(w, nil, e)
-			return
-		}
-		v, e := s.Deliveries(r.Context(), p, r.PathValue("group"), cursor, limit)
-		write(w, v, e)
-	}))
+	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/subscriptions", s.Subscriptions)
+	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/blacklist", s.Blacklist)
+	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/warnings", s.Warnings)
+	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/watch", s.Watch)
+	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/deliveries", s.Deliveries)
+	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/audit", s.Audits)
 	return mux
 }
-
-func allowQuery(r *http.Request, allowed ...string) error {
-	for name, values := range r.URL.Query() {
-		ok := false
-		for _, a := range allowed {
-			if name == a {
-				ok = true
-				break
-			}
-		}
-		if !ok || len(values) != 1 {
-			return g.ErrInvalid
-		}
-	}
-	return nil
-}
-
 func optionalBool(r *http.Request, name string) (*bool, error) {
 	raw, exists := r.URL.Query()[name]
 	if !exists {
@@ -264,14 +216,16 @@ func optionalBool(r *http.Request, name string) (*bool, error) {
 	return &v, nil
 }
 
-func strictPagination(r *http.Request) (string, int, error) {
-	if e := allowQuery(r, "cursor", "limit"); e != nil {
-		return "", 0, e
+func pagination(r *http.Request, extra ...string) (string, int, error) {
+	q, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		return "", 0, g.ErrInvalid
 	}
-	return pagination(r)
-}
-func pagination(r *http.Request) (string, int, error) {
-	q := r.URL.Query()
+	for name, values := range q {
+		if len(values) != 1 || (name != "cursor" && name != "limit" && !slices.Contains(extra, name)) {
+			return "", 0, g.ErrInvalid
+		}
+	}
 	if len(q["limit"]) > 1 || len(q["cursor"]) > 1 || len(q.Get("cursor")) > 4096 {
 		return "", 0, g.ErrInvalid
 	}
@@ -289,12 +243,23 @@ func pagination(r *http.Request) (string, int, error) {
 var contract = sync.OnceValues(func() (*openapi3.T, error) { return openapi3.NewLoader().LoadFromData(g.OpenAPI()) })
 
 func decode(w http.ResponseWriter, r *http.Request, schema string, v any) error {
-	r.Body = http.MaxBytesReader(w, r.Body, 32768)
+	// Allow escaped Unicode at the schema limits, including 100 batch targets.
+	var limit int64 = 128 << 10
+	switch schema {
+	case "GroupConfigInput":
+		limit = 512 << 10
+	case "Bulk", "BlacklistInput":
+		limit = 3 << 20
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, limit)
 	data, e := io.ReadAll(r.Body)
 	if e != nil {
 		return g.ErrInvalid
 	}
 	var value any
+	if !utf8.Valid(data) {
+		return g.ErrInvalid
+	}
 	if e = json.Unmarshal(data, &value); e != nil {
 		return g.ErrInvalid
 	}
@@ -302,16 +267,31 @@ func decode(w http.ResponseWriter, r *http.Request, schema string, v any) error 
 	if e != nil {
 		return g.ErrUnavailable
 	}
-	if e = doc.Components.Schemas[schema].Value.VisitJSON(value); e != nil {
-		return g.ErrUnprocessable
+	definition := doc.Components.Schemas[schema].Value
+	if e = definition.VisitJSON(value); e != nil {
+		var fieldError *openapi3.SchemaError
+		if schema == "GroupConfigInput" && errors.As(e, &fieldError) {
+			if path := fieldError.JSONPointer(); len(path) > 0 && definition.Properties[path[0]] != nil {
+				return g.NewErrorDetail(g.ErrUnprocessable, "invalid_field", path[0], 0)
+			}
+		}
+		return g.NewErrorDetail(g.ErrUnprocessable, "schema_validation_failed", "", 0)
 	}
 	d := json.NewDecoder(bytes.NewReader(data))
 	d.DisallowUnknownFields()
 	if e = d.Decode(v); e != nil {
-		return g.ErrUnprocessable
+		return g.NewErrorDetail(g.ErrUnprocessable, "schema_validation_failed", "", 0)
 	}
 	return nil
 }
+
+type problemResponse struct {
+	Code              string `json:"code"`
+	Reason            string `json:"reason,omitempty"`
+	Field             string `json:"field,omitempty"`
+	RetryAfterSeconds *int64 `json:"retry_after_seconds,omitempty"`
+}
+
 func write(w http.ResponseWriter, v any, e error) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
@@ -332,8 +312,19 @@ func write(w http.ResponseWriter, v any, e error) {
 				break
 			}
 		}
+		resp := problemResponse{Code: code}
+		var detail *g.ErrorDetail
+		if errors.As(e, &detail) && detail != nil {
+			resp.Reason = detail.Reason
+			resp.Field = detail.Field
+			if detail.RetryAfterSeconds > 0 {
+				retry := detail.RetryAfterSeconds
+				resp.RetryAfterSeconds = &retry
+				w.Header().Set("Retry-After", strconv.FormatInt(retry, 10))
+			}
+		}
 		w.WriteHeader(status)
-		_ = json.NewEncoder(w).Encode(map[string]string{"code": code})
+		_ = json.NewEncoder(w).Encode(resp)
 		return
 	}
 	_ = json.NewEncoder(w).Encode(v)

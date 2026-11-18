@@ -59,3 +59,47 @@ func (t *transaction) OwnerGroupRecords(owner, cursor string, limit int, include
 	}
 	return out, nil
 }
+
+const directoryGroupsQuery = `SELECT c.id,c.data,m.data FROM groups.records c
+ LEFT JOIN groups.records m ON m.bucket=c.id||'/members' AND m.id=$1 AND m.data->>'owner'=$1 AND m.data->>'state'<>'removed'
+ WHERE c.bucket='config' AND c.data->>'discoverable'='true'
+ AND ($2='' OR c.data->>'school'=$2)
+ AND ($3='' OR COALESCE(c.data->>'category','')=$3)
+ AND c.id COLLATE "C">$4 COLLATE "C"
+ ORDER BY c.id COLLATE "C" LIMIT $5`
+
+func (t *transaction) DirectoryGroups(owner, school, category, cursor string, limit int) ([]g.DirectoryRecord, error) {
+	if limit < 1 || limit > 100 || len(cursor) > 128 {
+		return nil, g.ErrInvalid
+	}
+	rows, e := t.tx.Query(t.ctx, directoryGroupsQuery, owner, school, category, cursor, limit)
+	if e != nil {
+		return nil, e
+	}
+	defer rows.Close()
+	out := []g.DirectoryRecord{}
+	for rows.Next() {
+		var id string
+		var config, member []byte
+		if e = rows.Scan(&id, &config, &member); e != nil {
+			return nil, e
+		}
+		var item g.DirectoryRecord
+		if e = json.Unmarshal(config, &item.Config); e != nil {
+			return nil, e
+		}
+		item.Config.ID = id
+		if len(member) > 0 {
+			var m g.Member
+			if e = json.Unmarshal(member, &m); e != nil {
+				return nil, e
+			}
+			item.Member = &m
+		}
+		out = append(out, item)
+	}
+	if e = rows.Err(); e != nil {
+		return nil, e
+	}
+	return out, nil
+}
