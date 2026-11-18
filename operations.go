@@ -26,7 +26,7 @@ type Message struct {
 // Only authenticated bot adapters may provide the actual group and sender.
 func (s *Service) Ingest(ctx context.Context, g string, event Event, m Message) error {
 	stream := g + "/messages/" + m.ID
-	if !valid(g, 128) || event.Source != "qq-bot" || (event.Subject != g && event.Subject != stream) || event.Type != "groups.message" || !valid(m.ID, 128) || !valid(m.Owner, 2048) || len(m.Body) > 8192 {
+	if !valid(g, 128) || event.Source != "qq-bot" || (event.Subject != g && event.Subject != stream) || event.Type != "groups.message" || !valid(m.ID, 128) || !valid(m.Owner, 2048) || !validText(m.Body, 8192) {
 		return ErrInvalid
 	}
 	if len(m.Attachments) > 20 {

@@ -344,7 +344,7 @@ joined 表示已由机器人确认加入，state 是本人当前处理阶段。�
 
 此接口复用 GroupsForOwner 的 owner 反向索引、查询和分页逻辑，额外包含有效申请。每页在同一事务读取群公开信息和本人记录；当前事实按 owner、school 在单次请求内复用，不跨请求缓存。
 
-limit 默认 50，范围 1–100；cursor 最长 128 字节。按群 ID 字节顺序升序，next_cursor 是最后返回的群 ID，空字符串表示结束。无关联记录时返回空 items；未知查询参数或无效分页返回 400 groups_invalid_request。
+limit 默认 50，范围 1–100；cursor 最长 128 个 Unicode 码点。按群 ID 字节顺序升序，next_cursor 是最后返回的群 ID，空字符串表示结束。无关联记录时返回空 items；未知查询参数或无效分页返回 400 groups_invalid_request。
 
 eligibility 为 eligible、ineligible 或 unknown，只说明当前准入条件是否满足，不表示已经批准入群，也不会撤销既有豁免。所需事实明确未知时返回 unknown，不能视为具备资格；不需要的学生资格条件不参与判断。
 

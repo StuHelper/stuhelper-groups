@@ -54,7 +54,7 @@ func listRecords[T any](s *Service, ctx context.Context, p account.Principal, g,
 	if !p.Valid() {
 		return out, ErrUnauthenticated
 	}
-	if limit < 1 || limit > 100 || len(cursor) > 4096 {
+	if !valid(g, 128) || limit < 1 || limit > 100 || !validCursor(cursor, 4096) {
 		return out, ErrInvalid
 	}
 	e := s.run(ctx, func(tx Tx) error {
@@ -177,7 +177,7 @@ func (s *Service) Groups(ctx context.Context, p account.Principal, cursor string
 	if !p.Valid() {
 		return out, ErrUnauthenticated
 	}
-	if limit < 1 || limit > 100 || len(cursor) > 4096 {
+	if limit < 1 || limit > 100 || !validCursor(cursor, 4096) {
 		return out, ErrInvalid
 	}
 	e := s.run(ctx, func(tx Tx) error {

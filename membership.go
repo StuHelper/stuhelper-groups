@@ -25,7 +25,7 @@ type ManagedGroup struct {
 // It returns joined, non-removed memberships whose group configuration exists.
 func (s *Service) GroupsForOwner(ctx context.Context, owner account.Principal, cursor string, limit int) (Page[ManagedGroup], error) {
 	out := Page[ManagedGroup]{Items: []ManagedGroup{}}
-	if !owner.Valid() || len(cursor) > 128 || limit < 1 || limit > 100 {
+	if !owner.Valid() || !validCursor(cursor, 128) || limit < 1 || limit > 100 {
 		return out, ErrInvalid
 	}
 	e := s.run(ctx, func(tx Tx) error { var e error; out, e = tx.OwnerGroups(owner.Key(), cursor, limit, false); return e })
