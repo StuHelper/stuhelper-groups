@@ -1,10 +1,12 @@
 ---
 type: development
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-18
 ---
 
 # Groups 实施状态
+
+提交或重放举报前校验本人在目标群的成员关系。未加入和已退出者收到相同的拒绝结果。
 
 ## 当前实现
 

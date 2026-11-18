@@ -431,6 +431,11 @@ func TestRulesCardsReportAndBatchPreview(t *testing.T) {
 	if count(t, f, "g/hits") != 1 || count(t, f, "g/actions") != 0 {
 		t.Fatal(r)
 	}
+	if err := f.r.Transaction(ctx, func(tx g.Tx) error {
+		return tx.Put("g/members", user.Key(), g.Member{Owner: user.Key(), Joined: true, State: "restored"})
+	}); err != nil {
+		t.Fatal(err)
+	}
 	r = command(t, f, user, "report", g.Command{Kind: "report", Text: "reason", Message: "m"})
 	if count(t, f, "g/reports") != 1 {
 		t.Fatal(r)
@@ -567,6 +572,11 @@ func TestAISuggestionsRequireEnabledActionsAndCurrentAuthorization(t *testing.T)
 	f.s.AI = ai{}
 	e := event("message", "qq-bot", "g", "groups.message", 1)
 	if err := f.s.Ingest(ctx, "g", e, g.Message{ID: "m", Owner: user.Key(), Body: "message"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.r.Transaction(ctx, func(tx g.Tx) error {
+		return tx.Put("g/members", user.Key(), g.Member{Owner: user.Key(), Joined: true, State: "restored"})
+	}); err != nil {
 		t.Fatal(err)
 	}
 	r := command(t, f, user, "report", g.Command{Kind: "report", Message: "m", Text: "reason"})
