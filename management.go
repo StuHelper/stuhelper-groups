@@ -34,7 +34,7 @@ func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string,
 		}
 		seen[target] = true
 	}
-	err := s.run(ctx, func(tx Tx) error {
+	err := s.runScoped(ctx, []string{"group:" + g, "batch:" + p.Key() + ":" + g + ":" + key}, func(tx Tx) error {
 		var c GroupConfig
 		if e := tx.Get("config", g, &c); e != nil {
 			return e
@@ -109,7 +109,11 @@ func (s *Service) Blacklists(ctx context.Context, p account.Principal, key strin
 	if len(in.Groups) < 1 || len(in.Groups) > 100 || !valid(in.Target, 2048) || !validKey(key) || strings.TrimSpace(in.Reason) == "" || !validText(in.Reason, 2048) || in.Seconds < 0 || in.Seconds > 31536000 {
 		return out, ErrInvalid
 	}
-	e := s.run(ctx, func(tx Tx) error {
+	scopes := []string{"receipt:" + p.Key() + ":" + key}
+	for _, id := range in.Groups {
+		scopes = append(scopes, "group:"+id)
+	}
+	e := s.runScoped(ctx, scopes, func(tx Tx) error {
 		seen := map[string]bool{}
 		for _, id := range in.Groups {
 			if !valid(id, 128) || seen[id] {
@@ -174,7 +178,7 @@ func (s *Service) Progress(ctx context.Context, p account.Principal, g string) (
 	if !valid(g, 128) {
 		return out, ErrInvalid
 	}
-	e := s.run(ctx, func(tx Tx) error { return tx.Get(bucket(g, "members"), p.Key(), &out) })
+	e := s.runRead(ctx, func(tx ReadTx) error { return tx.Get(bucket(g, "members"), p.Key(), &out) })
 	out.ID = out.Owner
 	return out, e
 }

@@ -23,7 +23,7 @@ func (a *eligibilityAssessment) action(value string) {
 
 // assessEligibility is the single prerequisite decision used by admission,
 // execution-time checks and the user's read-only progress view. No write occurs.
-func (s *Service) assessEligibility(ctx context.Context, tx Tx, c GroupConfig, m Member, cache map[factKey]Facts) (eligibilityAssessment, error) {
+func (s *Service) assessEligibility(ctx context.Context, tx ReadTx, c GroupConfig, m Member, cache map[factKey]Facts) (eligibilityAssessment, error) {
 	out := assessment()
 	restricted, err := s.restricted(tx, c.ID, m.Owner)
 	if err != nil {
@@ -39,9 +39,9 @@ func (s *Service) assessEligibility(ctx context.Context, tx Tx, c GroupConfig, m
 	facts, found := cache[key]
 	if !found {
 		var e error
-		facts, e = s.currentFacts(ctx, m.Owner, c.School)
+		facts, e = s.transactionFacts(ctx, tx, key)
 		if e != nil {
-			return assessment(), ErrUnavailable
+			return assessment(), e
 		}
 		if cache != nil {
 			cache[key] = facts
@@ -98,7 +98,7 @@ func (s *Service) assessEligibility(ctx context.Context, tx Tx, c GroupConfig, m
 	return out, nil
 }
 
-func (s *Service) restricted(tx Tx, id, owner string) (bool, error) {
+func (s *Service) restricted(tx ReadTx, id, owner string) (bool, error) {
 	for _, group := range []string{id, "*"} {
 		var block Blacklist
 		e := tx.Get(bucket(group, "blacklist"), owner, &block)

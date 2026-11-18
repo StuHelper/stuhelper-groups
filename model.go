@@ -210,20 +210,25 @@ type Row struct {
 	ID   string
 	Data json.RawMessage
 }
-type Tx interface {
+type ReadTx interface {
 	Get(string, string, any) error
-	Put(string, string, any) error
-	Delete(string, string) error
 	List(string, string, int) ([]Row, error)
 	PendingActions(string) (int, error)
 	PendingAdmissionKick(group, owner string) (bool, error)
 	GroupCounts([]string) (map[string]GroupCounts, error)
 	OwnerGroups(owner, cursor string, limit int, includeApplicants bool) (Page[ManagedGroup], error)
 	OwnerGroupRecords(owner, cursor string, limit int, includeApplicants bool) (Page[OwnerGroupRecord], error)
+}
+type Tx interface {
+	ReadTx
+	Put(string, string, any) error
+	Delete(string, string) error
 	Emit(Event) error
 	Accept(Event) (bool, error)
 }
 type Repository interface {
+	ReadOnly(context.Context, func(ReadTx) error) error
+	ScopedTransaction(context.Context, []string, func(Tx) error) error
 	Transaction(context.Context, func(Tx) error) error
 }
 type Service struct {

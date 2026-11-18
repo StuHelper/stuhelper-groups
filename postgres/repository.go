@@ -30,19 +30,46 @@ type transaction struct {
 	tx  pgx.Tx
 }
 
-func (r *Repository) Transaction(ctx context.Context, fn func(g.Tx) error) error {
+func (r *Repository) ReadOnly(ctx context.Context, fn func(g.ReadTx) error) error {
+	tx, e := r.Pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
+	if e != nil {
+		return e
+	}
+	defer func() { _ = tx.Rollback(context.WithoutCancel(ctx)) }()
+	if e = fn(&transaction{ctx, tx}); e != nil {
+		return e
+	}
+	return tx.Commit(ctx)
+}
+
+func (r *Repository) ScopedTransaction(ctx context.Context, scopes []string, fn func(g.Tx) error) error {
 	tx, e := r.Pool.Begin(ctx)
 	if e != nil {
 		return e
 	}
-	defer func() { _ = tx.Rollback(context.WithoutCancel(ctx)) }() // Module-local serialization prevents lost updates across workflows.
-	if _, e = tx.Exec(ctx, "SELECT pg_advisory_xact_lock(7420719)"); e != nil {
-		return e
+	defer func() { _ = tx.Rollback(context.WithoutCancel(ctx)) }()
+	if len(scopes) == 0 {
+		if _, e = tx.Exec(ctx, "SELECT pg_advisory_xact_lock(7420719)"); e != nil {
+			return e
+		}
+	} else {
+		// Legacy transactions take the exclusive module lock. Scoped writers may coexist.
+		if _, e = tx.Exec(ctx, "SELECT pg_advisory_xact_lock_shared(7420719)"); e != nil {
+			return e
+		}
+		// Acquire hash locks in strict ascending int32 order so multi-group operations never deadlock.
+		if _, e = tx.Exec(ctx, "SELECT pg_advisory_xact_lock(7420719, h) FROM (SELECT DISTINCT hashtext(k) AS h FROM unnest($1::text[]) AS k ORDER BY h) q", scopes); e != nil {
+			return e
+		}
 	}
 	if e = fn(&transaction{ctx, tx}); e != nil {
 		return e
 	}
 	return tx.Commit(ctx)
+}
+
+func (r *Repository) Transaction(ctx context.Context, fn func(g.Tx) error) error {
+	return r.ScopedTransaction(ctx, nil, fn)
 }
 func (t *transaction) Get(bucket, id string, v any) error {
 	var b []byte

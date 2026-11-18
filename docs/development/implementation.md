@@ -76,6 +76,6 @@ groups 仅依赖自有接口、公开 platform 与公开第三方库。资格、
 
 机器人执行器、身份反向解析、图片媒体代理和实时工作台推送由 backend 与 Koishi 装配。本仓使用模拟机器人验证实际成功、失败和未知结果，不访问真实 QQ。
 
-Repository 使用模块级事务锁保护状态转换，批量上限为 100。AI 和资格查询具有事务超时，但仍占用锁；大规模群并发前需要按业务规模建立基准，再拆分锁和外部查询阶段。
+Repository 拆分无锁只读快照事务 ReadOnly 与按作用域哈希升序加锁的 ScopedTransaction，纯查询接口不加 advisory lock，单群与多群写入按确定顺序细粒度加锁。AI 分析使用独立 5 秒超时并在获取写锁前预取，资格事实也在锁外预取后于写事务内复核状态。
 
 远程仓库为 StuHelper/stuhelper-groups，候选通过 feat/backend-decisions 草稿 PR 验证。现有模块不在本任务写入范围，backend 依赖、工作区锁、管理端和 Koishi 未修改。

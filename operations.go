@@ -43,7 +43,7 @@ func (s *Service) Ingest(ctx context.Context, g string, event Event, m Message) 
 	if m.Attachments == nil {
 		m.Attachments = []string{}
 	}
-	return s.run(ctx, func(tx Tx) error {
+	return s.runScoped(ctx, []string{"group:" + g}, func(tx Tx) error {
 		var c GroupConfig
 		if e := tx.Get("config", g, &c); e != nil {
 			return e
@@ -222,9 +222,9 @@ func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	if s.Facts == nil {
 		return out, ErrUnavailable
 	}
-	f, e := s.currentFacts(ctx, cmd.Target, c.School)
+	f, e := s.transactionFacts(ctx, tx, factKey{cmd.Target, c.School})
 	if e != nil {
-		return out, ErrUnavailable
+		return out, e
 	}
 	if !c.CheckCard || c.CardTemplate == "" {
 		return out, ErrDisabled
@@ -347,7 +347,7 @@ func (s *Service) authorizePending(ctx context.Context, tx Tx, g string, a *Acti
 func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 	var a Action
 	var lookup bool
-	e := s.run(ctx, func(tx Tx) error {
+	e := s.runPrepared(ctx, []string{"group:" + g}, func(tx *preparedTx) error {
 		if e := tx.Get(bucket(g, "actions"), id, &a); e != nil {
 			return e
 		}
@@ -389,7 +389,7 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 		result, found, e = s.Bot.Lookup(call, a.ID)
 		if e == nil && !found {
 			// The adapter confirmed that nothing happened. Recheck permission before retrying.
-			e = s.run(call, func(tx Tx) error { return s.authorizePending(call, tx, g, &a) })
+			e = s.runPrepared(call, []string{"group:" + g}, func(tx *preparedTx) error { return s.authorizePending(call, tx, g, &a) })
 			if e == nil && a.State == "cancelled" {
 				return a, nil
 			}
@@ -411,7 +411,7 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 	}
 	finish, cancelFinish := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer cancelFinish()
-	err := s.run(finish, func(tx Tx) error {
+	err := s.runScoped(finish, []string{"group:" + g}, func(tx Tx) error {
 		if a.State != "unknown" {
 			if err := tx.Delete(bucket(g, "action_traces"), id); err != nil {
 				return err
@@ -481,7 +481,7 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 // Recover is called by the host for expired execution leases, with bounded pages.
 func (s *Service) Recover(ctx context.Context, g, cursor string) (string, error) {
 	next := ""
-	e := s.run(ctx, func(tx Tx) error {
+	e := s.runScoped(ctx, []string{"group:" + g}, func(tx Tx) error {
 		rows, e := tx.List(bucket(g, "actions"), cursor, 100)
 		if e != nil {
 			return e
@@ -513,7 +513,7 @@ func (s *Service) Recover(ctx context.Context, g, cursor string) (string, error)
 }
 func (s *Service) Cleanup(ctx context.Context, g, cursor string) (string, error) {
 	next := ""
-	e := s.run(ctx, func(tx Tx) error {
+	e := s.runScoped(ctx, []string{"group:" + g}, func(tx Tx) error {
 		var c GroupConfig
 		if e := tx.Get("config", g, &c); e != nil {
 			return e

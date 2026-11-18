@@ -13,7 +13,7 @@ import (
 // persists its cursor and periodically starts at the beginning for new deadlines.
 func (s *Service) Sweep(ctx context.Context, g, cursor string) (string, error) {
 	next := ""
-	e := s.run(ctx, func(tx Tx) error {
+	e := s.runPrepared(ctx, []string{"group:" + g}, func(tx *preparedTx) error {
 		var c GroupConfig
 		if e := tx.Get("config", g, &c); e != nil {
 			return e
@@ -21,6 +21,26 @@ func (s *Service) Sweep(ctx context.Context, g, cursor string) (string, error) {
 		rows, e := tx.List(bucket(g, "members"), cursor, 100)
 		if e != nil {
 			return e
+		}
+		keys := []factKey{}
+		for _, row := range rows {
+			var m Member
+			if err := json.Unmarshal(row.Data, &m); err != nil {
+				return err
+			}
+			if m.State == "removed" {
+				continue
+			}
+			blocked, err := s.restricted(tx, c.ID, m.Owner)
+			if err != nil {
+				return err
+			}
+			if !blocked {
+				keys = append(keys, factKey{m.Owner, c.School})
+			}
+		}
+		if err := tx.prepareFacts(keys); err != nil {
+			return err
 		}
 		for _, r := range rows {
 			next = r.ID
@@ -55,7 +75,7 @@ func (s *Service) Fanout(ctx context.Context, e Event) error {
 	if e.TraceParent != "" {
 		ctx = WithTraceParent(ctx, e.TraceParent)
 	}
-	return s.run(ctx, func(tx Tx) error {
+	return s.runPrepared(ctx, []string{"group:" + e.Subject}, func(tx *preparedTx) error {
 		copy := e
 		copy.Source = "groups-subscriptions"
 		ok, err := tx.Accept(copy)
@@ -85,6 +105,18 @@ func (s *Service) Fanout(ctx context.Context, e Event) error {
 		rows, err := tx.List(bucket(e.Subject, "subscriptions"), "", 100)
 		if err != nil {
 			return err
+		}
+		for _, r := range rows {
+			var sub Subscription
+			if err := json.Unmarshal(r.Data, &sub); err != nil {
+				return err
+			}
+			if sub.Enabled {
+				tx.requireScope("group:" + sub.Receiver)
+			}
+		}
+		if len(tx.extra) > 0 {
+			return errPrepareTransaction
 		}
 		for _, r := range rows {
 			var sub Subscription
@@ -156,22 +188,22 @@ func (s *Service) frequency(tx Tx, c GroupConfig, cmd Command, preview bool) (bo
 // A web application alone cannot claim that a QQ user has already joined.
 func (s *Service) MemberEvent(ctx context.Context, g string, event Event, owner string) error {
 	stream := g + "/members/" + owner
-	if !valid(g, 128) || event.Source != "qq-bot" || (event.TraceParent != "" && !validTraceParent(event.TraceParent)) || (event.Subject != g && event.Subject != stream) || !valid(owner, 2048) || !slices.Contains([]string{"groups.member_joined", "groups.member_left"}, event.Type) {
+	if event.SpecVersion != "1.0" || event.ID == "" || event.Revision < 1 || event.Time.IsZero() || !valid(g, 128) || event.Source != "qq-bot" || (event.TraceParent != "" && !validTraceParent(event.TraceParent)) || (event.Subject != g && event.Subject != stream) || !valid(owner, 2048) || !slices.Contains([]string{"groups.member_joined", "groups.member_left"}, event.Type) {
 		return ErrInvalid
 	}
 	if event.TraceParent != "" && TraceParentFromContext(ctx) == "" {
 		ctx = WithTraceParent(ctx, event.TraceParent)
 	}
-	return s.run(ctx, func(tx Tx) error {
-		payload, e := json.Marshal(struct {
-			Owner string
-			Data  json.RawMessage
-		}{owner, event.Data})
-		if e != nil {
-			return e
-		}
-		event.revisionSubject = stream
-		event.Data = payload
+	payload, e := json.Marshal(struct {
+		Owner string
+		Data  json.RawMessage
+	}{owner, event.Data})
+	if e != nil {
+		return e
+	}
+	event.revisionSubject = stream
+	event.Data = payload
+	return s.runPrepared(ctx, []string{"group:" + g, "owner:" + owner}, func(tx *preparedTx) error {
 		ok, e := tx.Accept(event)
 		if e != nil || !ok {
 			return e

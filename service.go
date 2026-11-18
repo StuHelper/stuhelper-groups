@@ -41,12 +41,23 @@ func hash(v any) string {
 }
 func bucket(g, k string) string { return g + "/" + k }
 func (s *Service) run(ctx context.Context, fn func(Tx) error) error {
+	return s.runScoped(ctx, nil, fn)
+}
+func (s *Service) runScoped(ctx context.Context, scopes []string, fn func(Tx) error) error {
 	if s.Repo == nil {
 		return ErrUnavailable
 	}
 	c, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	return s.Repo.Transaction(c, fn)
+	return s.Repo.ScopedTransaction(c, scopes, fn)
+}
+func (s *Service) runRead(ctx context.Context, fn func(ReadTx) error) error {
+	if s.Repo == nil {
+		return ErrUnavailable
+	}
+	c, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	return s.Repo.ReadOnly(c, fn)
 }
 func (s *Service) auth(ctx context.Context, p account.Principal, c string, g GroupConfig) error {
 	if !p.Valid() {
@@ -99,7 +110,7 @@ func validKey(v string) bool {
 	return true
 }
 
-func replay(tx Tx, owner, operation, object, key string, input, out any) (bool, error) {
+func replay(tx ReadTx, owner, operation, object, key string, input, out any) (bool, error) {
 	var r receipt
 	e := tx.Get("receipts", hash([]string{owner, operation, object, key}), &r)
 	if errors.Is(e, ErrNotFound) {
@@ -222,7 +233,21 @@ func (s *Service) Command(ctx context.Context, p account.Principal, g, key strin
 	if !validKey(key) || !valid(g, 128) || !validText(cmd.Text, 8192) || !validText(cmd.Message, 128) || !validText(cmd.Receiver, 128) || !validText(cmd.Target, 2048) || cmd.Seconds < 0 || cmd.Seconds > 31536000 {
 		return out, ErrInvalid
 	}
-	e := s.run(ctx, func(tx Tx) error {
+	input := struct {
+		Group   string
+		Command Command
+	}{g, cmd}
+	if cmd.Kind == "analyze" {
+		return s.executeAnalyze(ctx, p, g, key, cmd, input)
+	}
+	scopes := []string{"group:" + g, "receipt:" + p.Key() + ":" + key}
+	if cmd.Kind == "apply" {
+		scopes = append(scopes, "owner:"+p.Key())
+	}
+	if cmd.Kind == "subscribe" && cmd.Receiver != "" {
+		scopes = append(scopes, "group:"+cmd.Receiver)
+	}
+	e := s.runPrepared(ctx, scopes, func(tx *preparedTx) error {
 		if cmd.Kind == "report" {
 			if !valid(cmd.Message, 128) {
 				return ErrInvalid
@@ -267,6 +292,105 @@ func (s *Service) Command(ctx context.Context, p account.Principal, g, key strin
 		}
 		out, e = s.command(ctx, tx, p, c, cmd, cap)
 		if e != nil {
+			return e
+		}
+		return save(tx, p.Key(), "command", g, key, input, out)
+	})
+	return out, e
+}
+func (s *Service) executeAnalyze(ctx context.Context, p account.Principal, g, key string, cmd Command, input any) (Result, error) {
+	out := Result{State: "completed"}
+	var replayed bool
+	var payload []byte
+	preErr := s.runRead(ctx, func(tx ReadTx) error {
+		var c GroupConfig
+		if e := tx.Get("config", g, &c); e != nil {
+			return e
+		}
+		if e := s.auth(ctx, p, "groups.read", c); e != nil {
+			return e
+		}
+		ok, e := replay(tx, p.Key(), "command", g, key, input, &out)
+		if e != nil || ok {
+			replayed = ok
+			return e
+		}
+		if s.AI == nil {
+			return ErrUnavailable
+		}
+		var r map[string]any
+		if e := tx.Get(bucket(c.ID, "reports"), cmd.Target, &r); e != nil {
+			return e
+		}
+		messageID, _ := r["message"].(string)
+		var message Message
+		if e := tx.Get(bucket(c.ID, "messages"), messageID, &message); e != nil {
+			return e
+		}
+		if !s.now().Before(message.Expires) || c.RetentionSeconds == 0 {
+			return ErrNotFound
+		}
+		if e := s.auth(ctx, p, "groups.messages.read", c); e != nil {
+			return e
+		}
+		if r["state"] == "pending_execution" || r["state"] == "resolved" {
+			return ErrConflict
+		}
+		reason, _ := r["reason"].(string)
+		var marshalErr error
+		payload, marshalErr = json.Marshal(struct {
+			Reason string `json:"reason"`
+			Body   string `json:"body"`
+		}{reason, message.Body})
+		return marshalErr
+	})
+	if preErr != nil || replayed {
+		return out, preErr
+	}
+
+	// Invoke external AI outside any database transaction or advisory lock with a bounded 5s timeout.
+	aiCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	text, actions, err := s.AI.Analyze(aiCtx, string(payload))
+	if err != nil {
+		return out, ErrUnavailable
+	}
+
+	e := s.runScoped(ctx, []string{"group:" + g, "receipt:" + p.Key() + ":" + key}, func(tx Tx) error {
+		var c GroupConfig
+		if e := tx.Get("config", g, &c); e != nil {
+			return e
+		}
+		if e := s.auth(ctx, p, "groups.read", c); e != nil {
+			return e
+		}
+		ok, e := replay(tx, p.Key(), "command", g, key, input, &out)
+		if e != nil || ok {
+			return e
+		}
+		var r map[string]any
+		if e := tx.Get(bucket(c.ID, "reports"), cmd.Target, &r); e != nil {
+			return e
+		}
+		if state, _ := r["state"].(string); state == "resolved" || state == "pending_execution" {
+			return ErrConflict
+		}
+		messageID, _ := r["message"].(string)
+		var message Message
+		if e := tx.Get(bucket(c.ID, "messages"), messageID, &message); e != nil {
+			return e
+		}
+		if !s.now().Before(message.Expires) || c.RetentionSeconds == 0 {
+			return ErrNotFound
+		}
+		if e := s.auth(ctx, p, "groups.messages.read", c); e != nil {
+			return e
+		}
+		r["analysis"] = text
+		r["suggestions"] = actions
+		r["state"] = "suggested"
+		out.Detail = text
+		if e := tx.Put(bucket(c.ID, "reports"), cmd.Target, r); e != nil {
 			return e
 		}
 		return save(tx, p.Key(), "command", g, key, input, out)
@@ -352,45 +476,6 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		}
 		out.ID = uuid.NewString()
 		return out, tx.Put(bucket(c.ID, "reports"), out.ID, map[string]any{"reporter": p.Key(), "message": cmd.Message, "reason": cmd.Text, "state": "open"})
-	case "analyze":
-		if s.AI == nil {
-			return out, ErrUnavailable
-		}
-		var r map[string]any
-		if e := tx.Get(bucket(c.ID, "reports"), cmd.Target, &r); e != nil {
-			return out, e
-		}
-		if r["state"] == "pending_execution" || r["state"] == "resolved" {
-			return out, ErrConflict
-		}
-		messageID, _ := r["message"].(string)
-		var message Message
-		if e := tx.Get(bucket(c.ID, "messages"), messageID, &message); e != nil {
-			return out, e
-		}
-		if !s.now().Before(message.Expires) || c.RetentionSeconds == 0 {
-			return out, ErrNotFound
-		}
-		if e := s.auth(ctx, p, "groups.messages.read", c); e != nil {
-			return out, e
-		}
-		reason, _ := r["reason"].(string)
-		b, marshalErr := json.Marshal(struct {
-			Reason string `json:"reason"`
-			Body   string `json:"body"`
-		}{reason, message.Body})
-		if marshalErr != nil {
-			return out, marshalErr
-		}
-		text, actions, e := s.AI.Analyze(ctx, string(b))
-		if e != nil {
-			return out, ErrUnavailable
-		}
-		r["analysis"] = text
-		r["suggestions"] = actions
-		r["state"] = "suggested"
-		out.Detail = text
-		return out, tx.Put(bucket(c.ID, "reports"), cmd.Target, r)
 	case "feedback", "watch", "ai_execute":
 		return s.manageRecord(ctx, tx, p, c, cmd)
 	case "preview", "rule":

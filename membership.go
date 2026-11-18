@@ -3,7 +3,6 @@ package groups
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"regexp"
 	"strconv"
 	"strings"
@@ -28,7 +27,11 @@ func (s *Service) GroupsForOwner(ctx context.Context, owner account.Principal, c
 	if !owner.Valid() || !validCursor(cursor, 128) || limit < 1 || limit > 100 {
 		return out, ErrInvalid
 	}
-	e := s.run(ctx, func(tx Tx) error { var e error; out, e = tx.OwnerGroups(owner.Key(), cursor, limit, false); return e })
+	e := s.runRead(ctx, func(tx ReadTx) error {
+		var e error
+		out, e = tx.OwnerGroups(owner.Key(), cursor, limit, false)
+		return e
+	})
 	if e != nil {
 		return Page[ManagedGroup]{Items: []ManagedGroup{}}, e
 	}
@@ -119,62 +122,45 @@ func (s *Service) Consume(ctx context.Context, event UpstreamEvent) error {
 }
 
 func (s *Service) consumeEvent(ctx context.Context, envelope Event, owner string) error {
-	call, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	cache := map[factKey]Facts{}
-	needFacts := errors.New("fetch group facts")
-	for {
-		schools := map[string]bool{}
-		err := s.run(call, func(tx Tx) error {
-			accepted, err := tx.Accept(envelope)
-			if err != nil || !accepted {
-				return err
-			}
-			groups, err := affectedGroups(tx, owner)
-			if err != nil {
-				return err
-			}
-			for _, group := range groups {
-				if _, found := cache[factKey{owner, group.School}]; found || schools[group.School] {
-					continue
-				}
-				blocked, err := s.restricted(tx, group.ID, owner)
-				if err != nil {
-					return err
-				}
-				if !blocked {
-					schools[group.School] = true
-				}
-			}
-			// Roll back the tentative inbox insert. The write pass checks the stream and memberships again.
-			if len(schools) > 0 {
-				return needFacts
-			}
-			for _, group := range groups {
-				if err := call.Err(); err != nil {
-					return err
-				}
-				var c GroupConfig
-				if err := tx.Get("config", group.ID, &c); err != nil {
-					return err
-				}
-				if _, err := s.admissionWithFacts(call, tx, account.Principal{}, c, owner, checkAdmission, cache); err != nil {
-					return err
-				}
-			}
-			return nil
-		})
-		if !errors.Is(err, needFacts) {
+	return s.runPrepared(ctx, []string{"owner:" + owner, "upstream:" + envelope.Source + ":" + envelope.Subject}, func(tx *preparedTx) error {
+		accepted, err := tx.Accept(envelope)
+		if err != nil || !accepted {
 			return err
 		}
-		for school := range schools {
-			facts, err := s.currentFacts(call, owner, school)
-			if err != nil {
-				return ErrUnavailable
-			}
-			cache[factKey{owner, school}] = facts
+		groups, err := affectedGroups(tx, owner)
+		if err != nil {
+			return err
 		}
-	}
+		keys := []factKey{}
+		schools := map[string]bool{}
+		for _, group := range groups {
+			tx.requireScope("group:" + group.ID)
+			if schools[group.School] {
+				continue
+			}
+			blocked, err := s.restricted(tx, group.ID, owner)
+			if err != nil {
+				return err
+			}
+			if !blocked {
+				keys = append(keys, factKey{owner, group.School})
+				schools[group.School] = true
+			}
+		}
+		if err := tx.prepareFacts(keys); err != nil {
+			return err
+		}
+		for _, group := range groups {
+			var c GroupConfig
+			if err := tx.Get("config", group.ID, &c); err != nil {
+				return err
+			}
+			if _, err := s.admission(ctx, tx, account.Principal{}, c, owner, checkAdmission); err != nil {
+				return err
+			}
+		}
+		return tx.Put("eligibility_generations", owner, hash(envelope))
+	})
 }
 func affectedGroups(tx Tx, owner string) ([]ManagedGroup, error) {
 	// Include active applications as well as joined members. Fetch the complete

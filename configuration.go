@@ -69,7 +69,7 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 	if in.AutoActions == nil {
 		in.AutoActions = []string{}
 	}
-	e := s.run(ctx, func(tx Tx) error {
+	e := s.runScoped(ctx, []string{"group:" + in.ID, "receipt:" + p.Key() + ":" + key}, func(tx Tx) error {
 		c := GroupConfig{GroupSettings: in.GroupSettings}
 		if e := s.auth(ctx, p, "groups.configure", c); e != nil {
 			return e
@@ -135,7 +135,7 @@ func (s *Service) Configuration(ctx context.Context, p account.Principal, g stri
 	if !valid(g, 128) {
 		return c, ErrInvalid
 	}
-	e := s.run(ctx, func(tx Tx) error {
+	e := s.runRead(ctx, func(tx ReadTx) error {
 		if e := tx.Get("config", g, &c); e != nil {
 			return e
 		}
