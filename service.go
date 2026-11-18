@@ -424,6 +424,9 @@ const (
 type admissionHistory struct{ Admitted, Muted bool }
 
 func (s *Service) admission(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, owner string, trigger admissionTrigger) (Result, error) {
+	return s.admissionWithFacts(ctx, tx, p, c, owner, trigger, nil)
+}
+func (s *Service) admissionWithFacts(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, owner string, trigger admissionTrigger, cache map[factKey]Facts) (Result, error) {
 	out := Result{}
 	if !valid(owner, 2048) {
 		return out, ErrInvalid
@@ -468,7 +471,8 @@ func (s *Service) admission(ctx context.Context, tx Tx, p account.Principal, c G
 		}
 	}
 	previous := m.State
-	ok, e := s.eligible(ctx, tx, c, m)
+	assessment, e := s.assessEligibility(ctx, tx, c, m, cache)
+	ok := assessment.state == "eligible"
 	if e != nil {
 		return out, e
 	}

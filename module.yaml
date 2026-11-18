@@ -46,6 +46,7 @@ scenario_tests:
     - facts_test.go#TestGroupFactsRejectsUnknownContradictoryAndFailedFacts
     - integration_test.go#TestPasswordDoesNotGrantStudentEligibilityAndBlacklistScope
   QQ-03:
+    - delivery_membership_test.go#TestConsumeFetchesFactsOutsideTransaction
     - qq_binding_event_test.go#TestQQBindingActualEnvelopeRecomputeReplayAndOldRevision
     - qq_binding_event_test.go#TestQQBindingEnvelopeValidationRejectsUnknownAndInconsistentFields
     - delivery_membership_test.go#TestConsumeFanoutDeduplicationOldRevisionsAndConcurrency
