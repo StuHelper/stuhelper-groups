@@ -316,10 +316,11 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		if e := s.auth(ctx, p, "groups.messages.read", c); e != nil {
 			return out, e
 		}
+		reason, _ := r["reason"].(string)
 		b, marshalErr := json.Marshal(struct {
-			Report  map[string]any
-			Message Message
-		}{r, message})
+			Reason string `json:"reason"`
+			Body   string `json:"body"`
+		}{reason, message.Body})
 		if marshalErr != nil {
 			return out, marshalErr
 		}

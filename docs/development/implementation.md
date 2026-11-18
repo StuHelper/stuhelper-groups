@@ -1,10 +1,12 @@
 ---
 type: development
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-18
 ---
 
 # Groups 实施状态
+
+举报分析向模型只发送举报原因与消息正文。模型输入由服务端显式选择字段。锁粒度、资格事实预取与 AI 锁外调用见并发改进 PR #6。
 
 ## 当前实现
 
