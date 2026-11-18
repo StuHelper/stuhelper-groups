@@ -193,6 +193,22 @@ func (s *Service) Command(ctx context.Context, p account.Principal, g, key strin
 		return out, ErrInvalid
 	}
 	e := s.run(ctx, func(tx Tx) error {
+		if cmd.Kind == "report" {
+			if !valid(cmd.Message, 128) {
+				return ErrInvalid
+			}
+			var m Member
+			err := tx.Get(bucket(g, "members"), p.Key(), &m)
+			if errors.Is(err, ErrNotFound) {
+				return ErrForbidden
+			}
+			if err != nil {
+				return err
+			}
+			if !m.Joined || m.State == "removed" {
+				return ErrForbidden
+			}
+		}
 		var c GroupConfig
 		if e := tx.Get("config", g, &c); e != nil {
 			return e

@@ -24,6 +24,9 @@ func TestAnalysisInputFields(t *testing.T) {
 	if err := f.s.Ingest(ctx, "g", event("m", "qq-bot", "g", "groups.message", 1), g.Message{ID: "m", Owner: user.Key(), Body: "message"}); err != nil {
 		t.Fatal(err)
 	}
+	if err := f.s.MemberEvent(ctx, "g", event("reporter-joined", "qq-bot", "g", "groups.member_joined", 1), user.Key()); err != nil {
+		t.Fatal(err)
+	}
 	r := command(t, f, user, "report", g.Command{Kind: "report", Message: "m", Text: "reason"})
 	command(t, f, manager, "analysis", g.Command{Kind: "analyze", Target: r.ID})
 }

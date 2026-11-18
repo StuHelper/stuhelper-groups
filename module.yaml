@@ -77,6 +77,7 @@ scenario_tests:
   QQ-09:
     - auto_actions_test.go#TestAutomaticActionDurationAndReportLifecycle
     - analysis_input_test.go#TestAnalysisInputFields
+    - report_membership_test.go#TestReportChecksCurrentMembership
     - integration_test.go#TestAISuggestionsRequireEnabledActionsAndCurrentAuthorization
   QQ-10:
     - bot_ingress_test.go#TestBotIngressReplaysLegacyInbox
