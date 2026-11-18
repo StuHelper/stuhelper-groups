@@ -203,6 +203,83 @@ func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	return s.queue(tx, p, c, Command{Kind: "card", Target: cmd.Target, Text: text}, "groups.manage")
 }
 
+func (s *Service) cancelAction(tx Tx, g string, a *Action, reason string) error {
+	a.State = "cancelled"
+	a.LeaseUntil = nil
+	if reason != "" {
+		a.Result = reason
+	}
+	if e := tx.Put(bucket(g, "actions"), a.ID, *a); e != nil {
+		return e
+	}
+	if e := s.audit(tx, a.Actor.Principal(), g, a.Command.Kind, a.Command.Target, a.State); e != nil {
+		return e
+	}
+	return s.event(tx, g, "action.result", map[string]string{"id": a.ID, "state": a.State})
+}
+
+func (s *Service) authorizePending(ctx context.Context, tx Tx, g string, a *Action) error {
+	var c GroupConfig
+	if e := tx.Get("config", g, &c); e != nil {
+		if errors.Is(e, ErrNotFound) {
+			return s.cancelAction(tx, g, a, e.Error())
+		}
+		return e
+	}
+	if a.Capability == "admission" {
+		var m Member
+		if e := tx.Get(bucket(g, "members"), a.Command.Target, &m); e != nil {
+			return e
+		}
+		ok, e := s.eligible(ctx, tx, c, m)
+		if e != nil {
+			return e
+		}
+		cancel := (a.Command.Kind == "kick" && (ok || m.Exempt || s.now().Before(m.Deadline))) || (a.Command.Kind == "remind" && (ok || m.Exempt)) || (a.Command.Kind == "approve" && !ok) || (a.Command.Kind == "welcome" && !ok) || (a.Command.Kind == "mute" && (ok || m.Exempt)) || (a.Command.Kind == "unmute" && !ok)
+		if cancel {
+			return s.cancelAction(tx, g, a, "")
+		}
+	} else if a.Capability == "entertainment" {
+		var m Member
+		if e := tx.Get(bucket(g, "members"), a.Command.Target, &m); e != nil {
+			return e
+		}
+		ok, e := s.eligible(ctx, tx, c, m)
+		if e != nil {
+			return e
+		}
+		if !m.Joined || !ok || c.MuteProbability == 0 || a.Command.Target != a.Actor.Key() {
+			return s.cancelAction(tx, g, a, "")
+		}
+	} else {
+		if e := s.auth(ctx, a.Actor.Principal(), a.Capability, c); e != nil {
+			if errors.Is(e, ErrForbidden) || errors.Is(e, ErrUnauthenticated) {
+				return s.cancelAction(tx, g, a, e.Error())
+			}
+			return e
+		}
+	}
+	if a.Command.Kind == "send" && a.Command.Receiver != "" {
+		var source GroupConfig
+		if e := tx.Get("config", a.Command.Receiver, &source); e != nil {
+			if errors.Is(e, ErrNotFound) {
+				return s.cancelAction(tx, g, a, ErrNotFound.Error())
+			}
+			return e
+		}
+		if e := s.auth(ctx, a.Actor.Principal(), "groups.read", source); e != nil {
+			if errors.Is(e, ErrForbidden) || errors.Is(e, ErrUnauthenticated) {
+				return s.cancelAction(tx, g, a, e.Error())
+			}
+			return e
+		}
+	}
+	if !c.BotEnabled {
+		return s.cancelAction(tx, g, a, ErrDisabled.Error())
+	}
+	return nil
+}
+
 // Execute serializes claims before an external call. Interrupted calls remain
 // unknown and are resolved via Lookup on the next invocation with the same ID.
 func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
@@ -219,61 +296,10 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 			return ErrConflict
 		}
 		lookup = a.State == "unknown"
-		var c GroupConfig
-		if e := tx.Get("config", g, &c); e != nil {
-			return e
-		}
-		if a.Capability == "admission" {
-			var m Member
-			if e := tx.Get(bucket(g, "members"), a.Command.Target, &m); e != nil {
+		if !lookup {
+			if e := s.authorizePending(ctx, tx, g, &a); e != nil || a.State == "cancelled" {
 				return e
 			}
-			ok, e := s.eligible(ctx, tx, c, m)
-			if e != nil {
-				return e
-			}
-			cancel := (a.Command.Kind == "kick" && (ok || m.Exempt || s.now().Before(m.Deadline))) || (a.Command.Kind == "remind" && (ok || m.Exempt)) || (a.Command.Kind == "approve" && !ok) || (a.Command.Kind == "welcome" && !ok) || (a.Command.Kind == "mute" && (ok || m.Exempt)) || (a.Command.Kind == "unmute" && !ok)
-			if cancel {
-				a.State = "cancelled"
-				return tx.Put(bucket(g, "actions"), id, a)
-			}
-		} else if a.Capability == "entertainment" {
-			var m Member
-			if e := tx.Get(bucket(g, "members"), a.Command.Target, &m); e != nil {
-				return e
-			}
-			ok, e := s.eligible(ctx, tx, c, m)
-			if e != nil {
-				return e
-			}
-			if !m.Joined || !ok || c.MuteProbability == 0 || a.Command.Target != a.Actor.Key() {
-				a.State = "cancelled"
-				return tx.Put(bucket(g, "actions"), id, a)
-			}
-		} else {
-			if e := s.auth(ctx, a.Actor.Principal(), a.Capability, c); e != nil {
-				return e
-			}
-		}
-		if a.Command.Kind == "send" && a.Command.Receiver != "" {
-			var source GroupConfig
-			if e := tx.Get("config", a.Command.Receiver, &source); e != nil {
-				return e
-			}
-			if e := s.auth(ctx, a.Actor.Principal(), "groups.read", source); e != nil {
-				return e
-			}
-		}
-		if !c.BotEnabled {
-			a.State = "cancelled"
-			a.LeaseUntil = nil
-			if e := tx.Put(bucket(g, "actions"), id, a); e != nil {
-				return e
-			}
-			if e := s.audit(tx, a.Actor.Principal(), g, a.Command.Kind, a.Command.Target, a.State); e != nil {
-				return e
-			}
-			return s.event(tx, g, "action.result", map[string]string{"id": id, "state": a.State})
 		}
 		if s.Bot == nil {
 			return ErrUnavailable
@@ -293,6 +319,13 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 	found := false
 	if lookup {
 		result, found, e = s.Bot.Lookup(call, a.ID)
+		if e == nil && !found {
+			// The adapter confirmed that nothing happened. Recheck permission before retrying.
+			e = s.run(call, func(tx Tx) error { return s.authorizePending(call, tx, g, &a) })
+			if e == nil && a.State == "cancelled" {
+				return a, nil
+			}
+		}
 	}
 	if e == nil && !found {
 		result, e = s.Bot.Execute(call, a)
@@ -316,12 +349,13 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 		}
 		if a.State == "succeeded" && a.Command.Kind == "kick" && a.Capability == "admission" {
 			var m Member
-			if err := tx.Get(bucket(g, "members"), a.Command.Target, &m); err != nil {
-				return err
-			}
-			m.State = "removed"
-			m.Joined = false
-			if err := tx.Put(bucket(g, "members"), m.Owner, m); err != nil {
+			if err := tx.Get(bucket(g, "members"), a.Command.Target, &m); err == nil {
+				m.State = "removed"
+				m.Joined = false
+				if err = tx.Put(bucket(g, "members"), m.Owner, m); err != nil {
+					return err
+				}
+			} else if !errors.Is(err, ErrNotFound) {
 				return err
 			}
 		}
@@ -336,15 +370,24 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 				return err
 			}
 			var c GroupConfig
-			if err = tx.Get("config", g, &c); err != nil {
+			if err = tx.Get("config", g, &c); err != nil && !errors.Is(err, ErrNotFound) {
 				return err
 			}
-			if c.WarningLimit > 0 && warnings.Count%c.WarningLimit == 0 && slices.Contains(c.AutoActions, "mute") {
-				if err = s.auth(finish, a.Actor.Principal(), "groups.manage", c); err != nil {
-					return err
-				}
-				if _, err = s.queue(tx, a.Actor.Principal(), c, Command{Kind: "mute", Target: a.Command.Target, Seconds: c.MuteSeconds, Text: "warning_limit"}, "groups.manage"); err != nil {
-					return err
+			if err == nil && c.WarningLimit > 0 && c.MuteSeconds > 0 && warnings.Count%c.WarningLimit == 0 && slices.Contains(c.AutoActions, "mute") {
+				if authErr := s.auth(finish, a.Actor.Principal(), "groups.manage", c); authErr != nil {
+					if !errors.Is(authErr, ErrForbidden) && !errors.Is(authErr, ErrUnauthenticated) {
+						return authErr
+					}
+					if err = s.audit(tx, a.Actor.Principal(), g, "mute", a.Command.Target, "cancelled"); err != nil {
+						return err
+					}
+				} else if _, qErr := s.queue(tx, a.Actor.Principal(), c, Command{Kind: "mute", Target: a.Command.Target, Seconds: c.MuteSeconds, Text: "warning_limit"}, "groups.manage"); qErr != nil {
+					if !errors.Is(qErr, ErrDisabled) && !errors.Is(qErr, ErrCooldown) {
+						return qErr
+					}
+					if err = s.audit(tx, a.Actor.Principal(), g, "mute", a.Command.Target, "skipped"); err != nil {
+						return err
+					}
 				}
 			}
 		}

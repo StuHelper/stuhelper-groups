@@ -305,9 +305,9 @@ func TestScopedAuthorizationRevocationAndSensitiveReads(t *testing.T) {
 	}
 	r := command(t, f, manager, "pending", g.Command{Kind: "kick", Target: user.Key()})
 	f.revoked.Store(true)
-	_, e = f.s.Execute(ctx, "g", r.ID)
-	if !errors.Is(e, g.ErrForbidden) || f.bot.calls != 0 {
-		t.Fatal(e)
+	cancelled, e := f.s.Execute(ctx, "g", r.ID)
+	if e != nil || cancelled.State != "cancelled" || cancelled.Result != "groups_forbidden" || f.bot.calls != 0 {
+		t.Fatalf("%+v %v calls=%d", cancelled, e, f.bot.calls)
 	}
 	_, e = f.s.Messages(ctx, manager, "g", "", 100)
 	if !errors.Is(e, g.ErrForbidden) {

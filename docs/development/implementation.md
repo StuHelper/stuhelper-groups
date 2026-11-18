@@ -1,10 +1,12 @@
 ---
 type: development
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-18
 ---
 
 # Groups 实施状态
+
+目标群关闭机器人、队列满或操作者撤权时，源群继续投递。警告成功后，派生禁言被拒也会保存警告结果。
 
 ## 当前实现
 
