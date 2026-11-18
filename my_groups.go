@@ -25,10 +25,12 @@ type MyGroup struct {
 	State             string     `json:"state"`
 	Deadline          *time.Time `json:"deadline"`
 	RequiresPassword  bool       `json:"requires_password"`
+	PasswordHint      string     `json:"password_hint,omitempty"`
 	Eligibility       string     `json:"eligibility"`
 	MissingConditions []string   `json:"missing_conditions"`
 	UnknownConditions []string   `json:"unknown_conditions"`
 	NextActions       []string   `json:"next_actions"`
+	MissingCardFields []string   `json:"missing_card_fields,omitempty"`
 }
 
 var maskedGroupNumber = regexp.MustCompile(`^\*+[0-9]{4}$`)
@@ -126,12 +128,22 @@ func (s *Service) MyGroups(ctx context.Context, p account.Principal, cursor stri
 				return e
 			}
 			item := MyGroup{ID: c.ID, Name: c.Name, School: c.School, Number: number, Joined: m.Joined, State: m.State, RequiresPassword: c.Mode == "password", Eligibility: assessment.state, MissingConditions: assessment.missing, UnknownConditions: assessment.unknown, NextActions: assessment.actions}
+			if item.RequiresPassword && c.PasswordHint != "" {
+				item.PasswordHint = c.PasswordHint
+			}
 			if !m.Deadline.IsZero() {
 				deadline := m.Deadline.UTC()
 				item.Deadline = &deadline
 			}
 			if item.Eligibility == "eligible" && (!m.Joined || (m.State != "restored" && m.State != "exempt")) {
 				item.NextActions = append(item.NextActions, "refresh")
+			}
+			if c.CheckCard && c.CardTemplate != "" {
+				if facts, ok := cache[factKey{m.Owner, c.School}]; ok {
+					if _, missing, err := renderCardTemplate(c.CardTemplate, facts.Fields); err == nil && len(missing) > 0 {
+						item.MissingCardFields = missing
+					}
+				}
 			}
 			out.Items = append(out.Items, item)
 		}

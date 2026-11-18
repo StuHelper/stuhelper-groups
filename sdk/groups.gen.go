@@ -50,35 +50,38 @@ func (e ActionState) Valid() bool {
 
 // Defines values for ActionCommandKind.
 const (
-	ActionCommandKindAiExecute   ActionCommandKind = "ai_execute"
-	ActionCommandKindAnalyze     ActionCommandKind = "analyze"
-	ActionCommandKindApply       ActionCommandKind = "apply"
-	ActionCommandKindApprove     ActionCommandKind = "approve"
-	ActionCommandKindBlacklist   ActionCommandKind = "blacklist"
-	ActionCommandKindCard        ActionCommandKind = "card"
-	ActionCommandKindDice        ActionCommandKind = "dice"
-	ActionCommandKindExempt      ActionCommandKind = "exempt"
-	ActionCommandKindExtend      ActionCommandKind = "extend"
-	ActionCommandKindFeedback    ActionCommandKind = "feedback"
-	ActionCommandKindForward     ActionCommandKind = "forward"
-	ActionCommandKindKick        ActionCommandKind = "kick"
-	ActionCommandKindMute        ActionCommandKind = "mute"
-	ActionCommandKindPassword    ActionCommandKind = "password"
-	ActionCommandKindPreview     ActionCommandKind = "preview"
-	ActionCommandKindRecall      ActionCommandKind = "recall"
-	ActionCommandKindRecheck     ActionCommandKind = "recheck"
-	ActionCommandKindRemind      ActionCommandKind = "remind"
-	ActionCommandKindReport      ActionCommandKind = "report"
-	ActionCommandKindRule        ActionCommandKind = "rule"
-	ActionCommandKindSelfMute    ActionCommandKind = "self_mute"
-	ActionCommandKindSend        ActionCommandKind = "send"
-	ActionCommandKindSubscribe   ActionCommandKind = "subscribe"
-	ActionCommandKindUnblacklist ActionCommandKind = "unblacklist"
-	ActionCommandKindUnexempt    ActionCommandKind = "unexempt"
-	ActionCommandKindUnmute      ActionCommandKind = "unmute"
-	ActionCommandKindWarn        ActionCommandKind = "warn"
-	ActionCommandKindWatch       ActionCommandKind = "watch"
-	ActionCommandKindWelcome     ActionCommandKind = "welcome"
+	ActionCommandKindAiExecute    ActionCommandKind = "ai_execute"
+	ActionCommandKindAnalyze      ActionCommandKind = "analyze"
+	ActionCommandKindApply        ActionCommandKind = "apply"
+	ActionCommandKindApprove      ActionCommandKind = "approve"
+	ActionCommandKindBlacklist    ActionCommandKind = "blacklist"
+	ActionCommandKindCancelAction ActionCommandKind = "cancel_action"
+	ActionCommandKindCard         ActionCommandKind = "card"
+	ActionCommandKindCardPreview  ActionCommandKind = "card_preview"
+	ActionCommandKindDice         ActionCommandKind = "dice"
+	ActionCommandKindExempt       ActionCommandKind = "exempt"
+	ActionCommandKindExtend       ActionCommandKind = "extend"
+	ActionCommandKindFeedback     ActionCommandKind = "feedback"
+	ActionCommandKindForward      ActionCommandKind = "forward"
+	ActionCommandKindKick         ActionCommandKind = "kick"
+	ActionCommandKindMute         ActionCommandKind = "mute"
+	ActionCommandKindPassword     ActionCommandKind = "password"
+	ActionCommandKindPreview      ActionCommandKind = "preview"
+	ActionCommandKindRecall       ActionCommandKind = "recall"
+	ActionCommandKindRecheck      ActionCommandKind = "recheck"
+	ActionCommandKindRemind       ActionCommandKind = "remind"
+	ActionCommandKindReport       ActionCommandKind = "report"
+	ActionCommandKindRetryAction  ActionCommandKind = "retry_action"
+	ActionCommandKindRule         ActionCommandKind = "rule"
+	ActionCommandKindSelfMute     ActionCommandKind = "self_mute"
+	ActionCommandKindSend         ActionCommandKind = "send"
+	ActionCommandKindSubscribe    ActionCommandKind = "subscribe"
+	ActionCommandKindUnblacklist  ActionCommandKind = "unblacklist"
+	ActionCommandKindUnexempt     ActionCommandKind = "unexempt"
+	ActionCommandKindUnmute       ActionCommandKind = "unmute"
+	ActionCommandKindWarn         ActionCommandKind = "warn"
+	ActionCommandKindWatch        ActionCommandKind = "watch"
+	ActionCommandKindWelcome      ActionCommandKind = "welcome"
 )
 
 // Valid indicates whether the value is a known member of the ActionCommandKind enum.
@@ -94,7 +97,11 @@ func (e ActionCommandKind) Valid() bool {
 		return true
 	case ActionCommandKindBlacklist:
 		return true
+	case ActionCommandKindCancelAction:
+		return true
 	case ActionCommandKindCard:
+		return true
+	case ActionCommandKindCardPreview:
 		return true
 	case ActionCommandKindDice:
 		return true
@@ -121,6 +128,8 @@ func (e ActionCommandKind) Valid() bool {
 	case ActionCommandKindRemind:
 		return true
 	case ActionCommandKindReport:
+		return true
+	case ActionCommandKindRetryAction:
 		return true
 	case ActionCommandKindRule:
 		return true
@@ -207,6 +216,21 @@ func (e BlacklistCommandKind) Valid() bool {
 	}
 }
 
+// Defines values for CancelActionCommandKind.
+const (
+	CancelActionCommandKindCancelAction CancelActionCommandKind = "cancel_action"
+)
+
+// Valid indicates whether the value is a known member of the CancelActionCommandKind enum.
+func (e CancelActionCommandKind) Valid() bool {
+	switch e {
+	case CancelActionCommandKindCancelAction:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CardBatchCommandKind.
 const (
 	CardBatchCommandKindCard CardBatchCommandKind = "card"
@@ -237,6 +261,21 @@ func (e CardCommandKind) Valid() bool {
 	}
 }
 
+// Defines values for CardPreviewCommandKind.
+const (
+	CardPreviewCommandKindCardPreview CardPreviewCommandKind = "card_preview"
+)
+
+// Valid indicates whether the value is a known member of the CardPreviewCommandKind enum.
+func (e CardPreviewCommandKind) Valid() bool {
+	switch e {
+	case CardPreviewCommandKindCardPreview:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DiceCommandKind.
 const (
 	DiceCommandKindDice DiceCommandKind = "dice"
@@ -246,6 +285,93 @@ const (
 func (e DiceCommandKind) Valid() bool {
 	switch e {
 	case DiceCommandKindDice:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DirectoryGroupCategory.
+const (
+	DirectoryGroupCategoryClub       DirectoryGroupCategory = "club"
+	DirectoryGroupCategoryCourse     DirectoryGroupCategory = "course"
+	DirectoryGroupCategoryDepartment DirectoryGroupCategory = "department"
+	DirectoryGroupCategoryEmpty      DirectoryGroupCategory = ""
+	DirectoryGroupCategoryGrade      DirectoryGroupCategory = "grade"
+	DirectoryGroupCategorySchool     DirectoryGroupCategory = "school"
+)
+
+// Valid indicates whether the value is a known member of the DirectoryGroupCategory enum.
+func (e DirectoryGroupCategory) Valid() bool {
+	switch e {
+	case DirectoryGroupCategoryClub:
+		return true
+	case DirectoryGroupCategoryCourse:
+		return true
+	case DirectoryGroupCategoryDepartment:
+		return true
+	case DirectoryGroupCategoryEmpty:
+		return true
+	case DirectoryGroupCategoryGrade:
+		return true
+	case DirectoryGroupCategorySchool:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DirectoryGroupMode.
+const (
+	DirectoryGroupModeBefore   DirectoryGroupMode = "before"
+	DirectoryGroupModeMuted    DirectoryGroupMode = "muted"
+	DirectoryGroupModePassword DirectoryGroupMode = "password"
+)
+
+// Valid indicates whether the value is a known member of the DirectoryGroupMode enum.
+func (e DirectoryGroupMode) Valid() bool {
+	switch e {
+	case DirectoryGroupModeBefore:
+		return true
+	case DirectoryGroupModeMuted:
+		return true
+	case DirectoryGroupModePassword:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DirectoryGroupState.
+const (
+	DirectoryGroupStateAwaitingVerification DirectoryGroupState = "awaiting_verification"
+	DirectoryGroupStateEmpty                DirectoryGroupState = ""
+	DirectoryGroupStateExempt               DirectoryGroupState = "exempt"
+	DirectoryGroupStateExtended             DirectoryGroupState = "extended"
+	DirectoryGroupStateGrace                DirectoryGroupState = "grace"
+	DirectoryGroupStateRemovalPending       DirectoryGroupState = "removal_pending"
+	DirectoryGroupStateRequested            DirectoryGroupState = "requested"
+	DirectoryGroupStateRestored             DirectoryGroupState = "restored"
+)
+
+// Valid indicates whether the value is a known member of the DirectoryGroupState enum.
+func (e DirectoryGroupState) Valid() bool {
+	switch e {
+	case DirectoryGroupStateAwaitingVerification:
+		return true
+	case DirectoryGroupStateEmpty:
+		return true
+	case DirectoryGroupStateExempt:
+		return true
+	case DirectoryGroupStateExtended:
+		return true
+	case DirectoryGroupStateGrace:
+		return true
+	case DirectoryGroupStateRemovalPending:
+		return true
+	case DirectoryGroupStateRequested:
+		return true
+	case DirectoryGroupStateRestored:
 		return true
 	default:
 		return false
@@ -369,6 +495,36 @@ func (e GroupConfigAutoActions) Valid() bool {
 	}
 }
 
+// Defines values for GroupConfigCategory.
+const (
+	GroupConfigCategoryClub       GroupConfigCategory = "club"
+	GroupConfigCategoryCourse     GroupConfigCategory = "course"
+	GroupConfigCategoryDepartment GroupConfigCategory = "department"
+	GroupConfigCategoryEmpty      GroupConfigCategory = ""
+	GroupConfigCategoryGrade      GroupConfigCategory = "grade"
+	GroupConfigCategorySchool     GroupConfigCategory = "school"
+)
+
+// Valid indicates whether the value is a known member of the GroupConfigCategory enum.
+func (e GroupConfigCategory) Valid() bool {
+	switch e {
+	case GroupConfigCategoryClub:
+		return true
+	case GroupConfigCategoryCourse:
+		return true
+	case GroupConfigCategoryDepartment:
+		return true
+	case GroupConfigCategoryEmpty:
+		return true
+	case GroupConfigCategoryGrade:
+		return true
+	case GroupConfigCategorySchool:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GroupConfigMode.
 const (
 	GroupConfigModeBefore   GroupConfigMode = "before"
@@ -411,6 +567,36 @@ func (e GroupConfigInputAutoActions) Valid() bool {
 	case GroupConfigInputAutoActionsRecall:
 		return true
 	case GroupConfigInputAutoActionsWarn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GroupConfigInputCategory.
+const (
+	GroupConfigInputCategoryClub       GroupConfigInputCategory = "club"
+	GroupConfigInputCategoryCourse     GroupConfigInputCategory = "course"
+	GroupConfigInputCategoryDepartment GroupConfigInputCategory = "department"
+	GroupConfigInputCategoryEmpty      GroupConfigInputCategory = ""
+	GroupConfigInputCategoryGrade      GroupConfigInputCategory = "grade"
+	GroupConfigInputCategorySchool     GroupConfigInputCategory = "school"
+)
+
+// Valid indicates whether the value is a known member of the GroupConfigInputCategory enum.
+func (e GroupConfigInputCategory) Valid() bool {
+	switch e {
+	case GroupConfigInputCategoryClub:
+		return true
+	case GroupConfigInputCategoryCourse:
+		return true
+	case GroupConfigInputCategoryDepartment:
+		return true
+	case GroupConfigInputCategoryEmpty:
+		return true
+	case GroupConfigInputCategoryGrade:
+		return true
+	case GroupConfigInputCategorySchool:
 		return true
 	default:
 		return false
@@ -513,6 +699,39 @@ func (e MyGroupEligibility) Valid() bool {
 	case MyGroupEligibilityIneligible:
 		return true
 	case MyGroupEligibilityUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MyGroupMissingCardFields.
+const (
+	MyGroupMissingCardFieldsDepartment MyGroupMissingCardFields = "department"
+	MyGroupMissingCardFieldsGender     MyGroupMissingCardFields = "gender"
+	MyGroupMissingCardFieldsGrade      MyGroupMissingCardFields = "grade"
+	MyGroupMissingCardFieldsName       MyGroupMissingCardFields = "name"
+	MyGroupMissingCardFieldsNickname   MyGroupMissingCardFields = "nickname"
+	MyGroupMissingCardFieldsSchool     MyGroupMissingCardFields = "school"
+	MyGroupMissingCardFieldsStudentId  MyGroupMissingCardFields = "student_id"
+)
+
+// Valid indicates whether the value is a known member of the MyGroupMissingCardFields enum.
+func (e MyGroupMissingCardFields) Valid() bool {
+	switch e {
+	case MyGroupMissingCardFieldsDepartment:
+		return true
+	case MyGroupMissingCardFieldsGender:
+		return true
+	case MyGroupMissingCardFieldsGrade:
+		return true
+	case MyGroupMissingCardFieldsName:
+		return true
+	case MyGroupMissingCardFieldsNickname:
+		return true
+	case MyGroupMissingCardFieldsSchool:
+		return true
+	case MyGroupMissingCardFieldsStudentId:
 		return true
 	default:
 		return false
@@ -816,6 +1035,54 @@ func (e ReportCommandKind) Valid() bool {
 	}
 }
 
+// Defines values for ResultMissingFields.
+const (
+	ResultMissingFieldsDepartment ResultMissingFields = "department"
+	ResultMissingFieldsGender     ResultMissingFields = "gender"
+	ResultMissingFieldsGrade      ResultMissingFields = "grade"
+	ResultMissingFieldsName       ResultMissingFields = "name"
+	ResultMissingFieldsNickname   ResultMissingFields = "nickname"
+	ResultMissingFieldsSchool     ResultMissingFields = "school"
+	ResultMissingFieldsStudentId  ResultMissingFields = "student_id"
+)
+
+// Valid indicates whether the value is a known member of the ResultMissingFields enum.
+func (e ResultMissingFields) Valid() bool {
+	switch e {
+	case ResultMissingFieldsDepartment:
+		return true
+	case ResultMissingFieldsGender:
+		return true
+	case ResultMissingFieldsGrade:
+		return true
+	case ResultMissingFieldsName:
+		return true
+	case ResultMissingFieldsNickname:
+		return true
+	case ResultMissingFieldsSchool:
+		return true
+	case ResultMissingFieldsStudentId:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RetryActionCommandKind.
+const (
+	RetryActionCommandKindRetryAction RetryActionCommandKind = "retry_action"
+)
+
+// Valid indicates whether the value is a known member of the RetryActionCommandKind enum.
+func (e RetryActionCommandKind) Valid() bool {
+	switch e {
+	case RetryActionCommandKindRetryAction:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RuleCommandKind.
 const (
 	RuleCommandKindRule RuleCommandKind = "rule"
@@ -996,6 +1263,291 @@ func (e WatchCommandKind) Valid() bool {
 	}
 }
 
+// Defines values for ListGroupDirectoryParamsCategory.
+const (
+	ListGroupDirectoryParamsCategoryClub       ListGroupDirectoryParamsCategory = "club"
+	ListGroupDirectoryParamsCategoryCourse     ListGroupDirectoryParamsCategory = "course"
+	ListGroupDirectoryParamsCategoryDepartment ListGroupDirectoryParamsCategory = "department"
+	ListGroupDirectoryParamsCategoryGrade      ListGroupDirectoryParamsCategory = "grade"
+	ListGroupDirectoryParamsCategorySchool     ListGroupDirectoryParamsCategory = "school"
+)
+
+// Valid indicates whether the value is a known member of the ListGroupDirectoryParamsCategory enum.
+func (e ListGroupDirectoryParamsCategory) Valid() bool {
+	switch e {
+	case ListGroupDirectoryParamsCategoryClub:
+		return true
+	case ListGroupDirectoryParamsCategoryCourse:
+		return true
+	case ListGroupDirectoryParamsCategoryDepartment:
+		return true
+	case ListGroupDirectoryParamsCategoryGrade:
+		return true
+	case ListGroupDirectoryParamsCategorySchool:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListActionsParamsState.
+const (
+	ListActionsParamsStateCancelled ListActionsParamsState = "cancelled"
+	ListActionsParamsStateExecuting ListActionsParamsState = "executing"
+	ListActionsParamsStateFailed    ListActionsParamsState = "failed"
+	ListActionsParamsStatePending   ListActionsParamsState = "pending"
+	ListActionsParamsStateSucceeded ListActionsParamsState = "succeeded"
+	ListActionsParamsStateUnknown   ListActionsParamsState = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the ListActionsParamsState enum.
+func (e ListActionsParamsState) Valid() bool {
+	switch e {
+	case ListActionsParamsStateCancelled:
+		return true
+	case ListActionsParamsStateExecuting:
+		return true
+	case ListActionsParamsStateFailed:
+		return true
+	case ListActionsParamsStatePending:
+		return true
+	case ListActionsParamsStateSucceeded:
+		return true
+	case ListActionsParamsStateUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListActionsParamsKind.
+const (
+	ListActionsParamsKindAiExecute   ListActionsParamsKind = "ai_execute"
+	ListActionsParamsKindAnalyze     ListActionsParamsKind = "analyze"
+	ListActionsParamsKindApply       ListActionsParamsKind = "apply"
+	ListActionsParamsKindApprove     ListActionsParamsKind = "approve"
+	ListActionsParamsKindBlacklist   ListActionsParamsKind = "blacklist"
+	ListActionsParamsKindCard        ListActionsParamsKind = "card"
+	ListActionsParamsKindDice        ListActionsParamsKind = "dice"
+	ListActionsParamsKindExempt      ListActionsParamsKind = "exempt"
+	ListActionsParamsKindExtend      ListActionsParamsKind = "extend"
+	ListActionsParamsKindFeedback    ListActionsParamsKind = "feedback"
+	ListActionsParamsKindForward     ListActionsParamsKind = "forward"
+	ListActionsParamsKindKick        ListActionsParamsKind = "kick"
+	ListActionsParamsKindMute        ListActionsParamsKind = "mute"
+	ListActionsParamsKindPassword    ListActionsParamsKind = "password"
+	ListActionsParamsKindPreview     ListActionsParamsKind = "preview"
+	ListActionsParamsKindRecall      ListActionsParamsKind = "recall"
+	ListActionsParamsKindRecheck     ListActionsParamsKind = "recheck"
+	ListActionsParamsKindRemind      ListActionsParamsKind = "remind"
+	ListActionsParamsKindReport      ListActionsParamsKind = "report"
+	ListActionsParamsKindRule        ListActionsParamsKind = "rule"
+	ListActionsParamsKindSelfMute    ListActionsParamsKind = "self_mute"
+	ListActionsParamsKindSend        ListActionsParamsKind = "send"
+	ListActionsParamsKindSubscribe   ListActionsParamsKind = "subscribe"
+	ListActionsParamsKindUnblacklist ListActionsParamsKind = "unblacklist"
+	ListActionsParamsKindUnmute      ListActionsParamsKind = "unmute"
+	ListActionsParamsKindWarn        ListActionsParamsKind = "warn"
+	ListActionsParamsKindWatch       ListActionsParamsKind = "watch"
+	ListActionsParamsKindWelcome     ListActionsParamsKind = "welcome"
+)
+
+// Valid indicates whether the value is a known member of the ListActionsParamsKind enum.
+func (e ListActionsParamsKind) Valid() bool {
+	switch e {
+	case ListActionsParamsKindAiExecute:
+		return true
+	case ListActionsParamsKindAnalyze:
+		return true
+	case ListActionsParamsKindApply:
+		return true
+	case ListActionsParamsKindApprove:
+		return true
+	case ListActionsParamsKindBlacklist:
+		return true
+	case ListActionsParamsKindCard:
+		return true
+	case ListActionsParamsKindDice:
+		return true
+	case ListActionsParamsKindExempt:
+		return true
+	case ListActionsParamsKindExtend:
+		return true
+	case ListActionsParamsKindFeedback:
+		return true
+	case ListActionsParamsKindForward:
+		return true
+	case ListActionsParamsKindKick:
+		return true
+	case ListActionsParamsKindMute:
+		return true
+	case ListActionsParamsKindPassword:
+		return true
+	case ListActionsParamsKindPreview:
+		return true
+	case ListActionsParamsKindRecall:
+		return true
+	case ListActionsParamsKindRecheck:
+		return true
+	case ListActionsParamsKindRemind:
+		return true
+	case ListActionsParamsKindReport:
+		return true
+	case ListActionsParamsKindRule:
+		return true
+	case ListActionsParamsKindSelfMute:
+		return true
+	case ListActionsParamsKindSend:
+		return true
+	case ListActionsParamsKindSubscribe:
+		return true
+	case ListActionsParamsKindUnblacklist:
+		return true
+	case ListActionsParamsKindUnmute:
+		return true
+	case ListActionsParamsKindWarn:
+		return true
+	case ListActionsParamsKindWatch:
+		return true
+	case ListActionsParamsKindWelcome:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListActionsParamsOrder.
+const (
+	ListActionsParamsOrderAsc  ListActionsParamsOrder = "asc"
+	ListActionsParamsOrderDesc ListActionsParamsOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ListActionsParamsOrder enum.
+func (e ListActionsParamsOrder) Valid() bool {
+	switch e {
+	case ListActionsParamsOrderAsc:
+		return true
+	case ListActionsParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListHitsParamsOrder.
+const (
+	ListHitsParamsOrderAsc  ListHitsParamsOrder = "asc"
+	ListHitsParamsOrderDesc ListHitsParamsOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ListHitsParamsOrder enum.
+func (e ListHitsParamsOrder) Valid() bool {
+	switch e {
+	case ListHitsParamsOrderAsc:
+		return true
+	case ListHitsParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListMembersParamsState.
+const (
+	ListMembersParamsStateAwaitingVerification ListMembersParamsState = "awaiting_verification"
+	ListMembersParamsStateExempt               ListMembersParamsState = "exempt"
+	ListMembersParamsStateExtended             ListMembersParamsState = "extended"
+	ListMembersParamsStateGrace                ListMembersParamsState = "grace"
+	ListMembersParamsStateRemovalPending       ListMembersParamsState = "removal_pending"
+	ListMembersParamsStateRemoved              ListMembersParamsState = "removed"
+	ListMembersParamsStateRequested            ListMembersParamsState = "requested"
+	ListMembersParamsStateRestored             ListMembersParamsState = "restored"
+)
+
+// Valid indicates whether the value is a known member of the ListMembersParamsState enum.
+func (e ListMembersParamsState) Valid() bool {
+	switch e {
+	case ListMembersParamsStateAwaitingVerification:
+		return true
+	case ListMembersParamsStateExempt:
+		return true
+	case ListMembersParamsStateExtended:
+		return true
+	case ListMembersParamsStateGrace:
+		return true
+	case ListMembersParamsStateRemovalPending:
+		return true
+	case ListMembersParamsStateRemoved:
+		return true
+	case ListMembersParamsStateRequested:
+		return true
+	case ListMembersParamsStateRestored:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListMessagesParamsOrder.
+const (
+	ListMessagesParamsOrderAsc  ListMessagesParamsOrder = "asc"
+	ListMessagesParamsOrderDesc ListMessagesParamsOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ListMessagesParamsOrder enum.
+func (e ListMessagesParamsOrder) Valid() bool {
+	switch e {
+	case ListMessagesParamsOrderAsc:
+		return true
+	case ListMessagesParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListReportsParamsState.
+const (
+	Open             ListReportsParamsState = "open"
+	PendingExecution ListReportsParamsState = "pending_execution"
+	Resolved         ListReportsParamsState = "resolved"
+	Suggested        ListReportsParamsState = "suggested"
+)
+
+// Valid indicates whether the value is a known member of the ListReportsParamsState enum.
+func (e ListReportsParamsState) Valid() bool {
+	switch e {
+	case Open:
+		return true
+	case PendingExecution:
+		return true
+	case Resolved:
+		return true
+	case Suggested:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListReportsParamsOrder.
+const (
+	ListReportsParamsOrderAsc  ListReportsParamsOrder = "asc"
+	ListReportsParamsOrderDesc ListReportsParamsOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ListReportsParamsOrder enum.
+func (e ListReportsParamsOrder) Valid() bool {
+	switch e {
+	case ListReportsParamsOrderAsc:
+		return true
+	case ListReportsParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
 // Action defines model for Action.
 type Action struct {
 	Actor      Actor         `json:"actor"`
@@ -1068,6 +1620,24 @@ type ApplyCommand struct {
 // ApplyCommandKind defines model for ApplyCommand.Kind.
 type ApplyCommandKind string
 
+// AuditEntry defines model for AuditEntry.
+type AuditEntry struct {
+	Action string    `json:"action"`
+	Actor  string    `json:"actor"`
+	Id     string    `json:"id"`
+	Result string    `json:"result"`
+	Target string    `json:"target"`
+	Time   time.Time `json:"time"`
+}
+
+// AuditPage defines model for AuditPage.
+type AuditPage struct {
+	Items []AuditEntry `json:"items"`
+
+	// NextCursor Opaque cursor for the next scan, or empty when exhausted.
+	NextCursor string `json:"next_cursor"`
+}
+
 // BatchCommand defines model for BatchCommand.
 type BatchCommand struct {
 	union json.RawMessage
@@ -1075,10 +1645,12 @@ type BatchCommand struct {
 
 // Blacklist defines model for Blacklist.
 type Blacklist struct {
-	Id        string    `json:"id"`
-	Permanent bool      `json:"permanent"`
-	Reason    string    `json:"reason"`
-	Until     time.Time `json:"until"`
+	Created   *time.Time `json:"created,omitempty"`
+	Id        string     `json:"id"`
+	Permanent bool       `json:"permanent"`
+	Reason    string     `json:"reason"`
+	Until     time.Time  `json:"until"`
+	Updated   *time.Time `json:"updated,omitempty"`
 }
 
 // BlacklistCommand Management command; requires current group-scoped capability.
@@ -1124,6 +1696,16 @@ type BulkResult struct {
 	} `json:"items"`
 }
 
+// CancelActionCommand Management command; cancels a pending bot action without affecting executing or unknown actions.
+type CancelActionCommand struct {
+	Kind   CancelActionCommandKind `json:"kind"`
+	Target string                  `json:"target"`
+	Text   *string                 `json:"text,omitempty"`
+}
+
+// CancelActionCommandKind defines model for CancelActionCommand.Kind.
+type CancelActionCommandKind string
+
 // CardBatchCommand Management command; requires current group-scoped capability.
 type CardBatchCommand struct {
 	Kind CardBatchCommandKind `json:"kind"`
@@ -1142,6 +1724,18 @@ type CardCommand struct {
 
 // CardCommandKind defines model for CardCommand.Kind.
 type CardCommandKind string
+
+// CardPreviewCommand Read-only management command; previews expected card rendering and missing profile fields without queuing bot actions.
+type CardPreviewCommand struct {
+	Kind   CardPreviewCommandKind `json:"kind"`
+	Target string                 `json:"target"`
+
+	// Text Optional candidate card_template override; uses the group's stored card_template when omitted or empty.
+	Text *string `json:"text,omitempty"`
+}
+
+// CardPreviewCommandKind defines model for CardPreviewCommand.Kind.
+type CardPreviewCommandKind string
 
 // Command defines model for Command.
 type Command struct {
@@ -1171,6 +1765,51 @@ type DiceCommand struct {
 
 // DiceCommandKind defines model for DiceCommand.Kind.
 type DiceCommandKind string
+
+// DirectoryGroup defines model for DirectoryGroup.
+type DirectoryGroup struct {
+	AcceptAlumni    bool                   `json:"accept_alumni"`
+	AcceptTemporary bool                   `json:"accept_temporary"`
+	Category        DirectoryGroupCategory `json:"category"`
+	Description     string                 `json:"description"`
+
+	// Id Internal group ID.
+	Id string `json:"id"`
+
+	// Joined True only when the caller's own membership has been confirmed by the bot.
+	Joined bool               `json:"joined"`
+	Mode   DirectoryGroupMode `json:"mode"`
+	Name   string             `json:"name"`
+
+	// Number Masked group number showing at most the final four digits; empty when not recorded.
+	Number string `json:"number"`
+
+	// PasswordHint Optional hint describing where to locate the dynamic password when requires_password is true.
+	PasswordHint     *string `json:"password_hint,omitempty"`
+	RequireStudent   bool    `json:"require_student"`
+	RequiresPassword bool    `json:"requires_password"`
+	School           string  `json:"school"`
+
+	// State Caller's own active membership or application state, or empty when none.
+	State DirectoryGroupState `json:"state"`
+}
+
+// DirectoryGroupCategory defines model for DirectoryGroup.Category.
+type DirectoryGroupCategory string
+
+// DirectoryGroupMode defines model for DirectoryGroup.Mode.
+type DirectoryGroupMode string
+
+// DirectoryGroupState Caller's own active membership or application state, or empty when none.
+type DirectoryGroupState string
+
+// DirectoryGroupPage defines model for DirectoryGroupPage.
+type DirectoryGroupPage struct {
+	Items []DirectoryGroup `json:"items"`
+
+	// NextCursor Last scanned group ID if another page may exist, or empty when exhausted.
+	NextCursor string `json:"next_cursor"`
+}
 
 // ExemptBatchCommand Management command; requires current group-scoped capability.
 type ExemptBatchCommand struct {
@@ -1233,28 +1872,37 @@ type ForwardCommandKind string
 
 // GroupConfig defines model for GroupConfig.
 type GroupConfig struct {
-	AcceptAlumni     bool                     `json:"accept_alumni"`
-	AcceptTemporary  bool                     `json:"accept_temporary"`
-	AutoActions      []GroupConfigAutoActions `json:"auto_actions"`
-	AutoCard         bool                     `json:"auto_card"`
-	BlockLinks       bool                     `json:"block_links"`
-	BotEnabled       bool                     `json:"bot_enabled"`
-	CardTemplate     string                   `json:"card_template"`
-	CheckCard        bool                     `json:"check_card"`
-	CooldownSeconds  int64                    `json:"cooldown_seconds"`
-	DiceSides        int64                    `json:"dice_sides"`
-	FrequencyLimit   int64                    `json:"frequency_limit"`
-	FrequencySeconds int64                    `json:"frequency_seconds"`
-	GraceSeconds     int64                    `json:"grace_seconds"`
-	Id               string                   `json:"id"`
-	Keywords         []string                 `json:"keywords"`
-	Mode             GroupConfigMode          `json:"mode"`
-	MuteProbability  int64                    `json:"mute_probability"`
-	MuteSeconds      int64                    `json:"mute_seconds"`
-	Name             string                   `json:"name"`
+	AcceptAlumni    bool                     `json:"accept_alumni"`
+	AcceptTemporary bool                     `json:"accept_temporary"`
+	AutoActions     []GroupConfigAutoActions `json:"auto_actions"`
+	AutoCard        bool                     `json:"auto_card"`
+	BlockLinks      bool                     `json:"block_links"`
+	BotEnabled      bool                     `json:"bot_enabled"`
+	CardTemplate    string                   `json:"card_template"`
+	Category        GroupConfigCategory      `json:"category"`
+	CheckCard       bool                     `json:"check_card"`
+	CooldownSeconds int64                    `json:"cooldown_seconds"`
+	Description     string                   `json:"description"`
+	DiceSides       int64                    `json:"dice_sides"`
+
+	// Discoverable Whether the group appears in the student-facing directory.
+	Discoverable     bool            `json:"discoverable"`
+	FrequencyLimit   int64           `json:"frequency_limit"`
+	FrequencySeconds int64           `json:"frequency_seconds"`
+	GraceSeconds     int64           `json:"grace_seconds"`
+	Id               string          `json:"id"`
+	Keywords         []string        `json:"keywords"`
+	Mode             GroupConfigMode `json:"mode"`
+	MuteProbability  int64           `json:"mute_probability"`
+	MuteSeconds      int64           `json:"mute_seconds"`
+	Name             string          `json:"name"`
 
 	// Number Masked QQ group number; only its final four digits are shown.
-	Number           string `json:"number"`
+	Number string `json:"number"`
+
+	// PasswordEpoch Monotonic generation counter incremented whenever the dynamic password is set, rotated or cleared.
+	PasswordEpoch    *int64 `json:"password_epoch,omitempty"`
+	PasswordHint     string `json:"password_hint"`
 	PasswordSet      bool   `json:"password_set"`
 	Pity             int64  `json:"pity"`
 	RemindCard       bool   `json:"remind_card"`
@@ -1272,6 +1920,9 @@ type GroupConfig struct {
 // GroupConfigAutoActions defines model for GroupConfig.AutoActions.
 type GroupConfigAutoActions string
 
+// GroupConfigCategory defines model for GroupConfig.Category.
+type GroupConfigCategory string
+
 // GroupConfigMode defines model for GroupConfig.Mode.
 type GroupConfigMode string
 
@@ -1284,9 +1935,18 @@ type GroupConfigInput struct {
 	BlockLinks      bool                          `json:"block_links"`
 	BotEnabled      bool                          `json:"bot_enabled"`
 	CardTemplate    string                        `json:"card_template"`
-	CheckCard       bool                          `json:"check_card"`
-	CooldownSeconds int64                         `json:"cooldown_seconds"`
-	DiceSides       int64                         `json:"dice_sides"`
+
+	// Category Optional directory category; empty when uncategorized.
+	Category        *GroupConfigInputCategory `json:"category,omitempty"`
+	CheckCard       bool                      `json:"check_card"`
+	CooldownSeconds int64                     `json:"cooldown_seconds"`
+
+	// Description Optional public group summary shown in the directory.
+	Description *string `json:"description,omitempty"`
+	DiceSides   int64   `json:"dice_sides"`
+
+	// Discoverable Optional directory visibility flag; defaults to false when omitted.
+	Discoverable *bool `json:"discoverable,omitempty"`
 
 	// ExpectedRevision 0 creates a group; otherwise must equal the current revision. A successful update increments revision by one.
 	ExpectedRevision int64                `json:"expected_revision"`
@@ -1304,7 +1964,10 @@ type GroupConfigInput struct {
 	Number *string `json:"number,omitempty"`
 
 	// Password Omitted preserves password; empty clears it (not allowed in password mode). Never returned or saved as plaintext.
-	Password         *string `json:"password,omitempty"`
+	Password *string `json:"password,omitempty"`
+
+	// PasswordHint Optional hint telling applicants where to obtain the dynamic password.
+	PasswordHint     *string `json:"password_hint,omitempty"`
 	Pity             int64   `json:"pity"`
 	RemindCard       bool    `json:"remind_card"`
 	ReminderSeconds  int64   `json:"reminder_seconds"`
@@ -1319,6 +1982,9 @@ type GroupConfigInput struct {
 
 // GroupConfigInputAutoActions defines model for GroupConfigInput.AutoActions.
 type GroupConfigInputAutoActions string
+
+// GroupConfigInputCategory Optional directory category; empty when uncategorized.
+type GroupConfigInputCategory string
 
 // GroupConfigInputMode defines model for GroupConfigInput.Mode.
 type GroupConfigInputMode string
@@ -1352,11 +2018,12 @@ type GroupSummaryPage struct {
 
 // Hit defines model for Hit.
 type Hit struct {
-	Id      string   `json:"id"`
-	Message string   `json:"message"`
-	Owner   string   `json:"owner"`
-	Rules   []string `json:"rules"`
-	State   string   `json:"state"`
+	Created *time.Time `json:"created,omitempty"`
+	Id      string     `json:"id"`
+	Message string     `json:"message"`
+	Owner   string     `json:"owner"`
+	Rules   []string   `json:"rules"`
+	State   string     `json:"state"`
 }
 
 // HitPage defines model for HitPage.
@@ -1404,6 +2071,9 @@ type Member struct {
 	Owner      string    `json:"owner"`
 	Password   bool      `json:"password"`
 
+	// PasswordEpoch Dynamic password generation matched by this member.
+	PasswordEpoch *int64 `json:"password_epoch,omitempty"`
+
 	// Reminder UTC timestamp. 0001-01-01T00:00:00Z means no deadline/event is currently set.
 	Reminder time.Time `json:"reminder"`
 	State    string    `json:"state"`
@@ -1420,12 +2090,13 @@ type MemberPage struct {
 // Message defines model for Message.
 type Message struct {
 	// Attachments Opaque media references. Backend proxy enforces current group access and the same expiry.
-	Attachments []string  `json:"attachments"`
-	Body        string    `json:"body"`
-	Expires     time.Time `json:"expires"`
-	Id          string    `json:"id"`
-	Owner       string    `json:"owner"`
-	Recalled    bool      `json:"recalled"`
+	Attachments []string   `json:"attachments"`
+	Body        string     `json:"body"`
+	Created     *time.Time `json:"created,omitempty"`
+	Expires     time.Time  `json:"expires"`
+	Id          string     `json:"id"`
+	Owner       string     `json:"owner"`
+	Recalled    bool       `json:"recalled"`
 }
 
 // MessagePage defines model for MessagePage.
@@ -1471,6 +2142,9 @@ type MyGroup struct {
 	// Joined True only after the bot confirms group membership; an application does not imply joining.
 	Joined bool `json:"joined"`
 
+	// MissingCardFields Optional card template field keys not yet disclosed or available for this group's card check; never contains field values.
+	MissingCardFields *[]MyGroupMissingCardFields `json:"missing_card_fields,omitempty"`
+
 	// MissingConditions Confirmed unmet conditions only. restricted discloses no blacklist reasons or management data.
 	MissingConditions []MyGroupMissingConditions `json:"missing_conditions"`
 	Name              string                     `json:"name"`
@@ -1480,6 +2154,9 @@ type MyGroup struct {
 
 	// Number Masked group number, showing at most the final four digits; empty when not recorded.
 	Number string `json:"number"`
+
+	// PasswordHint Optional hint describing where to locate the dynamic password; present only when requires_password is true and a hint is configured.
+	PasswordHint *string `json:"password_hint,omitempty"`
 
 	// RequiresPassword The group uses password mode. A previously accepted password is not listed as missing.
 	RequiresPassword bool   `json:"requires_password"`
@@ -1494,6 +2171,9 @@ type MyGroup struct {
 
 // MyGroupEligibility Current prerequisite assessment, separate from recorded membership/approval or exemption. Any required unknown fact prevents eligible.
 type MyGroupEligibility string
+
+// MyGroupMissingCardFields defines model for MyGroup.MissingCardFields.
+type MyGroupMissingCardFields string
 
 // MyGroupMissingConditions defines model for MyGroup.MissingConditions.
 type MyGroupMissingConditions string
@@ -1584,14 +2264,20 @@ type RecheckCommandKind string
 
 // Report defines model for Report.
 type Report struct {
-	Analysis    *string   `json:"analysis,omitempty"`
-	Feedback    *string   `json:"feedback,omitempty"`
-	Id          string    `json:"id"`
-	Message     string    `json:"message"`
-	Reason      string    `json:"reason"`
-	Reporter    string    `json:"reporter"`
-	State       string    `json:"state"`
-	Suggestions *[]string `json:"suggestions,omitempty"`
+	Analysis    *string    `json:"analysis,omitempty"`
+	Created     *time.Time `json:"created,omitempty"`
+	Feedback    *string    `json:"feedback,omitempty"`
+	Id          string     `json:"id"`
+	Message     string     `json:"message"`
+	Reason      string     `json:"reason"`
+	Reporter    string     `json:"reporter"`
+	ResolvedBy  *Actor     `json:"resolved_by,omitempty"`
+	State       string     `json:"state"`
+	Suggestions *[]string  `json:"suggestions,omitempty"`
+
+	// Target Owner key of the reported message author when the message was retained at report creation time; never includes message body.
+	Target  *string    `json:"target,omitempty"`
+	Updated *time.Time `json:"updated,omitempty"`
 }
 
 // ReportCommand User command; caller only.
@@ -1621,6 +2307,9 @@ type Result struct {
 	// MaxValue Configured upper bound for randomized commands such as dice_sides.
 	MaxValue *int64 `json:"max_value,omitempty"`
 
+	// MissingFields Optional list of card template field keys not yet disclosed or available.
+	MissingFields *[]ResultMissingFields `json:"missing_fields,omitempty"`
+
 	// PityRemaining Remaining attempts before guaranteed pity trigger when pity > 0.
 	PityRemaining *int64 `json:"pity_remaining,omitempty"`
 
@@ -1629,6 +2318,19 @@ type Result struct {
 	State   string `json:"state"`
 	Value   int64  `json:"value"`
 }
+
+// ResultMissingFields defines model for Result.MissingFields.
+type ResultMissingFields string
+
+// RetryActionCommand Management command; queues a controlled retry for a confirmed failed bot action.
+type RetryActionCommand struct {
+	Kind   RetryActionCommandKind `json:"kind"`
+	Target string                 `json:"target"`
+	Text   *string                `json:"text,omitempty"`
+}
+
+// RetryActionCommandKind defines model for RetryActionCommand.Kind.
+type RetryActionCommandKind string
 
 // RuleCommand Management command; requires current group-scoped capability.
 type RuleCommand struct {
@@ -1764,9 +2466,11 @@ type WarningsPage struct {
 
 // Watch defines model for Watch.
 type Watch struct {
-	Enabled bool   `json:"enabled"`
-	Id      string `json:"id"`
-	Reason  string `json:"reason"`
+	Created *time.Time `json:"created,omitempty"`
+	Enabled bool       `json:"enabled"`
+	Id      string     `json:"id"`
+	Reason  string     `json:"reason"`
+	Updated *time.Time `json:"updated,omitempty"`
 }
 
 // WatchCommand Management command; requires current group-scoped capability.
@@ -1799,6 +2503,17 @@ type BlacklistsParams struct {
 	IdempotencyKey string `json:"Idempotency-Key"`
 }
 
+// ListGroupDirectoryParams defines parameters for ListGroupDirectory.
+type ListGroupDirectoryParams struct {
+	School   *string                           `form:"school,omitempty" json:"school,omitempty"`
+	Category *ListGroupDirectoryParamsCategory `form:"category,omitempty" json:"category,omitempty"`
+	Cursor   *string                           `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit    *int                              `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListGroupDirectoryParamsCategory defines parameters for ListGroupDirectory.
+type ListGroupDirectoryParamsCategory string
+
 // ListMyGroupsParams defines parameters for ListMyGroups.
 type ListMyGroupsParams struct {
 	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
@@ -1812,6 +2527,24 @@ type ConfigureGroupParams struct {
 
 // ListActionsParams defines parameters for ListActions.
 type ListActionsParams struct {
+	Cursor *string                 `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int                    `form:"limit,omitempty" json:"limit,omitempty"`
+	State  *ListActionsParamsState `form:"state,omitempty" json:"state,omitempty"`
+	Kind   *ListActionsParamsKind  `form:"kind,omitempty" json:"kind,omitempty"`
+	Order  *ListActionsParamsOrder `form:"order,omitempty" json:"order,omitempty"`
+}
+
+// ListActionsParamsState defines parameters for ListActions.
+type ListActionsParamsState string
+
+// ListActionsParamsKind defines parameters for ListActions.
+type ListActionsParamsKind string
+
+// ListActionsParamsOrder defines parameters for ListActions.
+type ListActionsParamsOrder string
+
+// ListAuditParams defines parameters for ListAudit.
+type ListAuditParams struct {
 	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
 	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
 }
@@ -1840,27 +2573,50 @@ type ListDeliverysParams struct {
 
 // ListHitsParams defines parameters for ListHits.
 type ListHitsParams struct {
-	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
-	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor *string              `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int                 `form:"limit,omitempty" json:"limit,omitempty"`
+	Order  *ListHitsParamsOrder `form:"order,omitempty" json:"order,omitempty"`
 }
+
+// ListHitsParamsOrder defines parameters for ListHits.
+type ListHitsParamsOrder string
 
 // ListMembersParams defines parameters for ListMembers.
 type ListMembersParams struct {
-	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
-	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor *string                 `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int                    `form:"limit,omitempty" json:"limit,omitempty"`
+	State  *ListMembersParamsState `form:"state,omitempty" json:"state,omitempty"`
+	Joined *bool                   `form:"joined,omitempty" json:"joined,omitempty"`
+	Exempt *bool                   `form:"exempt,omitempty" json:"exempt,omitempty"`
 }
+
+// ListMembersParamsState defines parameters for ListMembers.
+type ListMembersParamsState string
 
 // ListMessagesParams defines parameters for ListMessages.
 type ListMessagesParams struct {
-	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
-	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor   *string                  `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit    *int                     `form:"limit,omitempty" json:"limit,omitempty"`
+	Recalled *bool                    `form:"recalled,omitempty" json:"recalled,omitempty"`
+	Order    *ListMessagesParamsOrder `form:"order,omitempty" json:"order,omitempty"`
 }
+
+// ListMessagesParamsOrder defines parameters for ListMessages.
+type ListMessagesParamsOrder string
 
 // ListReportsParams defines parameters for ListReports.
 type ListReportsParams struct {
-	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
-	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor *string                 `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int                    `form:"limit,omitempty" json:"limit,omitempty"`
+	State  *ListReportsParamsState `form:"state,omitempty" json:"state,omitempty"`
+	Order  *ListReportsParamsOrder `form:"order,omitempty" json:"order,omitempty"`
 }
+
+// ListReportsParamsState defines parameters for ListReports.
+type ListReportsParamsState string
+
+// ListReportsParamsOrder defines parameters for ListReports.
+type ListReportsParamsOrder string
 
 // ListSubscriptionsParams defines parameters for ListSubscriptions.
 type ListSubscriptionsParams struct {
@@ -2891,6 +3647,40 @@ func (t *Command) MergeCardCommand(v CardCommand) error {
 	return err
 }
 
+// AsCardPreviewCommand returns the union data inside the Command as a CardPreviewCommand
+func (t Command) AsCardPreviewCommand() (CardPreviewCommand, error) {
+	var body CardPreviewCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCardPreviewCommand overwrites any union data inside the Command as the provided CardPreviewCommand
+func (t *Command) FromCardPreviewCommand(v CardPreviewCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"card_preview"}`))
+	t.union = b
+	return err
+}
+
+// MergeCardPreviewCommand performs a merge with any union data inside the Command, using the provided CardPreviewCommand
+func (t *Command) MergeCardPreviewCommand(v CardPreviewCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"card_preview"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 // AsAnalyzeCommand returns the union data inside the Command as a AnalyzeCommand
 func (t Command) AsAnalyzeCommand() (AnalyzeCommand, error) {
 	var body AnalyzeCommand
@@ -3129,6 +3919,74 @@ func (t *Command) MergeAiExecuteCommand(v AiExecuteCommand) error {
 	return err
 }
 
+// AsCancelActionCommand returns the union data inside the Command as a CancelActionCommand
+func (t Command) AsCancelActionCommand() (CancelActionCommand, error) {
+	var body CancelActionCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCancelActionCommand overwrites any union data inside the Command as the provided CancelActionCommand
+func (t *Command) FromCancelActionCommand(v CancelActionCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"cancel_action"}`))
+	t.union = b
+	return err
+}
+
+// MergeCancelActionCommand performs a merge with any union data inside the Command, using the provided CancelActionCommand
+func (t *Command) MergeCancelActionCommand(v CancelActionCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"cancel_action"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsRetryActionCommand returns the union data inside the Command as a RetryActionCommand
+func (t Command) AsRetryActionCommand() (RetryActionCommand, error) {
+	var body RetryActionCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRetryActionCommand overwrites any union data inside the Command as the provided RetryActionCommand
+func (t *Command) FromRetryActionCommand(v RetryActionCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"retry_action"}`))
+	t.union = b
+	return err
+}
+
+// MergeRetryActionCommand performs a merge with any union data inside the Command, using the provided RetryActionCommand
+func (t *Command) MergeRetryActionCommand(v RetryActionCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"retry_action"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 func (t Command) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"kind"`
@@ -3151,8 +4009,12 @@ func (t Command) ValueByDiscriminator() (interface{}, error) {
 		return t.AsApplyCommand()
 	case "blacklist":
 		return t.AsBlacklistCommand()
+	case "cancel_action":
+		return t.AsCancelActionCommand()
 	case "card":
 		return t.AsCardCommand()
+	case "card_preview":
+		return t.AsCardPreviewCommand()
 	case "dice":
 		return t.AsDiceCommand()
 	case "exempt":
@@ -3177,6 +4039,8 @@ func (t Command) ValueByDiscriminator() (interface{}, error) {
 		return t.AsRecheckCommand()
 	case "report":
 		return t.AsReportCommand()
+	case "retry_action":
+		return t.AsRetryActionCommand()
 	case "rule":
 		return t.AsRuleCommand()
 	case "self_mute":
@@ -3297,6 +4161,11 @@ type ClientInterface interface {
 	// Takes a body of the `application/json` content type.
 	Blacklists(ctx context.Context, params *BlacklistsParams, body BlacklistsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListGroupDirectory performs a GET /api/v1/groups/directory (the `ListGroupDirectory` operationId) request.
+	//
+	// Authenticated user discovery directory for managed QQ groups with discoverable=true. Groups requiring student verification are visible only when the caller currently holds valid campus eligibility in that school; groups without student requirement remain publicly discoverable to authenticated users. Discloses only masked group numbers, admission summary and the caller's own joined/state.
+	ListGroupDirectory(ctx context.Context, params *ListGroupDirectoryParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListMyGroups performs a GET /api/v1/groups/me (the `ListMyGroups` operationId) request.
 	//
 	// Authenticated user only; no owner/issuer/subject parameter or management role is accepted. Includes joined memberships and active applications in configured groups; excludes removed or unmanaged groups. Ordered by group ID in bytewise ascending order. Read-only: no admission, punishment, inbox or audit writes.
@@ -3317,6 +4186,11 @@ type ClientInterface interface {
 	//
 	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
 	ListActions(ctx context.Context, group string, params *ListActionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListAudit performs a GET /api/v1/groups/{group}/audit (the `ListAudit` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; requires groups.configure on the target group. Contains only sanitized management audit metadata and never records or exposes recalled message bodies.
+	ListAudit(ctx context.Context, group string, params *ListAuditParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// BatchWithBody performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request,
 	// with any type of body and a specified content type.
@@ -3426,6 +4300,21 @@ func (c *Client) Blacklists(ctx context.Context, params *BlacklistsParams, body 
 	return c.Client.Do(req)
 }
 
+// ListGroupDirectory performs a GET /api/v1/groups/directory (the `ListGroupDirectory` operationId) request.
+//
+// Authenticated user discovery directory for managed QQ groups with discoverable=true. Groups requiring student verification are visible only when the caller currently holds valid campus eligibility in that school; groups without student requirement remain publicly discoverable to authenticated users. Discloses only masked group numbers, admission summary and the caller's own joined/state.
+func (c *Client) ListGroupDirectory(ctx context.Context, params *ListGroupDirectoryParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListGroupDirectoryRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // ListMyGroups performs a GET /api/v1/groups/me (the `ListMyGroups` operationId) request.
 //
 // Authenticated user only; no owner/issuer/subject parameter or management role is accepted. Includes joined memberships and active applications in configured groups; excludes removed or unmanaged groups. Ordered by group ID in bytewise ascending order. Read-only: no admission, punishment, inbox or audit writes.
@@ -3487,6 +4376,21 @@ func (c *Client) ConfigureGroup(ctx context.Context, group string, params *Confi
 // Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
 func (c *Client) ListActions(ctx context.Context, group string, params *ListActionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListActionsRequest(c.Server, group, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListAudit performs a GET /api/v1/groups/{group}/audit (the `ListAudit` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; requires groups.configure on the target group. Contains only sanitized management audit metadata and never records or exposes recalled message bodies.
+func (c *Client) ListAudit(ctx context.Context, group string, params *ListAuditParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListAuditRequest(c.Server, group, params)
 	if err != nil {
 		return nil, err
 	}
@@ -3820,6 +4724,96 @@ func NewBlacklistsRequestWithBody(server string, params *BlacklistsParams, conte
 	return req, nil
 }
 
+// NewListGroupDirectoryRequest constructs an http.Request for the ListGroupDirectory method
+func NewListGroupDirectoryRequest(server string, params *ListGroupDirectoryParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/groups/directory")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.School != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "school", *params.School, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Category != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "category", *params.Category, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListMyGroupsRequest constructs an http.Request for the ListMyGroups method
 func NewListMyGroupsRequest(server string, params *ListMyGroupsParams) (*http.Request, error) {
 	var err error
@@ -3997,6 +4991,115 @@ func NewListActionsRequest(server string, group string, params *ListActionsParam
 	}
 
 	operationPath := fmt.Sprintf("/api/v1/groups/%s/actions", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.State != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "state", *params.State, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Kind != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "kind", *params.Kind, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Order != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "order", *params.Order, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListAuditRequest constructs an http.Request for the ListAudit method
+func NewListAuditRequest(server string, group string, params *ListAuditParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "group", group, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/groups/%s/audit", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -4378,6 +5481,18 @@ func NewListHitsRequest(server string, group string, params *ListHitsParams) (*h
 
 		}
 
+		if params.Order != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "order", *params.Order, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
 		if encoded := queryValues.Encode(); encoded != "" {
 			rawQueryFragments = append(rawQueryFragments, encoded)
 		}
@@ -4451,6 +5566,42 @@ func NewListMembersRequest(server string, group string, params *ListMembersParam
 
 		}
 
+		if params.State != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "state", *params.State, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Joined != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "joined", *params.Joined, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Exempt != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "exempt", *params.Exempt, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
 		if encoded := queryValues.Encode(); encoded != "" {
 			rawQueryFragments = append(rawQueryFragments, encoded)
 		}
@@ -4515,6 +5666,30 @@ func NewListMessagesRequest(server string, group string, params *ListMessagesPar
 		if params.Limit != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Recalled != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "recalled", *params.Recalled, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Order != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "order", *params.Order, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -4622,6 +5797,30 @@ func NewListReportsRequest(server string, group string, params *ListReportsParam
 		if params.Limit != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.State != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "state", *params.State, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Order != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "order", *params.Order, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -4925,6 +6124,13 @@ type ClientWithResponsesInterface interface {
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	BlacklistsWithResponse(ctx context.Context, params *BlacklistsParams, body BlacklistsJSONRequestBody, reqEditors ...RequestEditorFn) (*BlacklistsResponse, error)
 
+	// ListGroupDirectoryWithResponse performs a GET /api/v1/groups/directory (the `ListGroupDirectory` operationId) request.
+	//
+	// Authenticated user discovery directory for managed QQ groups with discoverable=true. Groups requiring student verification are visible only when the caller currently holds valid campus eligibility in that school; groups without student requirement remain publicly discoverable to authenticated users. Discloses only masked group numbers, admission summary and the caller's own joined/state.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ListGroupDirectoryWithResponse(ctx context.Context, params *ListGroupDirectoryParams, reqEditors ...RequestEditorFn) (*ListGroupDirectoryResponse, error)
+
 	// ListMyGroupsWithResponse performs a GET /api/v1/groups/me (the `ListMyGroups` operationId) request.
 	//
 	// Authenticated user only; no owner/issuer/subject parameter or management role is accepted. Includes joined memberships and active applications in configured groups; excludes removed or unmanaged groups. Ordered by group ID in bytewise ascending order. Read-only: no admission, punishment, inbox or audit writes.
@@ -4953,6 +6159,13 @@ type ClientWithResponsesInterface interface {
 	//
 	// Returns a wrapper object for the known response body format(s).
 	ListActionsWithResponse(ctx context.Context, group string, params *ListActionsParams, reqEditors ...RequestEditorFn) (*ListActionsResponse, error)
+
+	// ListAuditWithResponse performs a GET /api/v1/groups/{group}/audit (the `ListAudit` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; requires groups.configure on the target group. Contains only sanitized management audit metadata and never records or exposes recalled message bodies.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ListAuditWithResponse(ctx context.Context, group string, params *ListAuditParams, reqEditors ...RequestEditorFn) (*ListAuditResponse, error)
 
 	// BatchWithBodyWithResponse performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request,
 	// with any type of body and a specified content type.
@@ -5196,6 +6409,75 @@ func (r BlacklistsResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r BlacklistsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListGroupDirectoryResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *DirectoryGroupPage
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListGroupDirectoryResponse) GetJSON200() *DirectoryGroupPage {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListGroupDirectoryResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListGroupDirectoryResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListGroupDirectoryResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r ListGroupDirectoryResponse) GetJSON503() *Problem {
+	return r.JSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListGroupDirectoryResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListGroupDirectoryResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListGroupDirectoryResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListGroupDirectoryResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -5500,6 +6782,82 @@ func (r ListActionsResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r ListActionsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListAuditResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *AuditPage
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListAuditResponse) GetJSON200() *AuditPage {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListAuditResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListAuditResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListAuditResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r ListAuditResponse) GetJSON404() *Problem {
+	return r.JSON404
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r ListAuditResponse) GetJSON503() *Problem {
+	return r.JSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListAuditResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListAuditResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListAuditResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListAuditResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -6481,6 +7839,19 @@ func (c *ClientWithResponses) BlacklistsWithResponse(ctx context.Context, params
 	return ParseBlacklistsResponse(rsp)
 }
 
+// ListGroupDirectoryWithResponse performs a GET /api/v1/groups/directory (the `ListGroupDirectory` operationId) request.
+//
+// Authenticated user discovery directory for managed QQ groups with discoverable=true. Groups requiring student verification are visible only when the caller currently holds valid campus eligibility in that school; groups without student requirement remain publicly discoverable to authenticated users. Discloses only masked group numbers, admission summary and the caller's own joined/state.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ListGroupDirectoryWithResponse(ctx context.Context, params *ListGroupDirectoryParams, reqEditors ...RequestEditorFn) (*ListGroupDirectoryResponse, error) {
+	rsp, err := c.ListGroupDirectory(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListGroupDirectoryResponse(rsp)
+}
+
 // ListMyGroupsWithResponse performs a GET /api/v1/groups/me (the `ListMyGroups` operationId) request.
 //
 // Authenticated user only; no owner/issuer/subject parameter or management role is accepted. Includes joined memberships and active applications in configured groups; excludes removed or unmanaged groups. Ordered by group ID in bytewise ascending order. Read-only: no admission, punishment, inbox or audit writes.
@@ -6538,6 +7909,19 @@ func (c *ClientWithResponses) ListActionsWithResponse(ctx context.Context, group
 		return nil, err
 	}
 	return ParseListActionsResponse(rsp)
+}
+
+// ListAuditWithResponse performs a GET /api/v1/groups/{group}/audit (the `ListAudit` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; requires groups.configure on the target group. Contains only sanitized management audit metadata and never records or exposes recalled message bodies.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ListAuditWithResponse(ctx context.Context, group string, params *ListAuditParams, reqEditors ...RequestEditorFn) (*ListAuditResponse, error) {
+	rsp, err := c.ListAudit(ctx, group, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListAuditResponse(rsp)
 }
 
 // BatchWithBodyWithResponse performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request,
@@ -6841,6 +8225,60 @@ func ParseBlacklistsResponse(rsp *http.Response) (*BlacklistsResponse, error) {
 	return response, nil
 }
 
+// ParseListGroupDirectoryResponse parses an HTTP response from a ListGroupDirectoryWithResponse call
+func ParseListGroupDirectoryResponse(rsp *http.Response) (*ListGroupDirectoryResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListGroupDirectoryResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DirectoryGroupPage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListMyGroupsResponse parses an HTTP response from a ListMyGroupsWithResponse call
 func ParseListMyGroupsResponse(rsp *http.Response) (*ListMyGroupsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -7040,6 +8478,67 @@ func ParseListActionsResponse(rsp *http.Response) (*ListActionsResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest ActionPage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListAuditResponse parses an HTTP response from a ListAuditWithResponse call
+func ParseListAuditResponse(rsp *http.Response) (*ListAuditResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListAuditResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AuditPage
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

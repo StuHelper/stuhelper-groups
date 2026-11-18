@@ -42,6 +42,10 @@ func NewErrorDetail(base error, reason, field string, retryAfter int64) error {
 type GroupSettings struct {
 	Name             string   `json:"name"`
 	BotEnabled       bool     `json:"bot_enabled"`
+	Discoverable     bool     `json:"discoverable"`
+	Category         string   `json:"category"`
+	Description      string   `json:"description"`
+	PasswordHint     string   `json:"password_hint"`
 	Welcome          string   `json:"welcome"`
 	RulesTemplate    string   `json:"rules_template"`
 	CheckCard        bool     `json:"check_card"`
@@ -72,9 +76,10 @@ type GroupSettings struct {
 }
 type GroupConfig struct {
 	GroupSettings
-	Number      string `json:"number"`
-	Revision    int64  `json:"revision"`
-	PasswordSet bool   `json:"password_set"`
+	Number        string `json:"number"`
+	Revision      int64  `json:"revision"`
+	PasswordSet   bool   `json:"password_set"`
+	PasswordEpoch int64  `json:"password_epoch,omitempty"`
 }
 type GroupConfigInput struct {
 	GroupSettings
@@ -114,28 +119,30 @@ type Command struct {
 	Enabled  bool   `json:"enabled,omitempty"`
 }
 type Result struct {
-	ID            string `json:"id"`
-	State         string `json:"state"`
-	Action        string `json:"action"`
-	Value         int64  `json:"value"`
-	Detail        string `json:"detail"`
-	MaxValue      *int64 `json:"max_value,omitempty"`
-	Seconds       *int64 `json:"seconds,omitempty"`
-	PityRemaining *int64 `json:"pity_remaining,omitempty"`
+	ID            string   `json:"id"`
+	State         string   `json:"state"`
+	Action        string   `json:"action"`
+	Value         int64    `json:"value"`
+	Detail        string   `json:"detail"`
+	MaxValue      *int64   `json:"max_value,omitempty"`
+	Seconds       *int64   `json:"seconds,omitempty"`
+	PityRemaining *int64   `json:"pity_remaining,omitempty"`
+	MissingFields []string `json:"missing_fields,omitempty"`
 }
 type Member struct {
-	ID         string    `json:"id"`
-	Joined     bool      `json:"joined"`
-	Owner      string    `json:"owner"`
-	State      string    `json:"state"`
-	Deadline   time.Time `json:"deadline"`
-	Reminder   time.Time `json:"reminder"`
-	Password   bool      `json:"password"`
-	Exempt     bool      `json:"exempt"`
-	Extended   bool      `json:"extended"`
-	Failures   int64     `json:"failures"`
-	LastPlay   time.Time `json:"last_play"`
-	MutedUntil time.Time `json:"muted_until"`
+	ID            string    `json:"id"`
+	Joined        bool      `json:"joined"`
+	Owner         string    `json:"owner"`
+	State         string    `json:"state"`
+	Deadline      time.Time `json:"deadline"`
+	Reminder      time.Time `json:"reminder"`
+	Password      bool      `json:"password"`
+	PasswordEpoch int64     `json:"password_epoch,omitempty"`
+	Exempt        bool      `json:"exempt"`
+	Extended      bool      `json:"extended"`
+	Failures      int64     `json:"failures"`
+	LastPlay      time.Time `json:"last_play"`
+	MutedUntil    time.Time `json:"muted_until"`
 }
 type Authorizer interface {
 	Evaluate(context.Context, account.Principal, string, admin.Scope) error
@@ -224,22 +231,37 @@ func TraceParentFromContext(ctx context.Context) string {
 }
 
 type Row struct {
-	ID   string
-	Data json.RawMessage
+	ID        string
+	Data      json.RawMessage
+	CreatedAt time.Time
+}
+type ListQuery struct {
+	Cursor     string
+	CursorTime *time.Time
+	Limit      int
+	Desc       bool
+	State      string
+	Kind       string
+	Joined     *bool
+	Exempt     *bool
+	Recalled   *bool
 }
 type ReadTx interface {
 	Get(string, string, any) error
 	List(string, string, int) ([]Row, error)
+	QueryList(string, ListQuery) ([]Row, error)
 	PendingActions(string) (int, error)
 	PendingAdmissionKick(group, owner string) (bool, error)
 	GroupCounts([]string) (map[string]GroupCounts, error)
 	OwnerGroups(owner, cursor string, limit int, includeApplicants bool) (Page[ManagedGroup], error)
 	OwnerGroupRecords(owner, cursor string, limit int, includeApplicants bool) (Page[OwnerGroupRecord], error)
+	DirectoryGroups(owner, school, category, cursor string, limit int) ([]DirectoryRecord, error)
 }
 type Tx interface {
 	ReadTx
 	Put(string, string, any) error
 	Delete(string, string) error
+	DeleteSentOutboxBefore(cutoff time.Time, limit int) (int, error)
 	Emit(Event) error
 	Accept(Event) (bool, error)
 }

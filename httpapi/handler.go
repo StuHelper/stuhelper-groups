@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"sync"
 	"unicode/utf8"
@@ -64,6 +65,16 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 			return
 		}
 		v, e := s.MyGroups(r.Context(), p, cursor, limit)
+		write(w, v, e)
+	}))
+	mux.HandleFunc("GET /api/v1/groups/directory", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+		q := r.URL.Query()
+		cursor, limit, e := pagination(r, "school", "category")
+		if e != nil {
+			write(w, nil, e)
+			return
+		}
+		v, e := s.Directory(r.Context(), p, g.DirectoryQuery{School: q.Get("school"), Category: q.Get("category"), Cursor: cursor, Limit: limit})
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
@@ -123,25 +134,95 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		v, e := s.Blacklists(r.Context(), p, r.Header.Get("Idempotency-Key"), in)
 		write(w, v, e)
 	}))
-	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/members", s.Members)
-	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/actions", s.Actions)
-	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/reports", s.Reports)
-	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/hits", s.Hits)
-	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/messages", s.Messages)
+	mux.HandleFunc("GET /api/v1/groups/{group}/members", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+		cursor, limit, e := pagination(r, "state", "joined", "exempt")
+		if e != nil {
+			write(w, nil, e)
+			return
+		}
+		joined, e := optionalBool(r, "joined")
+		if e != nil {
+			write(w, nil, e)
+			return
+		}
+		exempt, e := optionalBool(r, "exempt")
+		if e != nil {
+			write(w, nil, e)
+			return
+		}
+		v, e := s.QueryMembers(r.Context(), p, r.PathValue("group"), g.MemberQuery{Cursor: cursor, Limit: limit, State: r.URL.Query().Get("state"), Joined: joined, Exempt: exempt})
+		write(w, v, e)
+	}))
+	mux.HandleFunc("GET /api/v1/groups/{group}/actions", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+		cursor, limit, e := pagination(r, "state", "kind", "order")
+		if e != nil {
+			write(w, nil, e)
+			return
+		}
+		q := r.URL.Query()
+		v, e := s.QueryActions(r.Context(), p, r.PathValue("group"), g.ActionQuery{Cursor: cursor, Limit: limit, Order: q.Get("order"), State: q.Get("state"), Kind: q.Get("kind")})
+		write(w, v, e)
+	}))
+	mux.HandleFunc("GET /api/v1/groups/{group}/reports", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+		cursor, limit, e := pagination(r, "state", "order")
+		if e != nil {
+			write(w, nil, e)
+			return
+		}
+		q := r.URL.Query()
+		v, e := s.QueryReports(r.Context(), p, r.PathValue("group"), g.ReportQuery{Cursor: cursor, Limit: limit, Order: q.Get("order"), State: q.Get("state")})
+		write(w, v, e)
+	}))
+	mux.HandleFunc("GET /api/v1/groups/{group}/hits", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+		cursor, limit, e := pagination(r, "order")
+		if e != nil {
+			write(w, nil, e)
+			return
+		}
+		v, e := s.QueryHits(r.Context(), p, r.PathValue("group"), g.HitQuery{Cursor: cursor, Limit: limit, Order: r.URL.Query().Get("order")})
+		write(w, v, e)
+	}))
+	mux.HandleFunc("GET /api/v1/groups/{group}/messages", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+		cursor, limit, e := pagination(r, "recalled", "order")
+		if e != nil {
+			write(w, nil, e)
+			return
+		}
+		recalled, e := optionalBool(r, "recalled")
+		if e != nil {
+			write(w, nil, e)
+			return
+		}
+		v, e := s.QueryMessages(r.Context(), p, r.PathValue("group"), g.MessageQuery{Cursor: cursor, Limit: limit, Order: r.URL.Query().Get("order"), Recalled: recalled})
+		write(w, v, e)
+	}))
 	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/subscriptions", s.Subscriptions)
 	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/blacklist", s.Blacklist)
 	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/warnings", s.Warnings)
 	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/watch", s.Watch)
 	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/deliveries", s.Deliveries)
+	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/audit", s.Audits)
 	return mux
 }
-func pagination(r *http.Request) (string, int, error) {
+func optionalBool(r *http.Request, name string) (*bool, error) {
+	raw, exists := r.URL.Query()[name]
+	if !exists {
+		return nil, nil
+	}
+	if len(raw) != 1 || (raw[0] != "true" && raw[0] != "false") {
+		return nil, g.ErrInvalid
+	}
+	v := raw[0] == "true"
+	return &v, nil
+}
+
+func pagination(r *http.Request, extra ...string) (string, int, error) {
 	q, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
 		return "", 0, g.ErrInvalid
 	}
-	for name := range q {
-		if name != "cursor" && name != "limit" {
+	for name, values := range q {
+		if len(values) != 1 || (name != "cursor" && name != "limit" && !slices.Contains(extra, name)) {
 			return "", 0, g.ErrInvalid
 		}
 	}

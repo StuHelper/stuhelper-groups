@@ -14,12 +14,13 @@ import (
 )
 
 type Message struct {
-	Attachments []string  `json:"attachments"`
-	ID          string    `json:"id"`
-	Owner       string    `json:"owner"`
-	Body        string    `json:"body"`
-	Recalled    bool      `json:"recalled"`
-	Expires     time.Time `json:"expires"`
+	Attachments []string   `json:"attachments"`
+	ID          string     `json:"id"`
+	Owner       string     `json:"owner"`
+	Body        string     `json:"body"`
+	Recalled    bool       `json:"recalled"`
+	Expires     time.Time  `json:"expires"`
+	Created     *time.Time `json:"created,omitempty"`
 }
 
 // Ingest is a trusted backend boundary, never mounted as a public route.
@@ -64,13 +65,18 @@ func (s *Service) Ingest(ctx context.Context, g string, event Event, m Message) 
 		if c.RetentionSeconds == 0 {
 			return nil
 		}
-		m.Expires = s.now().Add(time.Duration(c.RetentionSeconds) * time.Second)
+		now := s.now()
+		m.Created = &now
+		m.Expires = now.Add(time.Duration(c.RetentionSeconds) * time.Second)
 		var previous Message
 		if err := tx.Get(bucket(g, "messages"), m.ID, &previous); err == nil {
 			if !s.now().Before(previous.Expires) {
 				return tx.Delete(bucket(g, "messages"), m.ID)
 			}
 			m.Expires = previous.Expires
+			if previous.Created != nil && !previous.Created.IsZero() {
+				m.Created = previous.Created
+			}
 			if m.Recalled {
 				m.Owner = previous.Owner
 				if m.Body == "" {
@@ -145,7 +151,7 @@ func (s *Service) rule(ctx context.Context, tx Tx, p account.Principal, c GroupC
 		return out, nil
 	}
 	out.ID = uuid.NewString()
-	if e = tx.Put(bucket(c.ID, "hits"), out.ID, map[string]any{"owner": cmd.Target, "message": cmd.Message, "rules": hits, "state": "matched"}); e != nil {
+	if e = tx.Put(bucket(c.ID, "hits"), out.ID, map[string]any{"owner": cmd.Target, "message": cmd.Message, "rules": hits, "state": "matched", "created": s.now()}); e != nil {
 		return out, e
 	}
 	for i, a := range c.AutoActions {
@@ -173,50 +179,83 @@ func (s *Service) rule(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	return out, nil
 }
 
-// A nil field map validates the template without expanding member data.
-func renderCard(template string, fields map[string]CardField) (string, bool, error) {
-	var out strings.Builder
-	complete := true
-	for len(template) > 0 {
-		i := strings.IndexAny(template, "{}")
-		if i < 0 {
-			out.WriteString(template)
-			break
-		}
-		out.WriteString(template[:i])
-		if template[i] != '{' {
-			return "", false, ErrInvalid
-		}
-		token, rest, ok := strings.Cut(template[i+1:], "}")
-		if !ok {
-			return "", false, ErrInvalid
-		}
-		template = rest
-		switch token {
-		case "separator":
-			switch fields["gender"].Value {
-			case "male":
-				out.WriteString("-")
-			case "female":
-				out.WriteString("+")
-			default:
-				out.WriteString("·")
+var cardTemplateFields = []string{"school", "grade", "department", "name", "student_id", "gender", "nickname"}
+
+func renderCardTemplate(tmpl string, fields map[string]CardField) (string, []string, error) {
+	var b strings.Builder
+	missing := []string{}
+	for i := 0; i < len(tmpl); {
+		switch tmpl[i] {
+		case '}':
+			return "", nil, ErrInvalid
+		case '{':
+			end := strings.IndexByte(tmpl[i+1:], '}')
+			if end < 0 {
+				return "", nil, ErrInvalid
 			}
-		case "school", "grade", "department", "name", "student_id", "gender", "nickname":
-			field, ok := fields[token]
+			token := tmpl[i+1 : i+1+end]
+			i += end + 2
+			if token == "separator" {
+				sep := "·"
+				if fields["gender"].Value == "male" {
+					sep = "-"
+				} else if fields["gender"].Value == "female" {
+					sep = "+"
+				}
+				b.WriteString(sep)
+				continue
+			}
+			if !slices.Contains(cardTemplateFields, token) {
+				return "", nil, ErrInvalid
+			}
+			v, ok := fields[token]
 			if !ok {
-				complete = false
+				if !slices.Contains(missing, token) {
+					missing = append(missing, token)
+				}
+				continue
 			}
-			out.WriteString(field.Value)
+			b.WriteString(v.Value)
 		default:
-			return "", false, ErrInvalid
+			b.WriteByte(tmpl[i])
+			i++
 		}
 	}
-	if utf8.RuneCountInString(out.String()) > 2048 {
-		return "", false, ErrUnprocessable
-	}
-	return out.String(), complete, nil
+	return b.String(), missing, nil
 }
+
+func (s *Service) cardPreview(ctx context.Context, tx Tx, c GroupConfig, cmd Command) (Result, error) {
+	out := Result{State: "unavailable", Action: "card_preview"}
+	if !valid(cmd.Target, 2048) || !validText(cmd.Text, 1024) {
+		return out, ErrInvalid
+	}
+	if s.Facts == nil {
+		return out, ErrUnavailable
+	}
+	f, e := s.transactionFacts(ctx, tx, factKey{cmd.Target, c.School})
+	if e != nil {
+		return out, e
+	}
+	tmpl := c.CardTemplate
+	if cmd.Text != "" {
+		tmpl = cmd.Text
+	}
+	if tmpl == "" {
+		return out, ErrDisabled
+	}
+	rendered, missing, e := renderCardTemplate(tmpl, f.Fields)
+	if e != nil {
+		return out, e
+	}
+	if len(missing) > 0 {
+		return Result{State: "pending_profile", Action: "card_preview", Detail: strings.Join(missing, ","), MissingFields: missing}, nil
+	}
+	if runes := []rune(rendered); len(runes) > 2048 {
+		rendered = string(runes[:2048])
+	}
+	return Result{State: "ready", Action: "card_preview", Detail: rendered}, nil
+}
+
 func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, cmd Command) (Result, error) {
 	out := Result{State: "unavailable"}
 	if s.Facts == nil {
@@ -229,11 +268,14 @@ func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	if !c.CheckCard || c.CardTemplate == "" {
 		return out, NewErrorDetail(ErrDisabled, "card_check_disabled", "check_card", 0)
 	}
-	text, complete, err := renderCard(c.CardTemplate, f.Fields)
-	if err != nil {
-		return out, err
+	text, missing, e := renderCardTemplate(c.CardTemplate, f.Fields)
+	if e != nil {
+		return out, e
 	}
-	if !complete {
+	if utf8.RuneCountInString(text) > 2048 {
+		return out, ErrUnprocessable
+	}
+	if len(missing) > 0 {
 		return Result{State: "pending_profile"}, nil
 	}
 	out.Detail = text
@@ -319,6 +361,14 @@ func (s *Service) authorizePending(ctx context.Context, tx Tx, g string, a *Acti
 				return s.cancelAction(ctx, tx, g, a, e.Error())
 			}
 			return e
+		}
+	}
+	if a.Command.Kind == "forward" {
+		if err := s.checkForward(ctx, tx, a.Actor.Principal(), c, a.Command.Message); err != nil {
+			if errors.Is(err, ErrForbidden) || errors.Is(err, ErrUnauthenticated) || errors.Is(err, ErrNotFound) {
+				return s.cancelAction(ctx, tx, g, a, err.Error())
+			}
+			return err
 		}
 	}
 	if a.Command.Kind == "send" && a.Command.Receiver != "" {
@@ -511,6 +561,82 @@ func (s *Service) Recover(ctx context.Context, g, cursor string) (string, error)
 	}
 	return next, nil
 }
+func (s *Service) manageAction(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, cmd Command) (Result, error) {
+	var out Result
+	if !valid(cmd.Target, 2048) || !validText(cmd.Text, 2048) {
+		return out, ErrInvalid
+	}
+	var a Action
+	if e := tx.Get(bucket(c.ID, "actions"), cmd.Target, &a); e != nil {
+		return out, e
+	}
+	if cmd.Kind == "cancel_action" {
+		// Only pending actions may be cancelled; executing/unknown actions may already be in flight.
+		if a.State != "pending" {
+			return out, ErrConflict
+		}
+		if err := s.cancelAction(ctx, tx, c.ID, &a, "cancelled_by_admin"); err != nil {
+			return out, err
+		}
+		if err := s.audit(tx, p, c.ID, "cancel_action", a.ID, "cancelled"); err != nil {
+			return out, err
+		}
+		return Result{ID: a.ID, State: "cancelled", Action: a.Command.Kind, Detail: "cancelled_by_admin"}, nil
+	}
+	// retry_action only accepts confirmed failed actions not already retried.
+	if a.State != "failed" || strings.HasPrefix(a.Result, "retried:") {
+		return out, ErrConflict
+	}
+	if a.Capability != "" && a.Capability != "admission" && a.Capability != "entertainment" {
+		if e := s.auth(ctx, p, a.Capability, c); e != nil {
+			return out, e
+		}
+	}
+	actor := p
+	if a.Command.Kind == "forward" {
+		if err := s.checkForward(ctx, tx, p, c, a.Command.Message); err != nil {
+			return out, err
+		}
+	}
+	if a.Capability == "entertainment" {
+		actor = a.Actor.Principal()
+		if !actor.Valid() || a.Command.Kind != "mute" || actor.Key() != a.Command.Target {
+			return out, ErrConflict
+		}
+		var member Member
+		if err := tx.Get(bucket(c.ID, "members"), actor.Key(), &member); err != nil {
+			return out, err
+		}
+		if member.LastPlay.After(a.Created) || member.MutedUntil.After(s.now()) {
+			return out, ErrConflict
+		}
+		var active string
+		if err := tx.Get(bucket(c.ID, "self_mutes"), actor.Key(), &active); err == nil {
+			return out, ErrConflict
+		} else if !errors.Is(err, ErrNotFound) {
+			return out, err
+		}
+	}
+	queued, e := s.queue(ctx, tx, actor, c, a.Command, a.Capability)
+	if e != nil {
+		return out, e
+	}
+	if a.Capability == "entertainment" {
+		if err := tx.Put(bucket(c.ID, "self_mutes"), actor.Key(), queued.ID); err != nil {
+			return out, err
+		}
+	}
+	a.Result = "retried:" + queued.ID
+	if e := tx.Put(bucket(c.ID, "actions"), a.ID, a); e != nil {
+		return out, e
+	}
+	if e := s.audit(tx, p, c.ID, "retry_action", a.ID, queued.ID); e != nil {
+		return out, e
+	}
+	queued.Detail = a.ID
+	return queued, nil
+}
+
 func (s *Service) Cleanup(ctx context.Context, g, cursor string) (string, error) {
 	next := ""
 	e := s.runScoped(ctx, []string{"group:" + g}, func(tx Tx) error {
@@ -580,4 +706,113 @@ func (s *Service) applyMuteOutcome(tx Tx, g string, a Action) error {
 		m.MutedUntil = s.now().Add(time.Duration(a.Command.Seconds) * time.Second)
 	}
 	return tx.Put(bucket(g, "members"), m.Owner, m)
+}
+
+// CleanupIdempotency removes bounded pages of expired idempotency receipts or batch_inputs (default 24h).
+func (s *Service) CleanupIdempotency(ctx context.Context, bucketName, cursor string, maxAge time.Duration) (string, error) {
+	if bucketName != "receipts" && bucketName != "batch_inputs" {
+		return "", ErrInvalid
+	}
+	if maxAge <= 0 {
+		maxAge = 24 * time.Hour
+	}
+	next := ""
+	e := s.run(ctx, func(tx Tx) error {
+		rows, e := tx.List(bucketName, cursor, 100)
+		if e != nil {
+			return e
+		}
+		for _, r := range rows {
+			next = r.ID
+			var meta struct {
+				CreatedAt time.Time `json:"created_at"`
+			}
+			if json.Unmarshal(r.Data, &meta) == nil && !meta.CreatedAt.IsZero() && !s.now().Before(meta.CreatedAt.Add(maxAge)) {
+				if e = tx.Delete(bucketName, r.ID); e != nil {
+					return e
+				}
+			}
+		}
+		if len(rows) < 100 {
+			next = ""
+		}
+		return nil
+	})
+	if e != nil {
+		return "", e
+	}
+	return next, nil
+}
+
+// CleanupOutbox deletes at most 100 confirmed historical outbox rows older than maxAge (default 24h).
+// Unsent or held outbox rows are never deleted.
+func (s *Service) CleanupOutbox(ctx context.Context, maxAge time.Duration) (int, error) {
+	if maxAge <= 0 {
+		maxAge = 24 * time.Hour
+	}
+	deleted := 0
+	e := s.run(ctx, func(tx Tx) error {
+		var err error
+		deleted, err = tx.DeleteSentOutboxBefore(s.now().Add(-maxAge), 100)
+		return err
+	})
+	if e != nil {
+		return 0, e
+	}
+	return deleted, nil
+}
+
+// CleanupFrequency removes bounded pages of expired message rate-limit windows for group g.
+func (s *Service) CleanupFrequency(ctx context.Context, g, cursor string) (string, error) {
+	next := ""
+	e := s.run(ctx, func(tx Tx) error {
+		var c GroupConfig
+		if e := tx.Get("config", g, &c); e != nil {
+			return e
+		}
+		ttl := time.Duration(c.FrequencySeconds) * time.Second
+		if ttl <= 0 {
+			ttl = 24 * time.Hour
+		}
+		rows, e := tx.List(bucket(g, "frequency"), cursor, 100)
+		if e != nil {
+			return e
+		}
+		for _, r := range rows {
+			next = r.ID
+			var window struct {
+				Start time.Time
+			}
+			if e = json.Unmarshal(r.Data, &window); e != nil {
+				return e
+			}
+			if c.FrequencyLimit == 0 || c.FrequencySeconds == 0 || !s.now().Before(window.Start.Add(ttl)) {
+				if e = tx.Delete(bucket(g, "frequency"), r.ID); e != nil {
+					return e
+				}
+			}
+		}
+		if len(rows) < 100 {
+			next = ""
+		}
+		return nil
+	})
+	if e != nil {
+		return "", e
+	}
+	return next, nil
+}
+
+func (s *Service) checkForward(ctx context.Context, tx ReadTx, actor account.Principal, c GroupConfig, id string) error {
+	if err := s.auth(ctx, actor, "groups.messages.read", c); err != nil {
+		return err
+	}
+	var msg Message
+	if err := tx.Get(bucket(c.ID, "messages"), id, &msg); err != nil {
+		return err
+	}
+	if c.RetentionSeconds == 0 || !s.now().Before(msg.Expires) {
+		return ErrNotFound
+	}
+	return nil
 }

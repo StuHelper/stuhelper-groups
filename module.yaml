@@ -32,12 +32,15 @@ scenario_tests:
     - postgres/account_query_test.go#TestAccountQueryScopePaginationAndRuntime
   QQ-01:
     - admission_transition_test.go#TestJoinedAdmissionTransitions
+    - directory_test.go#TestGroupDirectoryDiscoveryFilteringVisibilityAndPasswordHint
+    - directory_test.go#TestGroupDirectoryValidationSDKAndFailureBoundaries
     - delivery_membership_test.go#TestGroupsForOwnerPaginationAndBounds
     - api_v03_test.go#TestGroupSummaryCountsMaskingAndScope
     - api_v03_test.go#TestConfigurationRevisionPasswordAndReplay
     - api_v03_test.go#TestFinalSchemaInitializationAndLeaseRecovery
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-02:
+    - password_card_preview_test.go#TestPasswordEpochRotationProtectsJoinedMembersAndResetsUnjoinedApplicants
     - facts_test.go#TestGroupFactsRejectsUnknownContradictoryAndFailedFacts
     - integration_test.go#TestPasswordDoesNotGrantStudentEligibilityAndBlacklistScope
   QQ-03:
@@ -57,6 +60,7 @@ scenario_tests:
   QQ-06:
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-07:
+    - password_card_preview_test.go#TestSideEffectFreeCardPreviewBraceSafetyAndMyGroupMissingFields
     - card_template_test.go#TestCardTemplateLiteralFieldsAndLimits
     - batch_exemption_test.go#TestUnexemptPendingApplicantAndExistingExtension
     - batch_exemption_test.go#TestBatchReplaysEarlierChildKey
@@ -82,6 +86,12 @@ scenario_tests:
     - concurrency_test.go#TestDuplicateAndOldMemberEventsIgnoreFactsOutage
     - concurrency_test.go#TestSweepDiscardsFactsFetchedBeforeRevocation
     - concurrency_test.go#TestSweepPreFetchesFactsOutsideLockAndMultiGroupLocksNeverDeadlock
+    - ops_maintenance_test.go#TestForwardRetryRechecksCurrentReadPermission
+    - ops_maintenance_test.go#TestSelfMuteRetryPreservesMemberConsent
+    - ops_maintenance_test.go#TestCleanupRetainsConfirmedHeldOutbox
+    - ops_maintenance_test.go#TestCancelAndRetryActionsQueueRecoveryAndGroupAudit
+    - lists_filter_test.go#TestMigrateLegacyCollectionAndPagePrefixedMessageIDs
+    - lists_filter_test.go#TestCollectionFiltersDescendingCursorsAndReportContext
     - delivery_membership_test.go#TestPendingOutboxExclusionLimitOrderingAndConfirmation
     - delivery_membership_test.go#TestRelayStopsFailedSubjectWithinBatchAndDeliversOthers
     - api_v03_test.go#TestEveryCollectionTypedPaginationAndAuthorization
@@ -98,6 +108,7 @@ scenario_tests:
     - integration_test.go#TestAISuggestionsRequireEnabledActionsAndCurrentAuthorization
   QQ-10:
     - bot_ingress_test.go#TestBotIngressReplaysLegacyInbox
+    - ops_maintenance_test.go#TestPeriodicMaintenanceCleansExpiredReceiptsSentOutboxAndFrequencyWindows
     - contract_test.go#TestAPIPrefixMatchesContractRoutesAndGeneratedClient
     - integration_test.go#TestRetentionInboxRollbackAndNoRecallViewAudit
     - bot_ingress_test.go#TestBotIngressObjectStreamsAndRecalledAttachments

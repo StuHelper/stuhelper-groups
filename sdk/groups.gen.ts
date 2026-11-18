@@ -288,11 +288,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/groups/{group}/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Ascending record ID in bytewise (C collation) order; requires groups.configure on the target group. Contains only sanitized management audit metadata and never records or exposes recalled message bodies. */
+        get: operations["listAudit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/directory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Authenticated user discovery directory for managed QQ groups with discoverable=true. Groups requiring student verification are visible only when the caller currently holds valid campus eligibility in that school; groups without student requirement remain publicly discoverable to authenticated users. Discloses only masked group numbers, admission summary and the caller's own joined/state. */
+        get: operations["listGroupDirectory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        Command: components["schemas"]["ApplyCommand"] | components["schemas"]["PasswordCommand"] | components["schemas"]["DiceCommand"] | components["schemas"]["SelfMuteCommand"] | components["schemas"]["ReportCommand"] | components["schemas"]["RecheckCommand"] | components["schemas"]["ExtendCommand"] | components["schemas"]["ExemptCommand"] | components["schemas"]["UnexemptCommand"] | components["schemas"]["WarnCommand"] | components["schemas"]["MuteCommand"] | components["schemas"]["UnmuteCommand"] | components["schemas"]["KickCommand"] | components["schemas"]["BlacklistCommand"] | components["schemas"]["UnblacklistCommand"] | components["schemas"]["SendCommand"] | components["schemas"]["ForwardCommand"] | components["schemas"]["RecallCommand"] | components["schemas"]["CardCommand"] | components["schemas"]["AnalyzeCommand"] | components["schemas"]["PreviewCommand"] | components["schemas"]["RuleCommand"] | components["schemas"]["SubscribeCommand"] | components["schemas"]["FeedbackCommand"] | components["schemas"]["WatchCommand"] | components["schemas"]["AiExecuteCommand"];
+        Command: components["schemas"]["ApplyCommand"] | components["schemas"]["PasswordCommand"] | components["schemas"]["DiceCommand"] | components["schemas"]["SelfMuteCommand"] | components["schemas"]["ReportCommand"] | components["schemas"]["RecheckCommand"] | components["schemas"]["ExtendCommand"] | components["schemas"]["ExemptCommand"] | components["schemas"]["UnexemptCommand"] | components["schemas"]["WarnCommand"] | components["schemas"]["MuteCommand"] | components["schemas"]["UnmuteCommand"] | components["schemas"]["KickCommand"] | components["schemas"]["BlacklistCommand"] | components["schemas"]["UnblacklistCommand"] | components["schemas"]["SendCommand"] | components["schemas"]["ForwardCommand"] | components["schemas"]["RecallCommand"] | components["schemas"]["CardCommand"] | components["schemas"]["CardPreviewCommand"] | components["schemas"]["AnalyzeCommand"] | components["schemas"]["PreviewCommand"] | components["schemas"]["RuleCommand"] | components["schemas"]["SubscribeCommand"] | components["schemas"]["FeedbackCommand"] | components["schemas"]["WatchCommand"] | components["schemas"]["AiExecuteCommand"] | components["schemas"]["CancelActionCommand"] | components["schemas"]["RetryActionCommand"];
         Result: {
             id: string;
             state: string;
@@ -315,6 +349,8 @@ export interface components {
              * @description Remaining attempts before guaranteed pity trigger when pity > 0.
              */
             pity_remaining?: number;
+            /** @description Optional list of card template field keys not yet disclosed or available. */
+            missing_fields?: ("school" | "grade" | "department" | "name" | "student_id" | "gender" | "nickname")[];
         };
         Problem: {
             /**
@@ -368,6 +404,11 @@ export interface components {
              */
             reminder: string;
             password: boolean;
+            /**
+             * Format: int64
+             * @description Dynamic password generation matched by this member.
+             */
+            password_epoch?: number;
             exempt: boolean;
             extended: boolean;
             /** Format: int64 */
@@ -409,17 +450,26 @@ export interface components {
             recalled: boolean;
             /** Format: date-time */
             expires: string;
+            /** Format: date-time */
+            created?: string;
             /** @description Opaque media references. Backend proxy enforces current group access and the same expiry. */
             attachments: string[];
         };
         Report: {
             reporter: string;
+            /** @description Owner key of the reported message author when the message was retained at report creation time; never includes message body. */
+            target?: string;
             message: string;
             reason: string;
             state: string;
             analysis?: string;
             suggestions?: string[];
             feedback?: string;
+            resolved_by?: components["schemas"]["Actor"];
+            /** Format: date-time */
+            created?: string;
+            /** Format: date-time */
+            updated?: string;
             id: string;
         };
         Hit: {
@@ -427,6 +477,8 @@ export interface components {
             message: string;
             rules: string[];
             state: string;
+            /** Format: date-time */
+            created?: string;
             id: string;
         };
         Subscription: {
@@ -437,7 +489,7 @@ export interface components {
         };
         ActionCommand: {
             /** @enum {string} */
-            kind: "ai_execute" | "analyze" | "apply" | "approve" | "blacklist" | "card" | "dice" | "exempt" | "extend" | "feedback" | "forward" | "kick" | "mute" | "password" | "preview" | "recall" | "recheck" | "remind" | "report" | "rule" | "self_mute" | "send" | "subscribe" | "unblacklist" | "unexempt" | "unmute" | "warn" | "watch" | "welcome";
+            kind: "ai_execute" | "analyze" | "apply" | "approve" | "blacklist" | "card" | "card_preview" | "dice" | "exempt" | "extend" | "feedback" | "forward" | "kick" | "mute" | "password" | "preview" | "recall" | "recheck" | "remind" | "report" | "rule" | "self_mute" | "send" | "subscribe" | "unblacklist" | "unexempt" | "unmute" | "warn" | "watch" | "welcome" | "cancel_action" | "retry_action";
             target?: string;
             text?: string;
             /** Format: int64 */
@@ -452,6 +504,10 @@ export interface components {
             /** Format: date-time */
             until: string;
             permanent: boolean;
+            /** Format: date-time */
+            created?: string;
+            /** Format: date-time */
+            updated?: string;
         };
         Warnings: {
             id: string;
@@ -461,6 +517,10 @@ export interface components {
         Watch: {
             enabled: boolean;
             reason: string;
+            /** Format: date-time */
+            created?: string;
+            /** Format: date-time */
+            updated?: string;
             id: string;
         };
         Delivery: {
@@ -517,6 +577,17 @@ export interface components {
             /** Format: int64 */
             revision: number;
             password_set: boolean;
+            /**
+             * Format: int64
+             * @description Monotonic generation counter incremented whenever the dynamic password is set, rotated or cleared.
+             */
+            password_epoch?: number;
+            /** @description Whether the group appears in the student-facing directory. */
+            discoverable: boolean;
+            /** @enum {string} */
+            category: "" | "school" | "department" | "grade" | "course" | "club";
+            description: string;
+            password_hint: string;
         };
         GroupConfigInput: {
             id: string;
@@ -570,6 +641,17 @@ export interface components {
             expected_revision: number;
             /** @description Omitted preserves password; empty clears it (not allowed in password mode). Never returned or saved as plaintext. */
             password?: string;
+            /** @description Optional directory visibility flag; defaults to false when omitted. */
+            discoverable?: boolean;
+            /**
+             * @description Optional directory category; empty when uncategorized.
+             * @enum {string}
+             */
+            category?: "" | "school" | "department" | "grade" | "course" | "club";
+            /** @description Optional public group summary shown in the directory. */
+            description?: string;
+            /** @description Optional hint telling applicants where to obtain the dynamic password. */
+            password_hint?: string;
         };
         GroupSummary: {
             id: string;
@@ -1021,10 +1103,90 @@ export interface components {
             unknown_conditions: ("student_eligibility" | "student_stage")[];
             /** @description UI action categories, not authorization grants. Unknown facts suggest refresh. Unsupported stages suggest contacting an administrator rather than repeating verification. */
             next_actions: ("bind_qq" | "verify_student" | "submit_password" | "contact_group_admin" | "refresh")[];
+            /** @description Optional card template field keys not yet disclosed or available for this group's card check; never contains field values. */
+            missing_card_fields?: ("school" | "grade" | "department" | "name" | "student_id" | "gender" | "nickname")[];
+            /** @description Optional hint describing where to locate the dynamic password; present only when requires_password is true and a hint is configured. */
+            password_hint?: string;
         };
         MyGroupPage: {
             items: components["schemas"]["MyGroup"][];
             /** @description Last returned group ID if another page exists, or empty when exhausted. */
+            next_cursor: string;
+        };
+        /** @description Read-only management command; previews expected card rendering and missing profile fields without queuing bot actions. */
+        CardPreviewCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "card_preview";
+            target: string;
+            /** @description Optional candidate card_template override; uses the group's stored card_template when omitted or empty. */
+            text?: string;
+        };
+        /** @description Management command; cancels a pending bot action without affecting executing or unknown actions. */
+        CancelActionCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "cancel_action";
+            target: string;
+            text?: string;
+        };
+        /** @description Management command; queues a controlled retry for a confirmed failed bot action. */
+        RetryActionCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "retry_action";
+            target: string;
+            text?: string;
+        };
+        AuditEntry: {
+            id: string;
+            actor: string;
+            action: string;
+            target: string;
+            result: string;
+            /** Format: date-time */
+            time: string;
+        };
+        AuditPage: {
+            items: components["schemas"]["AuditEntry"][];
+            /** @description Opaque cursor for the next scan, or empty when exhausted. */
+            next_cursor: string;
+        };
+        DirectoryGroup: {
+            /** @description Internal group ID. */
+            id: string;
+            school: string;
+            name: string;
+            /** @description Masked group number showing at most the final four digits; empty when not recorded. */
+            number: string;
+            /** @enum {string} */
+            category: "" | "school" | "department" | "grade" | "course" | "club";
+            description: string;
+            /** @enum {string} */
+            mode: "before" | "muted" | "password";
+            require_student: boolean;
+            accept_alumni: boolean;
+            accept_temporary: boolean;
+            requires_password: boolean;
+            /** @description Optional hint describing where to locate the dynamic password when requires_password is true. */
+            password_hint?: string;
+            /** @description True only when the caller's own membership has been confirmed by the bot. */
+            joined: boolean;
+            /**
+             * @description Caller's own active membership or application state, or empty when none.
+             * @enum {string}
+             */
+            state: "" | "requested" | "awaiting_verification" | "grace" | "extended" | "exempt" | "restored" | "removal_pending";
+        };
+        DirectoryGroupPage: {
+            items: components["schemas"]["DirectoryGroup"][];
+            /** @description Last scanned group ID if another page may exist, or empty when exhausted. */
             next_cursor: string;
         };
     };
@@ -1596,6 +1758,9 @@ export interface operations {
             query?: {
                 cursor?: string;
                 limit?: number;
+                state?: "requested" | "awaiting_verification" | "grace" | "extended" | "exempt" | "restored" | "removal_pending" | "removed";
+                joined?: boolean;
+                exempt?: boolean;
             };
             header?: never;
             path: {
@@ -1666,6 +1831,9 @@ export interface operations {
             query?: {
                 cursor?: string;
                 limit?: number;
+                state?: "pending" | "executing" | "unknown" | "succeeded" | "failed" | "cancelled";
+                kind?: "ai_execute" | "analyze" | "apply" | "approve" | "blacklist" | "card" | "dice" | "exempt" | "extend" | "feedback" | "forward" | "kick" | "mute" | "password" | "preview" | "recall" | "recheck" | "remind" | "report" | "rule" | "self_mute" | "send" | "subscribe" | "unblacklist" | "unmute" | "warn" | "watch" | "welcome";
+                order?: "asc" | "desc";
             };
             header?: never;
             path: {
@@ -1736,6 +1904,8 @@ export interface operations {
             query?: {
                 cursor?: string;
                 limit?: number;
+                state?: "open" | "suggested" | "pending_execution" | "resolved";
+                order?: "asc" | "desc";
             };
             header?: never;
             path: {
@@ -1806,6 +1976,7 @@ export interface operations {
             query?: {
                 cursor?: string;
                 limit?: number;
+                order?: "asc" | "desc";
             };
             header?: never;
             path: {
@@ -1876,6 +2047,8 @@ export interface operations {
             query?: {
                 cursor?: string;
                 limit?: number;
+                recalled?: boolean;
+                order?: "asc" | "desc";
             };
             header?: never;
             path: {
@@ -2331,6 +2504,137 @@ export interface operations {
                 };
             };
             /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listAudit: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Group management audit entries; never contains message bodies or recalled content. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditPage"];
+                };
+            };
+            /** @description groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Current identity cannot perform this operation. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_not_found: Requested group, member, message or related object does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listGroupDirectory: {
+        parameters: {
+            query?: {
+                school?: string;
+                category?: "school" | "department" | "grade" | "course" | "club";
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Discoverable public group cards within the caller's campus eligibility or public visibility policy. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DirectoryGroupPage"];
+                };
+            };
+            /** @description groups_invalid_request: Invalid school, category or pagination query parameters. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unauthenticated: Missing or invalid authenticated identity. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_forbidden: Caller is restricted from discovering groups in the requested scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description groups_unavailable: Database or fact provider is unavailable, or an upstream result cannot be verified. */
             503: {
                 headers: {
                     [name: string]: unknown;

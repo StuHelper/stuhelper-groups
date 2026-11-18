@@ -2,6 +2,7 @@ package groups
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"github.com/StuHelper/stuhelper-platform/account"
 	"slices"
@@ -40,6 +41,23 @@ func validBatchCommand(cmd Command) bool {
 	}
 }
 
+type batchInputRecord struct {
+	Digest    string    `json:"digest"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+}
+
+func decodeBatchDigest(raw json.RawMessage) (string, error) {
+	var rec batchInputRecord
+	if err := json.Unmarshal(raw, &rec); err == nil && rec.Digest != "" {
+		return rec.Digest, nil
+	}
+	var legacy string
+	if err := json.Unmarshal(raw, &legacy); err == nil && legacy != "" {
+		return legacy, nil
+	}
+	return "", ErrInvalid
+}
+
 func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string, in Bulk) (BulkResult, error) {
 	out := BulkResult{Items: []BulkItem{}}
 	if !p.Valid() {
@@ -67,11 +85,15 @@ func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string,
 		if e := s.auth(ctx, p, "groups.manage", c); e != nil {
 			return e
 		}
-		var prior string
+		var rawPrior json.RawMessage
 		id := hash([]string{p.Key(), g, key})
-		e := tx.Get("batch_inputs", id, &prior)
+		e := tx.Get("batch_inputs", id, &rawPrior)
 		digest := hash(in)
 		if e == nil {
+			prior, err := decodeBatchDigest(rawPrior)
+			if err != nil {
+				return err
+			}
 			if prior != digest {
 				return NewErrorDetail(ErrConflict, "idempotency_mismatch", "", 0)
 			}
@@ -80,7 +102,7 @@ func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string,
 		if !errors.Is(e, ErrNotFound) {
 			return e
 		}
-		return tx.Put("batch_inputs", id, digest)
+		return tx.Put("batch_inputs", id, batchInputRecord{Digest: digest, CreatedAt: s.now()})
 	})
 	if err != nil {
 		return out, err
@@ -164,7 +186,13 @@ func (s *Service) Blacklists(ctx context.Context, p account.Principal, key strin
 			if in.Remove {
 				e = tx.Delete(bucket(id, "blacklist"), in.Target)
 			} else {
-				e = tx.Put(bucket(id, "blacklist"), in.Target, Blacklist{ID: in.Target, Reason: in.Reason, Until: s.now().Add(time.Duration(in.Seconds) * time.Second), Permanent: in.Seconds == 0})
+				now := s.now()
+				created := now
+				var prior Blacklist
+				if err := tx.Get(bucket(id, "blacklist"), in.Target, &prior); err == nil && prior.Created != nil && !prior.Created.IsZero() {
+					created = *prior.Created
+				}
+				e = tx.Put(bucket(id, "blacklist"), in.Target, Blacklist{ID: in.Target, Reason: in.Reason, Until: now.Add(time.Duration(in.Seconds) * time.Second), Permanent: in.Seconds == 0, Created: &created, Updated: &now})
 			}
 			if e != nil {
 				return e
@@ -177,7 +205,7 @@ func (s *Service) Blacklists(ctx context.Context, p account.Principal, key strin
 				return e
 			}
 		}
-		return save(tx, p.Key(), "blacklists", object, key, in, out)
+		return s.saveReceipt(tx, p.Key(), "blacklists", object, key, in, out)
 	})
 	return out, e
 }
@@ -199,7 +227,13 @@ func (s *Service) manageRecord(ctx context.Context, tx Tx, p account.Principal, 
 		if !valid(cmd.Target, 2048) {
 			return out, ErrInvalid
 		}
-		if e := tx.Put(bucket(c.ID, "watch"), cmd.Target, map[string]any{"enabled": cmd.Enabled, "reason": cmd.Text}); e != nil {
+		now := s.now()
+		created := now
+		var prior Watch
+		if e := tx.Get(bucket(c.ID, "watch"), cmd.Target, &prior); e == nil && prior.Created != nil && !prior.Created.IsZero() {
+			created = *prior.Created
+		}
+		if e := tx.Put(bucket(c.ID, "watch"), cmd.Target, map[string]any{"enabled": cmd.Enabled, "reason": cmd.Text, "created": created, "updated": now}); e != nil {
 			return out, e
 		}
 		return out, s.audit(tx, p, c.ID, "watch", cmd.Target, "updated")
@@ -214,6 +248,8 @@ func (s *Service) manageRecord(ctx context.Context, tx Tx, p account.Principal, 
 		}
 		report["feedback"] = cmd.Text
 		report["state"] = "resolved"
+		report["resolved_by"] = Actor(p)
+		report["updated"] = s.now()
 		if e := tx.Put(bucket(c.ID, "reports"), cmd.Target, report); e != nil {
 			return out, e
 		}
@@ -266,6 +302,7 @@ func (s *Service) manageRecord(ctx context.Context, tx Tx, p account.Principal, 
 	if len(executed) == 1 && executed["blacklist"] {
 		report["state"] = "resolved"
 	}
+	report["updated"] = s.now()
 	return out, tx.Put(bucket(c.ID, "reports"), cmd.Target, report)
 }
 

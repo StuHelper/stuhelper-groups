@@ -47,8 +47,9 @@ func (t *previewTx) PendingActions(group string) (int, error) {
 	}
 	return t.pending, nil
 }
-func (*previewTx) Emit(Event) error           { return nil }
-func (*previewTx) Accept(Event) (bool, error) { return false, ErrInvalid }
+func (*previewTx) DeleteSentOutboxBefore(time.Time, int) (int, error) { return 0, ErrInvalid }
+func (*previewTx) Emit(Event) error                                   { return nil }
+func (*previewTx) Accept(Event) (bool, error)                         { return false, ErrInvalid }
 
 func (s *Service) previewBatch(ctx context.Context, p account.Principal, id string, in Bulk) (BulkResult, error) {
 	out := BulkResult{Items: []BulkItem{}}

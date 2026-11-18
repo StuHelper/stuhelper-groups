@@ -1,7 +1,7 @@
 ---
 type: development
 status: Accepted
-updated: 2026-11-18
+updated: 2026-11-19
 ---
 
 # Groups 实施状态
@@ -40,7 +40,7 @@ updated: 2026-11-18
 
 OpenAPI 0.4.0 使用 /api/v1/groups 前缀，Go/TypeScript 客户端、HTTP Handler、Service 与 PostgreSQL Repository 已建立。群与学校关联、分范围管理、本人申请进度、三项绑定和资格判断、动态口令、宽限期、恢复、延期、豁免与自动移出均由服务端处理。
 
-群名片检查区分资料缺失和不合规，性别未知使用中性分隔符。检查、提醒和自动修改分别配置。模板可引用许可字段及自由昵称，名片不合规不触发资格失效移出。
+群名片采用单遍占位符解析，提供无副作用的 card_preview 预览与我的群 missing_card_fields 缺失字段键提示，性别未知使用中性分隔符。动态口令维护单调 password_epoch，已恢复入群成员在口令轮换后保留资格，未入群申请者按最新代数重验。
 
 群管理提供警告、禁言、解禁、踢出、黑名单、关键词、链接、频率、防复读、规则预览、观察名单、举报分析与反馈。AI 建议独立保存，执行只采用已启用的动作和当前授权。
 
@@ -50,15 +50,21 @@ OpenAPI 0.4.0 使用 /api/v1/groups 前缀，Go/TypeScript 客户端、HTTP Hand
 
 消息留存默认关闭，到期读取被拒绝并可分页删除。撤回事件在有效留存期内保留原发送者、正文与图片附件引用，撤回内容查看不写业务查看审计。机器人消息与成员进退分别按单条消息和单个成员维护修订流。其他机器人动作保存授权后的待执行记录及实际执行结果审计。
 
+GET /api/v1/groups/{group}/audit 按 groups.configure 分页返回群级管理审计，不含任何消息正文。cancel_action 与 retry_action 分别支持取消 pending 动作与受控重试已确认 failed 动作。
+
+幂等收据、已确认且未挂起的历史 outbox 与过期频率窗口提供有界定期清理。
+
 业务写入、审计和 outbox 在同一事务，提交后 pg_notify。inbox 拒绝同 ID 内容变化，忽略重复与旧修订。发送器使用部分索引、LISTEN、60 秒补读及退避队列。
 
 群列表返回 GroupSummary，集合各有独立分页类型并直接解码为目标结构体。HTTP 路由、Event 与 UpstreamEvent 支持透传可选 traceparent，串联 outbox、Execute 与 Fanout 链路追踪。
 
 配置采用 expected_revision 比较更新，口令只在请求中接收并保存带盐摘要。命令按 kind 验证必填字段，错误码采用 groups_ 枚举。
 
+集合可按状态、类型和撤回标记筛选，并按时间倒序分页。举报保留关联作者、结案人与时间戳，不复制消息正文。
+
 outbox 提供带排除主题和 limit 的 PendingOutbox，以及幂等 ConfirmOutbox。GroupsForOwner 提供有界成员反查，Consume 按上游 owner 在同一事务内重算关联群，Sweep 保留为周期性核对与期限处理。
 
-Web 通过 GET /api/v1/groups/me 查询自己的成员和申请记录。本人查询复用 owner 反向索引和资格判定，区分缺失条件、未知事实和依赖失败，不返回管理信息，不触发业务写入。
+Web 通过 GET /api/v1/groups/directory 查找公开群目录，并通过 GET /api/v1/groups/me 查询本人成员和申请记录。两端均复用资格判定，返回动态口令提示，不暴露管理计数或触发业务写入。
 
 Consume 接受 qq-binding.owner-bindings.changed.v1，并按提供方实际封套检查 subject、owner、十进制 ID 与 int64 修订的一致性。已有去重和旧修订规则不变，不支持的类型继续返回 ErrInvalid。
 

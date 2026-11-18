@@ -94,8 +94,9 @@ func (s *Service) audit(tx Tx, p account.Principal, g, kind, target, result stri
 }
 
 type receipt struct {
-	Digest string
-	Result json.RawMessage
+	Digest    string
+	Result    json.RawMessage
+	CreatedAt time.Time `json:"created_at,omitempty"`
 }
 
 func validKey(v string) bool {
@@ -128,16 +129,19 @@ func replay(tx ReadTx, owner, operation, object, key string, input, out any) (bo
 	}
 	return true, json.Unmarshal(r.Result, out)
 }
-func save(tx Tx, owner, operation, object, key string, input, out any) error {
+func (s *Service) saveReceipt(tx Tx, owner, operation, object, key string, input, out any) error {
 	b, e := json.Marshal(out)
 	if e != nil {
 		return e
 	}
-	return tx.Put("receipts", hash([]string{owner, operation, object, key}), receipt{hash(input), b})
+	return tx.Put("receipts", hash([]string{owner, operation, object, key}), receipt{Digest: hash(input), Result: b, CreatedAt: s.now()})
 }
 func validateConfig(c GroupConfig) error {
-	if c.ID == "me" || c.ID == "*" || !valid(c.ID, 128) {
+	if c.ID == "directory" || c.ID == "me" || c.ID == "*" || !valid(c.ID, 128) {
 		return NewErrorDetail(ErrInvalid, "invalid_field", "id", 0)
+	}
+	if !slices.Contains([]string{"", "school", "department", "grade", "course", "club"}, c.Category) || !utf8.ValidString(c.Description) || utf8.RuneCountInString(c.Description) > 512 || strings.ContainsFunc(c.Description, func(r rune) bool { return unicode.IsControl(r) && r != '\n' }) || !utf8.ValidString(c.PasswordHint) || utf8.RuneCountInString(c.PasswordHint) > 256 || strings.ContainsFunc(c.PasswordHint, unicode.IsControl) {
+		return ErrInvalid
 	}
 	if c.School == "*" || !valid(c.School, 128) {
 		return NewErrorDetail(ErrInvalid, "invalid_field", "school", 0)
@@ -181,7 +185,7 @@ func validateConfig(c GroupConfig) error {
 	if !validText(c.CardTemplate, 1024) {
 		return NewErrorDetail(ErrInvalid, "invalid_field", "card_template", 0)
 	}
-	if _, _, err := renderCard(c.CardTemplate, nil); err != nil {
+	if _, _, err := renderCardTemplate(c.CardTemplate, nil); err != nil {
 		return NewErrorDetail(ErrInvalid, "invalid_field", "card_template", 0)
 	}
 	if !validText(c.Welcome, 2048) {
@@ -232,13 +236,13 @@ func capability(kind string) string {
 		return "groups.messages.send"
 	case "recall":
 		return "groups.messages.recall"
-	case "extend", "exempt", "unexempt", "warn", "mute", "unmute", "kick", "blacklist", "unblacklist":
+	case "extend", "exempt", "unexempt", "warn", "mute", "unmute", "kick", "blacklist", "unblacklist", "cancel_action", "retry_action":
 		return "groups.manage"
 	case "subscribe", "rule", "ai_execute":
 		return "groups.configure"
 	case "feedback", "watch":
 		return "groups.manage"
-	case "analyze", "preview", "card", "recheck":
+	case "analyze", "preview", "card", "card_preview", "recheck":
 		return "groups.read"
 	}
 	return ""
@@ -340,7 +344,7 @@ func (s *Service) Command(ctx context.Context, p account.Principal, g, key strin
 		if e != nil {
 			return e
 		}
-		return save(tx, p.Key(), "command", g, key, input, out)
+		return s.saveReceipt(tx, p.Key(), "command", g, key, input, out)
 	})
 	return out, e
 }
@@ -432,6 +436,7 @@ func (s *Service) executeAnalyze(ctx context.Context, p account.Principal, g, ke
 		if e := s.auth(ctx, p, "groups.messages.read", c); e != nil {
 			return e
 		}
+		r["updated"] = s.now()
 		r["analysis"] = text
 		r["suggestions"] = actions
 		r["state"] = "suggested"
@@ -439,7 +444,7 @@ func (s *Service) executeAnalyze(ctx context.Context, p account.Principal, g, ke
 		if e := tx.Put(bucket(c.ID, "reports"), cmd.Target, r); e != nil {
 			return e
 		}
-		return save(tx, p.Key(), "command", g, key, input, out)
+		return s.saveReceipt(tx, p.Key(), "command", g, key, input, out)
 	})
 	return out, e
 }
@@ -548,6 +553,7 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 			return out, e
 		}
 		m.Password = true
+		m.PasswordEpoch = stored.PasswordEpoch
 		if e := tx.Put(bucket(c.ID, "members"), cmd.Target, m); e != nil {
 			return out, e
 		}
@@ -561,7 +567,13 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		if !valid(cmd.Target, 2048) {
 			return out, ErrInvalid
 		}
-		if e := tx.Put(bucket(c.ID, "blacklist"), cmd.Target, Blacklist{ID: cmd.Target, Reason: cmd.Text, Until: s.now().Add(time.Duration(cmd.Seconds) * time.Second), Permanent: cmd.Seconds == 0}); e != nil {
+		now := s.now()
+		created := now
+		var prior Blacklist
+		if e := tx.Get(bucket(c.ID, "blacklist"), cmd.Target, &prior); e == nil && prior.Created != nil && !prior.Created.IsZero() {
+			created = *prior.Created
+		}
+		if e := tx.Put(bucket(c.ID, "blacklist"), cmd.Target, Blacklist{ID: cmd.Target, Reason: cmd.Text, Until: now.Add(time.Duration(cmd.Seconds) * time.Second), Permanent: cmd.Seconds == 0, Created: &created, Updated: &now}); e != nil {
 			return out, e
 		}
 		return out, s.audit(tx, p, c.ID, cmd.Kind, cmd.Target, "blocked")
@@ -574,14 +586,28 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		if cmd.Message == "" || strings.TrimSpace(cmd.Text) == "" {
 			return out, ErrInvalid
 		}
+		now := s.now()
 		out.ID = uuid.NewString()
-		return out, tx.Put(bucket(c.ID, "reports"), out.ID, map[string]any{"reporter": p.Key(), "message": cmd.Message, "reason": cmd.Text, "state": "open"})
+		record := map[string]any{"reporter": p.Key(), "message": cmd.Message, "reason": cmd.Text, "state": "open", "created": now, "updated": now}
+		var msg Message
+		if e := tx.Get(bucket(c.ID, "messages"), cmd.Message, &msg); e == nil {
+			if c.RetentionSeconds > 0 && now.Before(msg.Expires) {
+				record["target"] = msg.Owner
+			}
+		} else if !errors.Is(e, ErrNotFound) {
+			return out, e
+		}
+		return out, tx.Put(bucket(c.ID, "reports"), out.ID, record)
 	case "feedback", "watch", "ai_execute":
 		return s.manageRecord(ctx, tx, p, c, cmd)
 	case "preview", "rule":
 		return s.rule(ctx, tx, p, c, cmd, cmd.Kind == "preview")
 	case "card":
 		return s.card(ctx, tx, p, c, cmd)
+	case "cancel_action", "retry_action":
+		return s.manageAction(ctx, tx, p, c, cmd)
+	case "card_preview":
+		return s.cardPreview(ctx, tx, c, cmd)
 	case "subscribe":
 		if !valid(cmd.Receiver, 128) {
 			return out, ErrInvalid
@@ -653,10 +679,12 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 }
 
 type Blacklist struct {
-	ID        string    `json:"id"`
-	Reason    string    `json:"reason"`
-	Until     time.Time `json:"until"`
-	Permanent bool      `json:"permanent"`
+	ID        string     `json:"id"`
+	Reason    string     `json:"reason"`
+	Until     time.Time  `json:"until"`
+	Permanent bool       `json:"permanent"`
+	Created   *time.Time `json:"created,omitempty"`
+	Updated   *time.Time `json:"updated,omitempty"`
 }
 
 func (s *Service) eligible(ctx context.Context, tx Tx, c GroupConfig, m Member) (bool, error) {

@@ -73,7 +73,7 @@ func (s *Service) assessEligibility(ctx context.Context, tx ReadTx, c GroupConfi
 			}
 		}
 	}
-	needsPassword := c.Mode == "password" && !m.Password
+	needsPassword := c.Mode == "password" && (!m.Password || m.PasswordEpoch < c.PasswordEpoch)
 	if needsPassword && m.Joined {
 		var history admissionHistory
 		err := tx.Get(bucket(c.ID, "admissions"), m.Owner, &history)
