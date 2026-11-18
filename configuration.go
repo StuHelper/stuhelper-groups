@@ -57,11 +57,23 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 	if !p.Valid() {
 		return out, ErrUnauthenticated
 	}
-	if !valid(key, 128) {
+	if !validKey(key) {
 		return out, ErrInvalid
 	}
-	if in.ExpectedRevision < 0 || in.Password != nil && len(*in.Password) > 256 || in.Number != nil && !groupNumber.MatchString(*in.Number) {
-		return out, ErrUnprocessable
+	if !valid(in.ID, 128) {
+		return out, NewErrorDetail(ErrUnprocessable, "invalid_field", "id", 0)
+	}
+	if !valid(in.School, 128) {
+		return out, NewErrorDetail(ErrUnprocessable, "invalid_field", "school", 0)
+	}
+	if in.ExpectedRevision < 0 {
+		return out, NewErrorDetail(ErrUnprocessable, "invalid_field", "expected_revision", 0)
+	}
+	if in.Password != nil && !validText(*in.Password, 256) {
+		return out, NewErrorDetail(ErrUnprocessable, "invalid_field", "password", 0)
+	}
+	if in.Number != nil && !groupNumber.MatchString(*in.Number) {
+		return out, NewErrorDetail(ErrUnprocessable, "invalid_field", "number", 0)
 	}
 	if in.Keywords == nil {
 		in.Keywords = []string{}
@@ -69,7 +81,7 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 	if in.AutoActions == nil {
 		in.AutoActions = []string{}
 	}
-	e := s.run(ctx, func(tx Tx) error {
+	e := s.runScoped(ctx, []string{"group:" + in.ID, "receipt:" + p.Key() + ":" + key}, func(tx Tx) error {
 		c := GroupConfig{GroupSettings: in.GroupSettings}
 		if e := s.auth(ctx, p, "groups.configure", c); e != nil {
 			return e
@@ -80,15 +92,15 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 			return e
 		}
 		if e == nil && old.School != c.School {
-			return ErrConflict
+			return NewErrorDetail(ErrConflict, "school_immutable", "school", 0)
 		}
 		// Authorize against current scope before replay, but replay before revision checks.
-		ok, e := replay(tx, p.Key(), key, in, &out)
+		ok, e := replay(tx, p.Key(), "configure", c.ID, key, in, &out)
 		if e != nil || ok {
 			return e
 		}
 		if old.Revision != in.ExpectedRevision {
-			return ErrConflict
+			return NewErrorDetail(ErrConflict, "revision_mismatch", "expected_revision", 0)
 		}
 		record := configRecord{GroupConfig: c, PasswordDigest: old.PasswordDigest}
 		record.Number = old.Number
@@ -110,6 +122,10 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 		record.PasswordSet = record.PasswordDigest != ""
 		record.Revision = old.Revision + 1
 		if e = validateConfig(record.GroupConfig); e != nil {
+			var detail *ErrorDetail
+			if errors.As(e, &detail) {
+				return NewErrorDetail(ErrUnprocessable, detail.Reason, detail.Field, 0)
+			}
 			return ErrUnprocessable
 		}
 		if e = tx.Put("config", c.ID, record); e != nil {
@@ -118,11 +134,11 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 		if e = s.audit(tx, p, c.ID, "configure", c.ID, "saved"); e != nil {
 			return e
 		}
-		if e = s.event(tx, c.ID, "configured", map[string]string{"group": c.ID}); e != nil {
+		if e = s.event(ctx, tx, c.ID, "configured", map[string]string{"group": c.ID}); e != nil {
 			return e
 		}
 		out = record.GroupConfig
-		return save(tx, p.Key(), key, in, out)
+		return save(tx, p.Key(), "configure", c.ID, key, in, out)
 	})
 	if e != nil {
 		return GroupConfig{}, e
@@ -134,7 +150,10 @@ func (s *Service) Configuration(ctx context.Context, p account.Principal, g stri
 	if !p.Valid() {
 		return c, ErrUnauthenticated
 	}
-	e := s.run(ctx, func(tx Tx) error {
+	if !valid(g, 128) {
+		return c, ErrInvalid
+	}
+	e := s.runRead(ctx, func(tx ReadTx) error {
 		if e := tx.Get("config", g, &c); e != nil {
 			return e
 		}

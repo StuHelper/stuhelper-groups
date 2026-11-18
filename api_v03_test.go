@@ -342,6 +342,7 @@ func TestCommandDiscriminatorRequiresKindSpecificFields(t *testing.T) {
 	if count(t, f, "g/actions") != 2 {
 		t.Fatal("valid commands not queued")
 	}
+	command(t, f, manager, "enable", g.Command{Kind: "subscribe", Receiver: "g", Enabled: true})
 	w := api(t, f, manager, "POST", "/api/v1/groups/g/commands", "subscribe", map[string]any{"kind": "subscribe", "receiver": "g", "enabled": false})
 	if w.Code != 200 {
 		t.Fatal(w.Body.String())

@@ -744,6 +744,66 @@ func (e ProblemCode) Valid() bool {
 	}
 }
 
+// Defines values for ProblemReason.
+const (
+	ActionExecuting        ProblemReason = "action_executing"
+	ActionQueueFull        ProblemReason = "action_queue_full"
+	BotDisabled            ProblemReason = "bot_disabled"
+	CardCheckDisabled      ProblemReason = "card_check_disabled"
+	DiceDisabled           ProblemReason = "dice_disabled"
+	IdempotencyMismatch    ProblemReason = "idempotency_mismatch"
+	InvalidField           ProblemReason = "invalid_field"
+	MemberCooldown         ProblemReason = "member_cooldown"
+	MissingCooldownSeconds ProblemReason = "missing_cooldown_seconds"
+	MissingMuteSeconds     ProblemReason = "missing_mute_seconds"
+	MissingPassword        ProblemReason = "missing_password"
+	PasswordModeDisabled   ProblemReason = "password_mode_disabled"
+	RevisionMismatch       ProblemReason = "revision_mismatch"
+	SchemaValidationFailed ProblemReason = "schema_validation_failed"
+	SchoolImmutable        ProblemReason = "school_immutable"
+	SelfMuteDisabled       ProblemReason = "self_mute_disabled"
+)
+
+// Valid indicates whether the value is a known member of the ProblemReason enum.
+func (e ProblemReason) Valid() bool {
+	switch e {
+	case ActionExecuting:
+		return true
+	case ActionQueueFull:
+		return true
+	case BotDisabled:
+		return true
+	case CardCheckDisabled:
+		return true
+	case DiceDisabled:
+		return true
+	case IdempotencyMismatch:
+		return true
+	case InvalidField:
+		return true
+	case MemberCooldown:
+		return true
+	case MissingCooldownSeconds:
+		return true
+	case MissingMuteSeconds:
+		return true
+	case MissingPassword:
+		return true
+	case PasswordModeDisabled:
+		return true
+	case RevisionMismatch:
+		return true
+	case SchemaValidationFailed:
+		return true
+	case SchoolImmutable:
+		return true
+	case SelfMuteDisabled:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RecallCommandKind.
 const (
 	RecallCommandKindRecall RecallCommandKind = "recall"
@@ -1554,10 +1614,22 @@ type PreviewCommandKind string
 type Problem struct {
 	// Code groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. groups_unauthenticated: Missing or invalid authenticated identity. groups_forbidden: Current identity cannot perform this operation. groups_not_found: Requested group, member, message or related object does not exist. groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled. groups_cooldown: Cooldown or pending action capacity prevents this operation. groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.
 	Code ProblemCode `json:"code"`
+
+	// Field Optional request field name associated with validation or conflict errors.
+	Field *string `json:"field,omitempty"`
+
+	// Reason Optional sanitized subcode for localized UI and bot prompts.
+	Reason *ProblemReason `json:"reason,omitempty"`
+
+	// RetryAfterSeconds Optional remaining cooldown seconds; paired with the HTTP Retry-After header.
+	RetryAfterSeconds *int64 `json:"retry_after_seconds,omitempty"`
 }
 
 // ProblemCode groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. groups_unauthenticated: Missing or invalid authenticated identity. groups_forbidden: Current identity cannot perform this operation. groups_not_found: Requested group, member, message or related object does not exist. groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled. groups_cooldown: Cooldown or pending action capacity prevents this operation. groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.
 type ProblemCode string
+
+// ProblemReason Optional sanitized subcode for localized UI and bot prompts.
+type ProblemReason string
 
 // RecallCommand Management command; requires current group-scoped capability.
 type RecallCommand struct {
@@ -1621,10 +1693,19 @@ type Result struct {
 	Detail string `json:"detail"`
 	Id     string `json:"id"`
 
+	// MaxValue Configured upper bound for randomized commands such as dice_sides.
+	MaxValue *int64 `json:"max_value,omitempty"`
+
 	// MissingFields Optional list of card template field keys not yet disclosed or available.
 	MissingFields *[]ResultMissingFields `json:"missing_fields,omitempty"`
-	State         string                 `json:"state"`
-	Value         int64                  `json:"value"`
+
+	// PityRemaining Remaining attempts before guaranteed pity trigger when pity > 0.
+	PityRemaining *int64 `json:"pity_remaining,omitempty"`
+
+	// Seconds Effective duration in seconds for timed dispositions or voluntary self_mute.
+	Seconds *int64 `json:"seconds,omitempty"`
+	State   string `json:"state"`
+	Value   int64  `json:"value"`
 }
 
 // ResultMissingFields defines model for Result.MissingFields.
@@ -3286,7 +3367,7 @@ type ClientInterface interface {
 
 	// ListDeliverys performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
 	//
-	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	// Lists delivery results. The SDK also accepts the legacy listDeliverys spelling.
 	ListDeliverys(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListHits performs a GET /api/v1/groups/{group}/hits (the `ListHits` operationId) request.
@@ -3515,7 +3596,7 @@ func (c *Client) Command(ctx context.Context, group string, params *CommandParam
 
 // ListDeliverys performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
 //
-// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+// Lists delivery results. The SDK also accepts the legacy listDeliverys spelling.
 func (c *Client) ListDeliverys(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListDeliverysRequest(c.Server, group, params)
 	if err != nil {
@@ -4928,7 +5009,7 @@ type ClientWithResponsesInterface interface {
 
 	// ListDeliverysWithResponse performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
 	//
-	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	// Lists delivery results. The SDK also accepts the legacy listDeliverys spelling.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	ListDeliverysWithResponse(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*ListDeliverysResponse, error)
@@ -6544,7 +6625,7 @@ func (c *ClientWithResponses) CommandWithResponse(ctx context.Context, group str
 
 // ListDeliverysWithResponse performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
 //
-// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+// Lists delivery results. The SDK also accepts the legacy listDeliverys spelling.
 //
 // Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ListDeliverysWithResponse(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*ListDeliverysResponse, error) {

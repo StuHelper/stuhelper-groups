@@ -36,7 +36,8 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 128
+              "maxLength": 128,
+              "pattern": "^[ -~]{1,128}$"
             }
           }
         ],
@@ -230,7 +231,8 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 128
+              "maxLength": 128,
+              "pattern": "^[ -~]{1,128}$"
             }
           }
         ],
@@ -348,7 +350,8 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 128
+              "maxLength": 128,
+              "pattern": "^[ -~]{1,128}$"
             }
           }
         ],
@@ -457,7 +460,8 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 128
+              "maxLength": 128,
+              "pattern": "^[ -~]{1,128}$"
             }
           }
         ],
@@ -1586,7 +1590,7 @@
     },
     "/api/v1/groups/{group}/deliveries": {
       "get": {
-        "operationId": "listDeliverys",
+        "operationId": "listDeliveries",
         "parameters": [
           {
             "in": "path",
@@ -1678,7 +1682,7 @@
             }
           }
         },
-        "description": "Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering."
+        "description": "Lists delivery results. The SDK also accepts the legacy listDeliverys spelling."
       }
     },
     "/api/v1/groups/me": {
@@ -1896,6 +1900,24 @@
             "type": "string",
             "maxLength": 2048
           },
+          "max_value": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "Configured upper bound for randomized commands such as dice_sides."
+          },
+          "seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "description": "Effective duration in seconds for timed dispositions or voluntary self_mute."
+          },
+          "pity_remaining": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "description": "Remaining attempts before guaranteed pity trigger when pity > 0."
+          },
           "missing_fields": {
             "type": "array",
             "uniqueItems": true,
@@ -1941,6 +1963,39 @@
               "groups_unavailable"
             ],
             "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. groups_unauthenticated: Missing or invalid authenticated identity. groups_forbidden: Current identity cannot perform this operation. groups_not_found: Requested group, member, message or related object does not exist. groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled. groups_cooldown: Cooldown or pending action capacity prevents this operation. groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified."
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "member_cooldown",
+              "action_queue_full",
+              "revision_mismatch",
+              "school_immutable",
+              "idempotency_mismatch",
+              "action_executing",
+              "bot_disabled",
+              "password_mode_disabled",
+              "dice_disabled",
+              "self_mute_disabled",
+              "card_check_disabled",
+              "invalid_field",
+              "missing_mute_seconds",
+              "missing_cooldown_seconds",
+              "missing_password",
+              "schema_validation_failed"
+            ],
+            "description": "Optional sanitized subcode for localized UI and bot prompts."
+          },
+          "field": {
+            "type": "string",
+            "maxLength": 128,
+            "description": "Optional request field name associated with validation or conflict errors."
+          },
+          "retry_after_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "Optional remaining cooldown seconds; paired with the HTTP Retry-After header."
           }
         },
         "required": [
@@ -2033,7 +2088,8 @@
           "seconds": {
             "type": "integer",
             "format": "int64",
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 31536000
           },
           "remove": {
             "type": "boolean"
@@ -2461,12 +2517,25 @@
           "id": {
             "type": "string",
             "maxLength": 128,
-            "minLength": 1
+            "minLength": 1,
+            "pattern": "^[^/]+$",
+            "not": {
+              "enum": [
+                "me",
+                "*"
+              ]
+            }
           },
           "school": {
             "type": "string",
             "maxLength": 128,
-            "minLength": 1
+            "minLength": 1,
+            "pattern": "^[^/]+$",
+            "not": {
+              "enum": [
+                "*"
+              ]
+            }
           },
           "mode": {
             "type": "string",
@@ -2514,7 +2583,12 @@
             "type": "integer",
             "format": "int64",
             "minimum": 0,
-            "maximum": 1000000
+            "maximum": 1000000,
+            "not": {
+              "enum": [
+                1
+              ]
+            }
           },
           "mute_probability": {
             "type": "integer",
@@ -2675,14 +2749,22 @@
             "minLength": 1,
             "not": {
               "enum": [
-                "me"
+                "me",
+                "*"
               ]
-            }
+            },
+            "pattern": "^[^/]+$"
           },
           "school": {
             "type": "string",
             "maxLength": 128,
-            "minLength": 1
+            "minLength": 1,
+            "pattern": "^[^/]+$",
+            "not": {
+              "enum": [
+                "*"
+              ]
+            }
           },
           "mode": {
             "type": "string",
@@ -2730,7 +2812,12 @@
             "type": "integer",
             "format": "int64",
             "minimum": 0,
-            "maximum": 1000000
+            "maximum": 1000000,
+            "not": {
+              "enum": [
+                1
+              ]
+            }
           },
           "mute_probability": {
             "type": "integer",
@@ -2782,7 +2869,8 @@
                 "kick",
                 "blacklist"
               ]
-            }
+            },
+            "uniqueItems": true
           },
           "welcome": {
             "type": "string",
@@ -3611,33 +3699,6 @@
         ],
         "description": "Management command; requires current group-scoped capability."
       },
-      "CardPreviewCommand": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "kind": {
-            "type": "string",
-            "enum": [
-              "card_preview"
-            ]
-          },
-          "target": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 2048
-          },
-          "text": {
-            "type": "string",
-            "maxLength": 1024,
-            "description": "Optional candidate card_template override; uses the group's stored card_template when omitted or empty."
-          }
-        },
-        "required": [
-          "kind",
-          "target"
-        ],
-        "description": "Read-only management command; previews expected card rendering and missing profile fields without queuing bot actions."
-      },
       "AnalyzeCommand": {
         "type": "object",
         "additionalProperties": false,
@@ -4205,6 +4266,33 @@
           "items",
           "next_cursor"
         ]
+      },
+      "CardPreviewCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "card_preview"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 1024,
+            "description": "Optional candidate card_template override; uses the group's stored card_template when omitted or empty."
+          }
+        },
+        "required": [
+          "kind",
+          "target"
+        ],
+        "description": "Read-only management command; previews expected card rendering and missing profile fields without queuing bot actions."
       }
     }
   }

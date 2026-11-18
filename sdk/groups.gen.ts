@@ -261,8 +261,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering. */
-        get: operations["listDeliverys"];
+        /** @description Lists delivery results. The SDK also accepts the legacy listDeliverys spelling. */
+        get: operations["listDeliveries"];
         put?: never;
         post?: never;
         delete?: never;
@@ -300,6 +300,21 @@ export interface components {
             /** Format: int64 */
             value: number;
             detail: string;
+            /**
+             * Format: int64
+             * @description Configured upper bound for randomized commands such as dice_sides.
+             */
+            max_value?: number;
+            /**
+             * Format: int64
+             * @description Effective duration in seconds for timed dispositions or voluntary self_mute.
+             */
+            seconds?: number;
+            /**
+             * Format: int64
+             * @description Remaining attempts before guaranteed pity trigger when pity > 0.
+             */
+            pity_remaining?: number;
             /** @description Optional list of card template field keys not yet disclosed or available. */
             missing_fields?: ("school" | "grade" | "department" | "name" | "student_id" | "gender" | "nickname")[];
         };
@@ -309,6 +324,18 @@ export interface components {
              * @enum {string}
              */
             code: "groups_invalid_request" | "groups_unauthenticated" | "groups_forbidden" | "groups_not_found" | "groups_conflict" | "groups_unprocessable" | "groups_disabled" | "groups_cooldown" | "groups_unavailable";
+            /**
+             * @description Optional sanitized subcode for localized UI and bot prompts.
+             * @enum {string}
+             */
+            reason?: "member_cooldown" | "action_queue_full" | "revision_mismatch" | "school_immutable" | "idempotency_mismatch" | "action_executing" | "bot_disabled" | "password_mode_disabled" | "dice_disabled" | "self_mute_disabled" | "card_check_disabled" | "invalid_field" | "missing_mute_seconds" | "missing_cooldown_seconds" | "missing_password" | "schema_validation_failed";
+            /** @description Optional request field name associated with validation or conflict errors. */
+            field?: string;
+            /**
+             * Format: int64
+             * @description Optional remaining cooldown seconds; paired with the HTTP Retry-After header.
+             */
+            retry_after_seconds?: number;
         };
         Bulk: {
             targets: string[];
@@ -809,17 +836,6 @@ export interface components {
             target: string;
             text: string;
         };
-        /** @description Read-only management command; previews expected card rendering and missing profile fields without queuing bot actions. */
-        CardPreviewCommand: {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            kind: "card_preview";
-            target: string;
-            /** @description Optional candidate card_template override; uses the group's stored card_template when omitted or empty. */
-            text?: string;
-        };
         /** @description Management command; requires current group-scoped capability. */
         AnalyzeCommand: {
             /**
@@ -1005,6 +1021,17 @@ export interface components {
             items: components["schemas"]["MyGroup"][];
             /** @description Last returned group ID if another page exists, or empty when exhausted. */
             next_cursor: string;
+        };
+        /** @description Read-only management command; previews expected card rendering and missing profile fields without queuing bot actions. */
+        CardPreviewCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "card_preview";
+            target: string;
+            /** @description Optional candidate card_template override; uses the group's stored card_template when omitted or empty. */
+            text?: string;
         };
     };
     responses: never;
@@ -2200,7 +2227,7 @@ export interface operations {
             };
         };
     };
-    listDeliverys: {
+    listDeliveries: {
         parameters: {
             query?: {
                 cursor?: string;
@@ -2320,4 +2347,9 @@ export interface operations {
             };
         };
     };
+}
+
+export interface operations {
+    /** @deprecated Use listDeliveries. */
+    listDeliverys: operations["listDeliveries"];
 }

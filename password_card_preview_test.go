@@ -79,6 +79,20 @@ func TestPasswordEpochRotationProtectsJoinedMembersAndResetsUnjoinedApplicants(t
 		t.Fatalf("joined restored veteran affected by password rotation: %+v", vetView)
 	}
 
+	f.facts.set(false)
+	if _, err := f.s.Sweep(ctx, "g", ""); err != nil {
+		t.Fatal(err)
+	}
+	if old := member(t, f, "g", veteran); old.State != "grace" {
+		t.Fatal(old)
+	}
+	f.facts.set(true)
+	if _, err := f.s.Sweep(ctx, "g", ""); err != nil {
+		t.Fatal(err)
+	}
+	if recovered := member(t, f, "g", veteran); recovered.State != "restored" || !recovered.Deadline.IsZero() {
+		t.Fatal(recovered)
+	}
 	appView := personalPage(t, f, applicant, "").Items[0]
 	if appView.Eligibility != "ineligible" || !slices.Contains(appView.MissingConditions, "password") || !slices.Contains(appView.NextActions, "submit_password") {
 		t.Fatalf("unjoined applicant bypassed rotated password: %+v", appView)

@@ -15,7 +15,7 @@ func (s *Service) currentFacts(ctx context.Context, owner, school string) (Facts
 	if err != nil {
 		return Facts{}, err
 	}
-	if (!facts.StageKnown && (facts.Alumni || facts.Temporary)) || (!facts.StudentKnown && facts.Student) {
+	if facts.Alumni && facts.Temporary || facts.StudentKnown && !facts.Student && (facts.Alumni || facts.Temporary) || (!facts.StageKnown && (facts.Alumni || facts.Temporary)) || (!facts.StudentKnown && facts.Student) {
 		return Facts{}, ErrUnavailable
 	}
 	fields := make(map[string]CardField)
