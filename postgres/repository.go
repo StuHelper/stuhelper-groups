@@ -129,7 +129,7 @@ func (t *transaction) Accept(event g.Event) (bool, error) {
 	if e != nil {
 		return false, e
 	}
-	tag, e := t.tx.Exec(t.ctx, "INSERT INTO groups.revisions(source,subject,revision) VALUES($1,$2,$3) ON CONFLICT(source,subject) DO UPDATE SET revision=EXCLUDED.revision WHERE groups.revisions.revision<EXCLUDED.revision", event.Source, event.Subject, event.Revision)
+	tag, e := t.tx.Exec(t.ctx, "INSERT INTO groups.revisions(source,subject,revision) VALUES($1,$2,$3) ON CONFLICT(source,subject) DO UPDATE SET revision=EXCLUDED.revision WHERE groups.revisions.revision<EXCLUDED.revision", event.Source, event.RevisionSubject(), event.Revision)
 	return tag.RowsAffected() == 1, e
 }
 
