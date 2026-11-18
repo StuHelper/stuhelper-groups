@@ -24,7 +24,7 @@ type BulkResult struct {
 
 func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string, in Bulk) (BulkResult, error) {
 	out := BulkResult{Items: []BulkItem{}}
-	if len(in.Targets) < 1 || len(in.Targets) > 100 || !valid(key, 100) || !slices.Contains([]string{"warn", "mute", "unmute", "kick", "recheck", "extend", "exempt", "card"}, in.Command.Kind) {
+	if len(in.Targets) < 1 || len(in.Targets) > 100 || !valid(g, 128) || !valid(key, 128) || !slices.Contains([]string{"warn", "mute", "unmute", "kick", "recheck", "extend", "exempt", "card"}, in.Command.Kind) {
 		return out, ErrInvalid
 	}
 	seen := map[string]bool{}
@@ -34,33 +34,34 @@ func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string,
 		}
 		seen[target] = true
 	}
-	if !in.Preview {
-		err := s.run(ctx, func(tx Tx) error {
-			var c GroupConfig
-			if e := tx.Get("config", g, &c); e != nil {
-				return e
-			}
-			if e := s.auth(ctx, p, "groups.manage", c); e != nil {
-				return e
-			}
-			var prior string
-			id := hash([]string{p.Key(), g, key})
-			e := tx.Get("batch_inputs", id, &prior)
-			digest := hash(in)
-			if e == nil {
-				if prior != digest {
-					return ErrConflict
-				}
-				return nil
-			}
-			if !errors.Is(e, ErrNotFound) {
-				return e
-			}
-			return tx.Put("batch_inputs", id, digest)
-		})
-		if err != nil {
-			return out, err
+	err := s.run(ctx, func(tx Tx) error {
+		var c GroupConfig
+		if e := tx.Get("config", g, &c); e != nil {
+			return e
 		}
+		if e := s.auth(ctx, p, "groups.manage", c); e != nil {
+			return e
+		}
+		if in.Preview {
+			return nil
+		}
+		var prior string
+		id := hash([]string{p.Key(), g, key})
+		e := tx.Get("batch_inputs", id, &prior)
+		digest := hash(in)
+		if e == nil {
+			if prior != digest {
+				return ErrConflict
+			}
+			return nil
+		}
+		if !errors.Is(e, ErrNotFound) {
+			return e
+		}
+		return tx.Put("batch_inputs", id, digest)
+	})
+	if err != nil {
+		return out, err
 	}
 	// Per-target receipts preserve independent outcomes. A preview performs no writes.
 	for _, target := range in.Targets {
@@ -69,24 +70,25 @@ func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string,
 		var r Result
 		var e error
 		if in.Preview {
-			e = s.run(ctx, func(tx Tx) error {
-				var c GroupConfig
-				if e := tx.Get("config", g, &c); e != nil {
-					return e
-				}
-				return s.auth(ctx, p, "groups.manage", c)
-			})
 			r = Result{State: "preview", Action: cmd.Kind, Detail: "target:" + target}
 		} else {
-			r, e = s.Command(ctx, p, g, key+"-"+hash(target)[:20], cmd)
+			childKey := key + "-" + hash(target)[:20]
+			// Preserve receipts written before long batch keys were accepted.
+			if len(key) > 100 {
+				childKey = hash([]string{"batch", g, key, target})
+			}
+			r, e = s.Command(ctx, p, g, childKey, cmd)
 		}
 		if e != nil {
-			r = Result{State: "rejected", Detail: ErrUnavailable.Error()}
+			r = Result{State: "rejected"}
 			for _, known := range []error{ErrInvalid, ErrForbidden, ErrUnauthenticated, ErrNotFound, ErrConflict, ErrDisabled, ErrUnprocessable, ErrCooldown} {
 				if errors.Is(e, known) {
 					r.Detail = known.Error()
 					break
 				}
+			}
+			if r.Detail == "" {
+				return BulkResult{}, e
 			}
 		}
 		out.Items = append(out.Items, BulkItem{target, r})

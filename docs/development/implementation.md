@@ -1,10 +1,12 @@
 ---
 type: development
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-18
 ---
 
 # Groups 实施状态
+
+批量预览先校验群管理权限。执行遇到基础设施故障时按原键重试，已成功的目标复用收据。批量键上限为 128。
 
 ## 当前实现
 
