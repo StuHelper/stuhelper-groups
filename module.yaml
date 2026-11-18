@@ -73,8 +73,10 @@ scenario_tests:
   QQ-09:
     - integration_test.go#TestAISuggestionsRequireEnabledActionsAndCurrentAuthorization
   QQ-10:
+    - bot_ingress_test.go#TestBotIngressReplaysLegacyInbox
     - contract_test.go#TestAPIPrefixMatchesContractRoutesAndGeneratedClient
     - integration_test.go#TestRetentionInboxRollbackAndNoRecallViewAudit
+    - bot_ingress_test.go#TestBotIngressObjectStreamsAndRecalledAttachments
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
   BE-01:
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation

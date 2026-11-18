@@ -24,7 +24,8 @@ type Message struct {
 // Ingest is a trusted backend boundary, never mounted as a public route.
 // Only authenticated bot adapters may provide the actual group and sender.
 func (s *Service) Ingest(ctx context.Context, g string, event Event, m Message) error {
-	if event.Source != "qq-bot" || event.Subject != g || event.Type != "groups.message" || !valid(m.ID, 128) || !valid(m.Owner, 2048) || len(m.Body) > 8192 {
+	stream := g + "/messages/" + m.ID
+	if !valid(g, 128) || event.Source != "qq-bot" || (event.Subject != g && event.Subject != stream) || event.Type != "groups.message" || !valid(m.ID, 128) || !valid(m.Owner, 2048) || len(m.Body) > 8192 {
 		return ErrInvalid
 	}
 	if len(m.Attachments) > 20 {
@@ -50,6 +51,7 @@ func (s *Service) Ingest(ctx context.Context, g string, event Event, m Message) 
 		if err != nil {
 			return err
 		}
+		event.revisionSubject = stream
 		event.Data = payload
 		ok, e := tx.Accept(event)
 		if e != nil || !ok {
@@ -61,9 +63,21 @@ func (s *Service) Ingest(ctx context.Context, g string, event Event, m Message) 
 		m.Expires = s.now().Add(time.Duration(c.RetentionSeconds) * time.Second)
 		var previous Message
 		if err := tx.Get(bucket(g, "messages"), m.ID, &previous); err == nil {
+			if !s.now().Before(previous.Expires) {
+				return tx.Delete(bucket(g, "messages"), m.ID)
+			}
 			m.Expires = previous.Expires
-			if m.Recalled && m.Body == "" {
-				m.Body = previous.Body
+			if m.Recalled {
+				m.Owner = previous.Owner
+				if m.Body == "" {
+					m.Body = previous.Body
+				}
+				if len(m.Attachments) == 0 && len(previous.Attachments) > 0 {
+					m.Attachments = previous.Attachments
+				}
+			}
+			if previous.Recalled {
+				m.Recalled = true
 			}
 		} else if !errors.Is(err, ErrNotFound) {
 			return err
