@@ -390,7 +390,9 @@ PUT 使用 GroupConfigInput，expected_revision 必填。首次创建传 0，后
 
 同一 Idempotency-Key 与相同请求返回原结果，即使当前修订已推进。键相同但内容不同返回 groups_conflict。更新时重新校验操作者当前权限，学校不能通过配置修改迁移。
 
-password 仅在 PUT 请求中接收：省略表示保留，空字符串表示清除。password 模式下必须已有或新设非空口令。服务端保存随机盐与 PBKDF2-SHA256 摘要，配置响应只给出 password_set，不返回口令或摘要。
+password 仅在 PUT 请求中接收：省略表示保留当前口令与代数，非空或空字符串变更时递增 password_epoch。已确认入群且 restored 的成员不受常规换口令影响，尚未实际入群的申请者在轮换口令后须按最新代数重新提交口令。
+
+card_preview 支持在不触发提醒或自动改名片动作的前提下只读预览目标成员预期名片（可通过 text 传入候选模板）并返回 missing_fields。MyGroup 在启用名片检查且缺少模板所需许可字段时返回 missing_card_fields 字段键提示，不携带任何字段值。
 
 number 在 PUT 中可选，传入 5–20 位数字时保存掩码后的显示值；省略保留当前掩码。机器人路由仍按 backend 的内部群 ID 映射，不能用显示群号决定目标。
 

@@ -181,7 +181,7 @@ func validateConfig(c GroupConfig) error {
 	if !validText(c.CardTemplate, 1024) {
 		return NewErrorDetail(ErrInvalid, "invalid_field", "card_template", 0)
 	}
-	if _, _, err := renderCard(c.CardTemplate, nil); err != nil {
+	if _, _, err := renderCardTemplate(c.CardTemplate, nil); err != nil {
 		return NewErrorDetail(ErrInvalid, "invalid_field", "card_template", 0)
 	}
 	if !validText(c.Welcome, 2048) {
@@ -238,7 +238,7 @@ func capability(kind string) string {
 		return "groups.configure"
 	case "feedback", "watch":
 		return "groups.manage"
-	case "analyze", "preview", "card", "recheck":
+	case "analyze", "preview", "card", "card_preview", "recheck":
 		return "groups.read"
 	}
 	return ""
@@ -494,6 +494,7 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 			return out, e
 		}
 		m.Password = true
+		m.PasswordEpoch = stored.PasswordEpoch
 		if e := tx.Put(bucket(c.ID, "members"), cmd.Target, m); e != nil {
 			return out, e
 		}
@@ -528,6 +529,8 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		return s.rule(ctx, tx, p, c, cmd, cmd.Kind == "preview")
 	case "card":
 		return s.card(ctx, tx, p, c, cmd)
+	case "card_preview":
+		return s.cardPreview(ctx, tx, c, cmd)
 	case "subscribe":
 		if !valid(cmd.Receiver, 128) {
 			return out, ErrInvalid

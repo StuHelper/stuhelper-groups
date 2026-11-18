@@ -38,6 +38,7 @@ scenario_tests:
     - api_v03_test.go#TestFinalSchemaInitializationAndLeaseRecovery
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-02:
+    - password_card_preview_test.go#TestPasswordEpochRotationProtectsJoinedMembersAndResetsUnjoinedApplicants
     - facts_test.go#TestGroupFactsRejectsUnknownContradictoryAndFailedFacts
     - integration_test.go#TestPasswordDoesNotGrantStudentEligibilityAndBlacklistScope
   QQ-03:
@@ -56,6 +57,7 @@ scenario_tests:
   QQ-06:
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-07:
+    - password_card_preview_test.go#TestSideEffectFreeCardPreviewBraceSafetyAndMyGroupMissingFields
     - card_template_test.go#TestCardTemplateLiteralFieldsAndLimits
     - facts_test.go#TestGroupFactsFiltersFieldsAtServiceBoundary
     - integration_test.go#TestRulesCardsReportAndBatchPreview

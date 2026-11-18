@@ -1819,6 +1819,9 @@
             "$ref": "#/components/schemas/CardCommand"
           },
           {
+            "$ref": "#/components/schemas/CardPreviewCommand"
+          },
+          {
             "$ref": "#/components/schemas/AnalyzeCommand"
           },
           {
@@ -1861,6 +1864,7 @@
             "forward": "#/components/schemas/ForwardCommand",
             "recall": "#/components/schemas/RecallCommand",
             "card": "#/components/schemas/CardCommand",
+            "card_preview": "#/components/schemas/CardPreviewCommand",
             "analyze": "#/components/schemas/AnalyzeCommand",
             "preview": "#/components/schemas/PreviewCommand",
             "rule": "#/components/schemas/RuleCommand",
@@ -1913,6 +1917,24 @@
             "format": "int64",
             "minimum": 0,
             "description": "Remaining attempts before guaranteed pity trigger when pity > 0."
+          },
+          "missing_fields": {
+            "type": "array",
+            "uniqueItems": true,
+            "maxItems": 7,
+            "items": {
+              "type": "string",
+              "enum": [
+                "school",
+                "grade",
+                "department",
+                "name",
+                "student_id",
+                "gender",
+                "nickname"
+              ]
+            },
+            "description": "Optional list of card template field keys not yet disclosed or available."
           }
         },
         "required": [
@@ -2095,6 +2117,12 @@
           },
           "password": {
             "type": "boolean"
+          },
+          "password_epoch": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "Dynamic password generation matched by this member."
           },
           "exempt": {
             "type": "boolean"
@@ -2340,6 +2368,7 @@
               "approve",
               "blacklist",
               "card",
+              "card_preview",
               "dice",
               "exempt",
               "extend",
@@ -2667,6 +2696,12 @@
           },
           "password_set": {
             "type": "boolean"
+          },
+          "password_epoch": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "Monotonic generation counter incremented whenever the dynamic password is set, rotated or cleared."
           }
         },
         "required": [
@@ -4177,6 +4212,24 @@
               ]
             },
             "description": "UI action categories, not authorization grants. Unknown facts suggest refresh. Unsupported stages suggest contacting an administrator rather than repeating verification."
+          },
+          "missing_card_fields": {
+            "type": "array",
+            "uniqueItems": true,
+            "maxItems": 7,
+            "items": {
+              "type": "string",
+              "enum": [
+                "school",
+                "grade",
+                "department",
+                "name",
+                "student_id",
+                "gender",
+                "nickname"
+              ]
+            },
+            "description": "Optional card template field keys not yet disclosed or available for this group's card check; never contains field values."
           }
         },
         "required": [
@@ -4213,6 +4266,33 @@
           "items",
           "next_cursor"
         ]
+      },
+      "CardPreviewCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "card_preview"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 1024,
+            "description": "Optional candidate card_template override; uses the group's stored card_template when omitted or empty."
+          }
+        },
+        "required": [
+          "kind",
+          "target"
+        ],
+        "description": "Read-only management command; previews expected card rendering and missing profile fields without queuing bot actions."
       }
     }
   }

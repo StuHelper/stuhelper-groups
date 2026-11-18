@@ -173,50 +173,83 @@ func (s *Service) rule(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	return out, nil
 }
 
-// A nil field map validates the template without expanding member data.
-func renderCard(template string, fields map[string]CardField) (string, bool, error) {
-	var out strings.Builder
-	complete := true
-	for len(template) > 0 {
-		i := strings.IndexAny(template, "{}")
-		if i < 0 {
-			out.WriteString(template)
-			break
-		}
-		out.WriteString(template[:i])
-		if template[i] != '{' {
-			return "", false, ErrInvalid
-		}
-		token, rest, ok := strings.Cut(template[i+1:], "}")
-		if !ok {
-			return "", false, ErrInvalid
-		}
-		template = rest
-		switch token {
-		case "separator":
-			switch fields["gender"].Value {
-			case "male":
-				out.WriteString("-")
-			case "female":
-				out.WriteString("+")
-			default:
-				out.WriteString("·")
+var cardTemplateFields = []string{"school", "grade", "department", "name", "student_id", "gender", "nickname"}
+
+func renderCardTemplate(tmpl string, fields map[string]CardField) (string, []string, error) {
+	var b strings.Builder
+	missing := []string{}
+	for i := 0; i < len(tmpl); {
+		switch tmpl[i] {
+		case '}':
+			return "", nil, ErrInvalid
+		case '{':
+			end := strings.IndexByte(tmpl[i+1:], '}')
+			if end < 0 {
+				return "", nil, ErrInvalid
 			}
-		case "school", "grade", "department", "name", "student_id", "gender", "nickname":
-			field, ok := fields[token]
+			token := tmpl[i+1 : i+1+end]
+			i += end + 2
+			if token == "separator" {
+				sep := "·"
+				if fields["gender"].Value == "male" {
+					sep = "-"
+				} else if fields["gender"].Value == "female" {
+					sep = "+"
+				}
+				b.WriteString(sep)
+				continue
+			}
+			if !slices.Contains(cardTemplateFields, token) {
+				return "", nil, ErrInvalid
+			}
+			v, ok := fields[token]
 			if !ok {
-				complete = false
+				if !slices.Contains(missing, token) {
+					missing = append(missing, token)
+				}
+				continue
 			}
-			out.WriteString(field.Value)
+			b.WriteString(v.Value)
 		default:
-			return "", false, ErrInvalid
+			b.WriteByte(tmpl[i])
+			i++
 		}
 	}
-	if utf8.RuneCountInString(out.String()) > 2048 {
-		return "", false, ErrUnprocessable
-	}
-	return out.String(), complete, nil
+	return b.String(), missing, nil
 }
+
+func (s *Service) cardPreview(ctx context.Context, tx Tx, c GroupConfig, cmd Command) (Result, error) {
+	out := Result{State: "unavailable", Action: "card_preview"}
+	if !valid(cmd.Target, 2048) || !validText(cmd.Text, 1024) {
+		return out, ErrInvalid
+	}
+	if s.Facts == nil {
+		return out, ErrUnavailable
+	}
+	f, e := s.transactionFacts(ctx, tx, factKey{cmd.Target, c.School})
+	if e != nil {
+		return out, e
+	}
+	tmpl := c.CardTemplate
+	if cmd.Text != "" {
+		tmpl = cmd.Text
+	}
+	if tmpl == "" {
+		return out, ErrDisabled
+	}
+	rendered, missing, e := renderCardTemplate(tmpl, f.Fields)
+	if e != nil {
+		return out, e
+	}
+	if len(missing) > 0 {
+		return Result{State: "pending_profile", Action: "card_preview", Detail: strings.Join(missing, ","), MissingFields: missing}, nil
+	}
+	if runes := []rune(rendered); len(runes) > 2048 {
+		rendered = string(runes[:2048])
+	}
+	return Result{State: "ready", Action: "card_preview", Detail: rendered}, nil
+}
+
 func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, cmd Command) (Result, error) {
 	out := Result{State: "unavailable"}
 	if s.Facts == nil {
@@ -229,11 +262,14 @@ func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	if !c.CheckCard || c.CardTemplate == "" {
 		return out, NewErrorDetail(ErrDisabled, "card_check_disabled", "check_card", 0)
 	}
-	text, complete, err := renderCard(c.CardTemplate, f.Fields)
-	if err != nil {
-		return out, err
+	text, missing, e := renderCardTemplate(c.CardTemplate, f.Fields)
+	if e != nil {
+		return out, e
 	}
-	if !complete {
+	if utf8.RuneCountInString(text) > 2048 {
+		return out, ErrUnprocessable
+	}
+	if len(missing) > 0 {
 		return Result{State: "pending_profile"}, nil
 	}
 	out.Detail = text

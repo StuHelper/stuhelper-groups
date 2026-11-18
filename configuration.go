@@ -104,10 +104,12 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 		}
 		record := configRecord{GroupConfig: c, PasswordDigest: old.PasswordDigest}
 		record.Number = old.Number
+		record.PasswordEpoch = old.PasswordEpoch
 		if in.Number != nil {
 			record.Number = maskNumber(*in.Number)
 		}
 		if in.Password != nil {
+			record.PasswordEpoch = old.PasswordEpoch + 1
 			record.PasswordDigest = ""
 			if *in.Password != "" {
 				digest, e := passwordDigest(*in.Password)

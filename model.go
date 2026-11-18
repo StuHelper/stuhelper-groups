@@ -72,9 +72,10 @@ type GroupSettings struct {
 }
 type GroupConfig struct {
 	GroupSettings
-	Number      string `json:"number"`
-	Revision    int64  `json:"revision"`
-	PasswordSet bool   `json:"password_set"`
+	Number        string `json:"number"`
+	Revision      int64  `json:"revision"`
+	PasswordSet   bool   `json:"password_set"`
+	PasswordEpoch int64  `json:"password_epoch,omitempty"`
 }
 type GroupConfigInput struct {
 	GroupSettings
@@ -114,28 +115,30 @@ type Command struct {
 	Enabled  bool   `json:"enabled,omitempty"`
 }
 type Result struct {
-	ID            string `json:"id"`
-	State         string `json:"state"`
-	Action        string `json:"action"`
-	Value         int64  `json:"value"`
-	Detail        string `json:"detail"`
-	MaxValue      *int64 `json:"max_value,omitempty"`
-	Seconds       *int64 `json:"seconds,omitempty"`
-	PityRemaining *int64 `json:"pity_remaining,omitempty"`
+	ID            string   `json:"id"`
+	State         string   `json:"state"`
+	Action        string   `json:"action"`
+	Value         int64    `json:"value"`
+	Detail        string   `json:"detail"`
+	MaxValue      *int64   `json:"max_value,omitempty"`
+	Seconds       *int64   `json:"seconds,omitempty"`
+	PityRemaining *int64   `json:"pity_remaining,omitempty"`
+	MissingFields []string `json:"missing_fields,omitempty"`
 }
 type Member struct {
-	ID         string    `json:"id"`
-	Joined     bool      `json:"joined"`
-	Owner      string    `json:"owner"`
-	State      string    `json:"state"`
-	Deadline   time.Time `json:"deadline"`
-	Reminder   time.Time `json:"reminder"`
-	Password   bool      `json:"password"`
-	Exempt     bool      `json:"exempt"`
-	Extended   bool      `json:"extended"`
-	Failures   int64     `json:"failures"`
-	LastPlay   time.Time `json:"last_play"`
-	MutedUntil time.Time `json:"muted_until"`
+	ID            string    `json:"id"`
+	Joined        bool      `json:"joined"`
+	Owner         string    `json:"owner"`
+	State         string    `json:"state"`
+	Deadline      time.Time `json:"deadline"`
+	Reminder      time.Time `json:"reminder"`
+	Password      bool      `json:"password"`
+	PasswordEpoch int64     `json:"password_epoch,omitempty"`
+	Exempt        bool      `json:"exempt"`
+	Extended      bool      `json:"extended"`
+	Failures      int64     `json:"failures"`
+	LastPlay      time.Time `json:"last_play"`
+	MutedUntil    time.Time `json:"muted_until"`
 }
 type Authorizer interface {
 	Evaluate(context.Context, account.Principal, string, admin.Scope) error
