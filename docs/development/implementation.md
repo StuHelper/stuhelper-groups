@@ -1,10 +1,12 @@
 ---
 type: development
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-18
 ---
 
 # Groups 实施状态
+
+链接协议名按大小写无关匹配，一条消息命中多个关键词时只记录一个关键词标签。
 
 ## 当前实现
 
