@@ -387,7 +387,10 @@ func (s *Service) Recover(ctx context.Context, g, cursor string) (string, error)
 		}
 		return nil
 	})
-	return next, e
+	if e != nil {
+		return "", e
+	}
+	return next, nil
 }
 func (s *Service) Cleanup(ctx context.Context, g, cursor string) (string, error) {
 	next := ""
@@ -417,5 +420,8 @@ func (s *Service) Cleanup(ctx context.Context, g, cursor string) (string, error)
 		}
 		return nil
 	})
-	return next, e
+	if e != nil {
+		return "", e
+	}
+	return next, nil
 }

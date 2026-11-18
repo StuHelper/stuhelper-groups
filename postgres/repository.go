@@ -134,13 +134,13 @@ func (t *transaction) Accept(event g.Event) (bool, error) {
 }
 
 func (r *Repository) Failed(ctx context.Context, id string, now time.Time) error {
-	_, e := r.Pool.Exec(ctx, `UPDATE groups.outbox SET attempts=attempts+1,next_attempt=$2::timestamptz+make_interval(secs=>LEAST(3600,5*power(2,LEAST(attempts,10)))::double precision),held=($2::timestamptz-created_at>=interval '24 hours') WHERE id=$1 AND sent_at IS NULL`, id, now)
+	_, e := r.Pool.Exec(ctx, `UPDATE groups.outbox SET attempts=attempts+1,next_attempt=$2::timestamptz+make_interval(secs=>LEAST(3600,5*power(2,LEAST(attempts,10)))::double precision),first_failed_at=COALESCE(first_failed_at,$2),held=($2::timestamptz-COALESCE(first_failed_at,$2)>=interval '24 hours') WHERE id=$1 AND sent_at IS NULL`, id, now)
 	return e
 }
 
 // Retry is a host-only administrative boundary; host must authorize and audit.
 func (r *Repository) Retry(ctx context.Context, id string, now time.Time) error {
-	_, e := r.Pool.Exec(ctx, "UPDATE groups.outbox SET held=false,attempts=0,created_at=$2,next_attempt=$2 WHERE id=$1 AND sent_at IS NULL", id, now)
+	_, e := r.Pool.Exec(ctx, "UPDATE groups.outbox SET held=false,attempts=0,first_failed_at=NULL,next_attempt=$2 WHERE id=$1 AND sent_at IS NULL", id, now)
 	return e
 }
 

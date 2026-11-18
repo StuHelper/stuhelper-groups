@@ -40,7 +40,10 @@ func (s *Service) Sweep(ctx context.Context, g, cursor string) (string, error) {
 		}
 		return nil
 	})
-	return next, e
+	if e != nil {
+		return "", e
+	}
+	return next, nil
 }
 
 // Fanout consumes committed disposition events, independently queuing each

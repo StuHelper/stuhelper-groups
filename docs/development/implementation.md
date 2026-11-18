@@ -1,10 +1,12 @@
 ---
 type: development
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-18
 ---
 
 # Groups 实施状态
+
+按首次失败的时间计算人工处理窗口。停机时确认已完成投递，维护事务回滚后返回空游标。
 
 ## 当前实现
 
