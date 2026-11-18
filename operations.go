@@ -93,7 +93,8 @@ func (s *Service) Ingest(ctx context.Context, g string, event Event, m Message) 
 func (s *Service) rule(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, cmd Command, preview bool) (Result, error) {
 	out := Result{State: "clear"}
 	hits := []string{}
-	if c.BlockLinks && (strings.Contains(cmd.Text, "http://") || strings.Contains(cmd.Text, "https://")) {
+	text := strings.ToLower(cmd.Text)
+	if c.BlockLinks && (strings.Contains(text, "http://") || strings.Contains(text, "https://")) {
 		hits = append(hits, "link")
 	}
 	exceeded, err := s.frequency(tx, c, cmd, preview)
@@ -107,6 +108,7 @@ func (s *Service) rule(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	for _, word := range c.Keywords {
 		if strings.Contains(cmd.Text, word) {
 			hits = append(hits, "keyword")
+			break
 		}
 	}
 	var previous struct {
