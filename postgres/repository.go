@@ -129,7 +129,7 @@ func (t *transaction) Accept(event g.Event) (bool, error) {
 	if e != nil {
 		return false, e
 	}
-	tag, e := t.tx.Exec(t.ctx, "INSERT INTO groups.revisions(source,subject,revision) VALUES($1,$2,$3) ON CONFLICT(source,subject) DO UPDATE SET revision=EXCLUDED.revision WHERE groups.revisions.revision<EXCLUDED.revision", event.Source, event.Subject, event.Revision)
+	tag, e := t.tx.Exec(t.ctx, "INSERT INTO groups.revisions(source,subject,revision) VALUES($1,$2,$3) ON CONFLICT(source,subject) DO UPDATE SET revision=EXCLUDED.revision WHERE groups.revisions.revision<EXCLUDED.revision", event.Source, event.RevisionSubject(), event.Revision)
 	return tag.RowsAffected() == 1, e
 }
 
@@ -177,4 +177,14 @@ func (t *transaction) GroupCounts(ids []string) (map[string]g.GroupCounts, error
 		out[id] = n
 	}
 	return out, rows.Err()
+}
+
+// PendingAdmissionKick includes legacy actions that predate admission history.
+func (t *transaction) PendingAdmissionKick(group, owner string) (bool, error) {
+	var pending bool
+	err := t.tx.QueryRow(t.ctx, `SELECT EXISTS (
+ SELECT 1 FROM groups.records WHERE bucket=$1 AND data->>'state' IN ('pending','executing','unknown')
+ AND data->>'capability'='admission' AND data->'command'->>'kind'='kick' AND data->'command'->>'target'=$2
+ )`, group+"/actions", owner).Scan(&pending)
+	return pending, err
 }

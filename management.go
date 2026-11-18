@@ -149,7 +149,11 @@ func (s *Service) Blacklists(ctx context.Context, p account.Principal, key strin
 			if e != nil {
 				return e
 			}
-			if e = s.audit(tx, p, id, "blacklist", in.Target, "updated"); e != nil {
+			result := "blocked"
+			if in.Remove {
+				result = "unblocked"
+			}
+			if e = s.audit(tx, p, id, "blacklist", in.Target, result); e != nil {
 				return e
 			}
 		}
