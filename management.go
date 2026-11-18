@@ -151,7 +151,11 @@ func (s *Service) Blacklists(ctx context.Context, p account.Principal, key strin
 			if e != nil {
 				return e
 			}
-			if e = s.audit(tx, p, id, "blacklist", in.Target, "updated"); e != nil {
+			result := "blocked"
+			if in.Remove {
+				result = "unblocked"
+			}
+			if e = s.audit(tx, p, id, "blacklist", in.Target, result); e != nil {
 				return e
 			}
 		}
@@ -194,13 +198,20 @@ func (s *Service) manageRecord(ctx context.Context, tx Tx, p account.Principal, 
 		}
 		return out, s.audit(tx, p, c.ID, "feedback", cmd.Target, "resolved")
 	}
+	if report["state"] != "suggested" {
+		return out, ErrConflict
+	}
+	if c.RetentionSeconds == 0 {
+		return out, ErrNotFound
+	}
 	raw, ok := report["suggestions"].([]any)
 	if !ok {
 		return out, ErrInvalid
 	}
+	executed := map[string]bool{}
 	for _, suggestion := range raw {
 		a, ok := suggestion.(string)
-		if !ok || !slices.Contains(c.AutoActions, a) {
+		if !ok || executed[a] || !slices.Contains(c.AutoActions, a) {
 			continue
 		}
 		cap := capability(a)
@@ -218,11 +229,21 @@ func (s *Service) manageRecord(ctx context.Context, tx Tx, p account.Principal, 
 		if !s.now().Before(m.Expires) {
 			return out, ErrNotFound
 		}
-		command := Command{Kind: a, Target: m.Owner, Message: m.ID, Text: "ai_report:" + cmd.Target, Seconds: c.MuteSeconds}
+		command := Command{Kind: a, Target: m.Owner, Message: m.ID, Text: "ai_report:" + cmd.Target}
+		if a == "mute" {
+			command.Seconds = c.MuteSeconds
+		}
 		if _, e := s.command(ctx, tx, p, c, command, cap); e != nil {
 			return out, e
 		}
+		executed[a] = true
+	}
+	if len(executed) == 0 {
+		return out, nil
 	}
 	report["state"] = "pending_execution"
+	if len(executed) == 1 && executed["blacklist"] {
+		report["state"] = "resolved"
+	}
 	return out, tx.Put(bucket(c.ID, "reports"), cmd.Target, report)
 }

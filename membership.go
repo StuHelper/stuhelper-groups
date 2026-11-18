@@ -138,7 +138,7 @@ func (s *Service) Consume(ctx context.Context, event UpstreamEvent) error {
 			if e = tx.Get("config", group.ID, &c); e != nil {
 				return e
 			}
-			if _, e = s.admission(call, tx, account.Principal{}, c, event.Data.Owner, false); e != nil {
+			if _, e = s.admission(call, tx, account.Principal{}, c, event.Data.Owner, checkAdmission); e != nil {
 				return e
 			}
 		}
