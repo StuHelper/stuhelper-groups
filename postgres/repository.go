@@ -178,3 +178,13 @@ func (t *transaction) GroupCounts(ids []string) (map[string]g.GroupCounts, error
 	}
 	return out, rows.Err()
 }
+
+// PendingAdmissionKick includes legacy actions that predate admission history.
+func (t *transaction) PendingAdmissionKick(group, owner string) (bool, error) {
+	var pending bool
+	err := t.tx.QueryRow(t.ctx, `SELECT EXISTS (
+ SELECT 1 FROM groups.records WHERE bucket=$1 AND data->>'state' IN ('pending','executing','unknown')
+ AND data->>'capability'='admission' AND data->'command'->>'kind'='kick' AND data->'command'->>'target'=$2
+ )`, group+"/actions", owner).Scan(&pending)
+	return pending, err
+}

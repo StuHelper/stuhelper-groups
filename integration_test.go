@@ -190,6 +190,9 @@ func TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval(t *testing.T) {
 	if r.State != "restored" {
 		t.Fatal(r)
 	}
+	if err := f.s.MemberEvent(ctx, "g", event("join-user", "qq-bot", "g", "groups.member_joined", 1), user.Key()); err != nil {
+		t.Fatal(err)
+	}
 	f.facts.set(false)
 	command(t, f, manager, "lost", g.Command{Kind: "recheck", Target: user.Key()})
 	m, e := f.s.Progress(ctx, user, "g")
@@ -230,6 +233,9 @@ func TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval(t *testing.T) {
 	other := account.Principal{Issuer: "test", Subject: "other"}
 	f.facts.set(true)
 	command(t, f, other, "otherApply", g.Command{Kind: "apply"})
+	if err := f.s.MemberEvent(ctx, "g", event("join-other", "qq-bot", "g", "groups.member_joined", 2), other.Key()); err != nil {
+		t.Fatal(err)
+	}
 	f.facts.set(false)
 	command(t, f, manager, "otherLost", g.Command{Kind: "recheck", Target: other.Key()})
 	f.now = f.now.Add(time.Hour)
