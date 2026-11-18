@@ -145,15 +145,25 @@ type Bot interface {
 type Analyzer interface {
 	Analyze(context.Context, string) (string, []string, error)
 }
+
+// RevisionSubject selects the object stream while the inbox hashes the original envelope.
+func (e Event) RevisionSubject() string {
+	if e.revisionSubject != "" {
+		return e.revisionSubject
+	}
+	return e.Subject
+}
+
 type Event struct {
-	SpecVersion string          `json:"specversion"`
-	ID          string          `json:"id"`
-	Source      string          `json:"source"`
-	Type        string          `json:"type"`
-	Subject     string          `json:"subject"`
-	Time        time.Time       `json:"time"`
-	Revision    int64           `json:"revision"`
-	Data        json.RawMessage `json:"data"`
+	revisionSubject string
+	SpecVersion     string          `json:"specversion"`
+	ID              string          `json:"id"`
+	Source          string          `json:"source"`
+	Type            string          `json:"type"`
+	Subject         string          `json:"subject"`
+	Time            time.Time       `json:"time"`
+	Revision        int64           `json:"revision"`
+	Data            json.RawMessage `json:"data"`
 }
 type Row struct {
 	ID   string

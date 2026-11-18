@@ -61,6 +61,9 @@ scenario_tests:
     - facts_test.go#TestGroupFactsFiltersFieldsAtServiceBoundary
     - integration_test.go#TestRulesCardsReportAndBatchPreview
   QQ-08:
+    - outbox_resilience_test.go#TestUnknownWarningAfterRevocationUsesActualResult
+    - outbox_resilience_test.go#TestExecuteRevocationCancelsActionAndFinishPreservesExecutedWarn
+    - outbox_resilience_test.go#TestFanoutReceiverFailuresDoNotBlockHealthyTargetsOrSourceOutbox
     - delivery_membership_test.go#TestPendingOutboxExclusionLimitOrderingAndConfirmation
     - delivery_membership_test.go#TestRelayStopsFailedSubjectWithinBatchAndDeliversOthers
     - api_v03_test.go#TestEveryCollectionTypedPaginationAndAuthorization
@@ -70,8 +73,10 @@ scenario_tests:
   QQ-09:
     - integration_test.go#TestAISuggestionsRequireEnabledActionsAndCurrentAuthorization
   QQ-10:
+    - bot_ingress_test.go#TestBotIngressReplaysLegacyInbox
     - contract_test.go#TestAPIPrefixMatchesContractRoutesAndGeneratedClient
     - integration_test.go#TestRetentionInboxRollbackAndNoRecallViewAudit
+    - bot_ingress_test.go#TestBotIngressObjectStreamsAndRecalledAttachments
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
   BE-01:
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
