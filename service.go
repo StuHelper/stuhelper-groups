@@ -114,6 +114,9 @@ func validateConfig(c GroupConfig) error {
 	if c.DiceSides < 0 || c.DiceSides == 1 || c.DiceSides > 1000000 || c.MuteProbability < 0 || c.MuteProbability > 100 || c.MuteSeconds < 0 || c.MuteSeconds > 2592000 || c.Pity < 0 || c.Pity > 10000 || c.RepeatThreshold < 0 || c.RepeatThreshold > 1000 || len(c.Keywords) > 100 || len(c.CardTemplate) > 1024 {
 		return ErrInvalid
 	}
+	if _, _, err := renderCard(c.CardTemplate, nil); err != nil {
+		return ErrInvalid
+	}
 	if len(c.Welcome) > 2048 || len(c.RulesTemplate) > 8192 || c.FrequencySeconds < 0 || c.FrequencySeconds > 86400 || c.FrequencyLimit < 0 || c.FrequencyLimit > 10000 || c.WarningLimit < 0 || c.WarningLimit > 10000 {
 		return ErrInvalid
 	}

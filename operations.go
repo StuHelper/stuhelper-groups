@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/StuHelper/stuhelper-platform/account"
 	"github.com/google/uuid"
@@ -166,6 +167,51 @@ func (s *Service) rule(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	}
 	return out, nil
 }
+
+// A nil field map validates the template without expanding member data.
+func renderCard(template string, fields map[string]CardField) (string, bool, error) {
+	var out strings.Builder
+	complete := true
+	for len(template) > 0 {
+		i := strings.IndexAny(template, "{}")
+		if i < 0 {
+			out.WriteString(template)
+			break
+		}
+		out.WriteString(template[:i])
+		if template[i] != '{' {
+			return "", false, ErrInvalid
+		}
+		token, rest, ok := strings.Cut(template[i+1:], "}")
+		if !ok {
+			return "", false, ErrInvalid
+		}
+		template = rest
+		switch token {
+		case "separator":
+			switch fields["gender"].Value {
+			case "male":
+				out.WriteString("-")
+			case "female":
+				out.WriteString("+")
+			default:
+				out.WriteString("·")
+			}
+		case "school", "grade", "department", "name", "student_id", "gender", "nickname":
+			field, ok := fields[token]
+			if !ok {
+				complete = false
+			}
+			out.WriteString(field.Value)
+		default:
+			return "", false, ErrInvalid
+		}
+	}
+	if utf8.RuneCountInString(out.String()) > 2048 {
+		return "", false, ErrUnprocessable
+	}
+	return out.String(), complete, nil
+}
 func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, cmd Command) (Result, error) {
 	out := Result{State: "unavailable"}
 	if s.Facts == nil {
@@ -178,27 +224,12 @@ func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	if !c.CheckCard || c.CardTemplate == "" {
 		return out, ErrDisabled
 	}
-	text := c.CardTemplate
-	for _, field := range []string{"school", "grade", "department", "name", "student_id", "gender", "nickname"} {
-		token := "{" + field + "}"
-		if strings.Contains(text, token) {
-			v, ok := f.Fields[field]
-			if !ok {
-				return Result{State: "pending_profile"}, nil
-			}
-			text = strings.ReplaceAll(text, token, v.Value)
-		}
+	text, complete, err := renderCard(c.CardTemplate, f.Fields)
+	if err != nil {
+		return out, err
 	}
-	sep := "·"
-	if f.Fields["gender"].Value == "male" {
-		sep = "-"
-	}
-	if f.Fields["gender"].Value == "female" {
-		sep = "+"
-	}
-	text = strings.ReplaceAll(text, "{separator}", sep)
-	if strings.ContainsAny(text, "{}") {
-		return out, ErrInvalid
+	if !complete {
+		return Result{State: "pending_profile"}, nil
 	}
 	out.Detail = text
 	if text == cmd.Text {

@@ -61,6 +61,7 @@ scenario_tests:
   QQ-06:
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-07:
+    - card_template_test.go#TestCardTemplateLiteralFieldsAndLimits
     - facts_test.go#TestGroupFactsFiltersFieldsAtServiceBoundary
     - integration_test.go#TestRulesCardsReportAndBatchPreview
   QQ-08:
