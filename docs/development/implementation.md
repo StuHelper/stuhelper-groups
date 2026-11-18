@@ -1,10 +1,12 @@
 ---
 type: development
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-18
 ---
 
 # Groups 实施状态
+
+保存配置时校验名片模板。渲染只解析原模板中的字段，字段值按原文插入，并按字符数检查结果上限。
 
 ## 当前实现
 
