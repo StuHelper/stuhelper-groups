@@ -326,7 +326,7 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        Command: components["schemas"]["ApplyCommand"] | components["schemas"]["PasswordCommand"] | components["schemas"]["DiceCommand"] | components["schemas"]["SelfMuteCommand"] | components["schemas"]["ReportCommand"] | components["schemas"]["RecheckCommand"] | components["schemas"]["ExtendCommand"] | components["schemas"]["ExemptCommand"] | components["schemas"]["WarnCommand"] | components["schemas"]["MuteCommand"] | components["schemas"]["UnmuteCommand"] | components["schemas"]["KickCommand"] | components["schemas"]["BlacklistCommand"] | components["schemas"]["UnblacklistCommand"] | components["schemas"]["SendCommand"] | components["schemas"]["ForwardCommand"] | components["schemas"]["RecallCommand"] | components["schemas"]["CardCommand"] | components["schemas"]["CardPreviewCommand"] | components["schemas"]["AnalyzeCommand"] | components["schemas"]["PreviewCommand"] | components["schemas"]["RuleCommand"] | components["schemas"]["SubscribeCommand"] | components["schemas"]["FeedbackCommand"] | components["schemas"]["WatchCommand"] | components["schemas"]["AiExecuteCommand"] | components["schemas"]["CancelActionCommand"] | components["schemas"]["RetryActionCommand"];
+        Command: components["schemas"]["ApplyCommand"] | components["schemas"]["PasswordCommand"] | components["schemas"]["DiceCommand"] | components["schemas"]["SelfMuteCommand"] | components["schemas"]["ReportCommand"] | components["schemas"]["RecheckCommand"] | components["schemas"]["ExtendCommand"] | components["schemas"]["ExemptCommand"] | components["schemas"]["UnexemptCommand"] | components["schemas"]["WarnCommand"] | components["schemas"]["MuteCommand"] | components["schemas"]["UnmuteCommand"] | components["schemas"]["KickCommand"] | components["schemas"]["BlacklistCommand"] | components["schemas"]["UnblacklistCommand"] | components["schemas"]["SendCommand"] | components["schemas"]["ForwardCommand"] | components["schemas"]["RecallCommand"] | components["schemas"]["CardCommand"] | components["schemas"]["CardPreviewCommand"] | components["schemas"]["AnalyzeCommand"] | components["schemas"]["PreviewCommand"] | components["schemas"]["RuleCommand"] | components["schemas"]["SubscribeCommand"] | components["schemas"]["FeedbackCommand"] | components["schemas"]["WatchCommand"] | components["schemas"]["AiExecuteCommand"] | components["schemas"]["CancelActionCommand"] | components["schemas"]["RetryActionCommand"];
         Result: {
             id: string;
             state: string;
@@ -376,11 +376,11 @@ export interface components {
             command: components["schemas"]["BatchCommand"];
             preview: boolean;
         };
+        /** @description items contains every target in request order. executed contains accepted commands (pending means queued) or projected commands in preview. skipped lists all other targets with a stable code and a display reason. Both lists preserve request order and may be empty. */
         BulkResult: {
-            items: {
-                target: string;
-                result: components["schemas"]["Result"];
-            }[];
+            items: components["schemas"]["BulkItems"];
+            executed: components["schemas"]["BulkItems"];
+            skipped: components["schemas"]["BulkSkippedItem"][];
         };
         BlacklistInput: {
             groups: string[];
@@ -489,7 +489,7 @@ export interface components {
         };
         ActionCommand: {
             /** @enum {string} */
-            kind: "ai_execute" | "analyze" | "apply" | "approve" | "blacklist" | "card" | "card_preview" | "dice" | "exempt" | "extend" | "feedback" | "forward" | "kick" | "mute" | "password" | "preview" | "recall" | "recheck" | "remind" | "report" | "rule" | "self_mute" | "send" | "subscribe" | "unblacklist" | "unmute" | "warn" | "watch" | "welcome" | "cancel_action" | "retry_action";
+            kind: "ai_execute" | "analyze" | "apply" | "approve" | "blacklist" | "card" | "card_preview" | "dice" | "exempt" | "extend" | "feedback" | "forward" | "kick" | "mute" | "password" | "preview" | "recall" | "recheck" | "remind" | "report" | "rule" | "self_mute" | "send" | "subscribe" | "unblacklist" | "unexempt" | "unmute" | "warn" | "watch" | "welcome" | "cancel_action" | "retry_action";
             target?: string;
             text?: string;
             /** Format: int64 */
@@ -807,6 +807,16 @@ export interface components {
             target: string;
             text: string;
         };
+        /** @description Management command; revokes member exemption and re-evaluates current admission eligibility. */
+        UnexemptCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "unexempt";
+            target: string;
+            text: string;
+        };
         /** @description Management command; requires current group-scoped capability. */
         WarnCommand: {
             /**
@@ -1042,6 +1052,15 @@ export interface components {
             kind: "exempt";
             text: string;
         };
+        /** @description Management command; revokes member exemption and re-evaluates current admission eligibility. */
+        UnexemptBatchCommand: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "unexempt";
+            text: string;
+        };
         /** @description Management command; requires current group-scoped capability. */
         CardBatchCommand: {
             /**
@@ -1051,7 +1070,7 @@ export interface components {
             kind: "card";
             text: string;
         };
-        BatchCommand: components["schemas"]["WarnBatchCommand"] | components["schemas"]["MuteBatchCommand"] | components["schemas"]["UnmuteBatchCommand"] | components["schemas"]["KickBatchCommand"] | components["schemas"]["RecheckBatchCommand"] | components["schemas"]["ExtendBatchCommand"] | components["schemas"]["ExemptBatchCommand"] | components["schemas"]["CardBatchCommand"];
+        BatchCommand: components["schemas"]["WarnBatchCommand"] | components["schemas"]["MuteBatchCommand"] | components["schemas"]["UnmuteBatchCommand"] | components["schemas"]["KickBatchCommand"] | components["schemas"]["RecheckBatchCommand"] | components["schemas"]["ExtendBatchCommand"] | components["schemas"]["ExemptBatchCommand"] | components["schemas"]["UnexemptBatchCommand"] | components["schemas"]["CardBatchCommand"];
         MyGroup: {
             /** @description Internal group ID. */
             id: string;
@@ -1169,6 +1188,17 @@ export interface components {
             items: components["schemas"]["DirectoryGroup"][];
             /** @description Last scanned group ID if another page may exist, or empty when exhausted. */
             next_cursor: string;
+        };
+        BulkItems: {
+            target: string;
+            result: components["schemas"]["Result"];
+        }[];
+        BulkSkippedItem: {
+            target: string;
+            /** @description Stable reason for localization, e.g. not_found (no member record), not_joined, bot_disabled or action_queue_full. */
+            reason_code: string;
+            /** @description Human-readable explanation in Chinese. */
+            reason: string;
         };
     };
     responses: never;

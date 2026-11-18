@@ -55,18 +55,26 @@ scenario_tests:
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-05:
     - admission_transition_test.go#TestPasswordJoinWelcomeAndManualRemoval
+    - batch_exemption_test.go#TestUnexemptLifecycleAndExtendAntiShrinkProtection
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-06:
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-07:
     - password_card_preview_test.go#TestSideEffectFreeCardPreviewBraceSafetyAndMyGroupMissingFields
     - card_template_test.go#TestCardTemplateLiteralFieldsAndLimits
+    - batch_exemption_test.go#TestUnexemptPendingApplicantAndExistingExtension
+    - batch_exemption_test.go#TestBatchReplaysEarlierChildKey
+    - batch_exemption_test.go#TestBatchPreviewReservesAllActionsAndIsolatesFactFailure
+    - batch_exemption_test.go#TestBatchDryRunPreviewAccuracyAuthorizationAndLongIdempotencyKey
     - facts_test.go#TestGroupFactsFiltersFieldsAtServiceBoundary
     - integration_test.go#TestRulesCardsReportAndBatchPreview
   QQ-08:
     - outbox_resilience_test.go#TestUnknownWarningAfterRevocationUsesActualResult
     - outbox_resilience_test.go#TestExecuteRevocationCancelsActionAndFinishPreservesExecutedWarn
     - outbox_resilience_test.go#TestFanoutReceiverFailuresDoNotBlockHealthyTargetsOrSourceOutbox
+    - batch_results_test.go#TestBatchSkipsIneligibleMembersAndReplaysResults
+    - batch_results_test.go#TestBatchChecksCurrentMembershipAndHandlesConcurrentRetries
+    - batch_results_test.go#TestBatchRollsBackRejectedTargetBeforeSavingReason
     - batch_retry_test.go#TestBatchPreflightAndRetry
     - text_validation_test.go#TestTextValidationAtBoundaries
     - receipt_scope_test.go#TestReceiptScopeAndLegacyReplay

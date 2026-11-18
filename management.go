@@ -20,7 +20,33 @@ type BulkItem struct {
 	Result Result `json:"result"`
 }
 type BulkResult struct {
-	Items []BulkItem `json:"items"`
+	Items    []BulkItem        `json:"items"`
+	Executed []BulkItem        `json:"executed"`
+	Skipped  []BulkSkippedItem `json:"skipped"`
+}
+
+type BulkSkippedItem struct {
+	Target     string `json:"target"`
+	ReasonCode string `json:"reason_code"`
+	Reason     string `json:"reason"`
+}
+
+func validBatchCommand(cmd Command) bool {
+	if !validText(cmd.Text, 8192) || !validText(cmd.Message, 128) || !validText(cmd.Receiver, 128) || cmd.Seconds < 0 || cmd.Seconds > 31536000 {
+		return false
+	}
+	switch cmd.Kind {
+	case "warn", "exempt", "unexempt":
+		return strings.TrimSpace(cmd.Text) != ""
+	case "extend":
+		return strings.TrimSpace(cmd.Text) != "" && cmd.Seconds > 0
+	case "mute":
+		return cmd.Seconds > 0 && cmd.Seconds <= 2592000
+	case "unmute", "kick", "recheck", "card":
+		return true
+	default:
+		return false
+	}
 }
 
 type batchInputRecord struct {
@@ -41,10 +67,14 @@ func decodeBatchDigest(raw json.RawMessage) (string, error) {
 }
 
 func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string, in Bulk) (BulkResult, error) {
-	out := BulkResult{Items: []BulkItem{}}
-	if len(in.Targets) < 1 || len(in.Targets) > 100 || !valid(g, 128) || !validKey(key) || !slices.Contains([]string{"warn", "mute", "unmute", "kick", "recheck", "extend", "exempt", "card"}, in.Command.Kind) {
+	out := newBulkResult()
+	if !p.Valid() {
+		return out, ErrUnauthenticated
+	}
+	if len(in.Targets) < 1 || len(in.Targets) > 100 || !valid(g, 128) || !validKey(key) || !validBatchCommand(in.Command) {
 		return out, ErrInvalid
 	}
+
 	seen := map[string]bool{}
 	for _, target := range in.Targets {
 		if !valid(target, 2048) || seen[target] {
@@ -52,16 +82,12 @@ func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string,
 		}
 		seen[target] = true
 	}
+	if in.Preview {
+		return s.previewBatch(ctx, p, g, in)
+	}
 	err := s.runScoped(ctx, []string{"group:" + g, "batch:" + p.Key() + ":" + g + ":" + key}, func(tx Tx) error {
-		var c GroupConfig
-		if e := tx.Get("config", g, &c); e != nil {
-			return e
-		}
-		if e := s.auth(ctx, p, "groups.manage", c); e != nil {
-			return e
-		}
-		if in.Preview {
-			return nil
+		if _, err := s.batchConfig(ctx, tx, p, g, in.Command.Kind); err != nil {
+			return err
 		}
 		var rawPrior json.RawMessage
 		id := hash([]string{p.Key(), g, key})
@@ -89,31 +115,11 @@ func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string,
 	for _, target := range in.Targets {
 		cmd := in.Command
 		cmd.Target = target
-		var r Result
-		var e error
-		if in.Preview {
-			r = Result{State: "preview", Action: cmd.Kind, Detail: "target:" + target}
-		} else {
-			childKey := key + "-" + hash(target)[:20]
-			// Preserve receipts written before long batch keys were accepted.
-			if len(key) > 100 {
-				childKey = hash([]string{"batch", g, key, target})
-			}
-			r, e = s.Command(ctx, p, g, childKey, cmd)
+		outcome, err := s.executeBatchTarget(ctx, p, g, batchChildKey(g, key, target), cmd)
+		if err != nil {
+			return BulkResult{}, err
 		}
-		if e != nil {
-			r = Result{State: "rejected"}
-			for _, known := range []error{ErrInvalid, ErrForbidden, ErrUnauthenticated, ErrNotFound, ErrConflict, ErrDisabled, ErrUnprocessable, ErrCooldown} {
-				if errors.Is(e, known) {
-					r.Detail = known.Error()
-					break
-				}
-			}
-			if r.Detail == "" {
-				return BulkResult{}, e
-			}
-		}
-		out.Items = append(out.Items, BulkItem{target, r})
+		out.add(target, outcome)
 	}
 	return out, nil
 }
@@ -293,4 +299,11 @@ func (s *Service) manageRecord(ctx context.Context, tx Tx, p account.Principal, 
 	}
 	report["updated"] = s.now()
 	return out, tx.Put(bucket(c.ID, "reports"), cmd.Target, report)
+}
+
+func batchChildKey(g, key, target string) string {
+	if len(key) <= 100 {
+		return key + "-" + hash(target)[:20]
+	}
+	return hash([]string{"batch", g, key, target})
 }

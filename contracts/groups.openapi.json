@@ -2138,6 +2138,9 @@
             "$ref": "#/components/schemas/ExemptCommand"
           },
           {
+            "$ref": "#/components/schemas/UnexemptCommand"
+          },
+          {
             "$ref": "#/components/schemas/WarnCommand"
           },
           {
@@ -2209,6 +2212,7 @@
             "recheck": "#/components/schemas/RecheckCommand",
             "extend": "#/components/schemas/ExtendCommand",
             "exempt": "#/components/schemas/ExemptCommand",
+            "unexempt": "#/components/schemas/UnexemptCommand",
             "warn": "#/components/schemas/WarnCommand",
             "mute": "#/components/schemas/MuteCommand",
             "unmute": "#/components/schemas/UnmuteCommand",
@@ -2389,29 +2393,26 @@
       "BulkResult": {
         "type": "object",
         "required": [
-          "items"
+          "items",
+          "executed",
+          "skipped"
         ],
         "properties": {
           "items": {
+            "$ref": "#/components/schemas/BulkItems"
+          },
+          "executed": {
+            "$ref": "#/components/schemas/BulkItems"
+          },
+          "skipped": {
             "type": "array",
+            "maxItems": 100,
             "items": {
-              "type": "object",
-              "required": [
-                "target",
-                "result"
-              ],
-              "properties": {
-                "target": {
-                  "type": "string",
-                  "maxLength": 2048
-                },
-                "result": {
-                  "$ref": "#/components/schemas/Result"
-                }
-              }
+              "$ref": "#/components/schemas/BulkSkippedItem"
             }
           }
-        }
+        },
+        "description": "items contains every target in request order. executed contains accepted commands (pending means queued) or projected commands in preview. skipped lists all other targets with a stable code and a display reason. Both lists preserve request order and may be empty."
       },
       "BlacklistInput": {
         "type": "object",
@@ -2767,6 +2768,7 @@
               "send",
               "subscribe",
               "unblacklist",
+              "unexempt",
               "unmute",
               "warn",
               "watch",
@@ -3890,6 +3892,34 @@
         ],
         "description": "Management command; requires current group-scoped capability."
       },
+      "UnexemptCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "unexempt"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "target",
+          "text"
+        ],
+        "description": "Management command; revokes member exemption and re-evaluates current admission eligibility."
+      },
       "WarnCommand": {
         "type": "object",
         "additionalProperties": false,
@@ -4501,6 +4531,28 @@
         ],
         "description": "Management command; requires current group-scoped capability."
       },
+      "UnexemptBatchCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "unexempt"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "text"
+        ],
+        "description": "Management command; revokes member exemption and re-evaluates current admission eligibility."
+      },
       "CardBatchCommand": {
         "type": "object",
         "additionalProperties": false,
@@ -4547,6 +4599,9 @@
             "$ref": "#/components/schemas/ExemptBatchCommand"
           },
           {
+            "$ref": "#/components/schemas/UnexemptBatchCommand"
+          },
+          {
             "$ref": "#/components/schemas/CardBatchCommand"
           }
         ],
@@ -4560,6 +4615,7 @@
             "recheck": "#/components/schemas/RecheckBatchCommand",
             "extend": "#/components/schemas/ExtendBatchCommand",
             "exempt": "#/components/schemas/ExemptBatchCommand",
+            "unexempt": "#/components/schemas/UnexemptBatchCommand",
             "card": "#/components/schemas/CardBatchCommand"
           }
         }
@@ -4971,6 +5027,48 @@
           "items",
           "next_cursor"
         ]
+      },
+      "BulkItems": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "target",
+            "result"
+          ],
+          "properties": {
+            "target": {
+              "type": "string",
+              "maxLength": 2048
+            },
+            "result": {
+              "$ref": "#/components/schemas/Result"
+            }
+          }
+        },
+        "maxItems": 100
+      },
+      "BulkSkippedItem": {
+        "type": "object",
+        "required": [
+          "target",
+          "reason_code",
+          "reason"
+        ],
+        "properties": {
+          "target": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "reason_code": {
+            "type": "string",
+            "description": "Stable reason for localization, e.g. not_found (no member record), not_joined, bot_disabled or action_queue_full."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Human-readable explanation in Chinese."
+          }
+        }
       }
     }
   }

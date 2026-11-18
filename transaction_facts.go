@@ -93,6 +93,9 @@ func (s *Service) transactionFacts(ctx context.Context, tx ReadTx, key factKey) 
 	}
 	facts, err := s.currentFacts(ctx, key.owner, key.school)
 	if err != nil {
+		if preview, ok := tx.(*previewTx); ok {
+			preview.factsFailed = true
+		}
 		return Facts{}, ErrUnavailable
 	}
 	return facts, nil

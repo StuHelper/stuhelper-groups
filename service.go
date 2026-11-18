@@ -112,12 +112,17 @@ func validKey(v string) bool {
 }
 
 func replay(tx ReadTx, owner, operation, object, key string, input, out any) (bool, error) {
-	var r receipt
-	e := tx.Get("receipts", hash([]string{owner, operation, object, key}), &r)
-	if errors.Is(e, ErrNotFound) {
-		// Legacy receipts have only the digest to identify the original operation.
-		e = tx.Get("receipts", hash([]string{owner, key}), &r)
+	hit, err := replayReceipt(tx, hash([]string{owner, operation, object, key}), input, out)
+	if hit || err != nil {
+		return hit, err
 	}
+	// Legacy receipts have only the digest to identify the original operation.
+	return replayReceipt(tx, hash([]string{owner, key}), input, out)
+}
+
+func replayReceipt(tx ReadTx, id string, input, out any) (bool, error) {
+	var r receipt
+	e := tx.Get("receipts", id, &r)
 	if errors.Is(e, ErrNotFound) {
 		return false, nil
 	}
@@ -236,7 +241,7 @@ func capability(kind string) string {
 		return "groups.messages.send"
 	case "recall":
 		return "groups.messages.recall"
-	case "extend", "exempt", "warn", "mute", "unmute", "kick", "blacklist", "unblacklist", "cancel_action", "retry_action":
+	case "extend", "exempt", "unexempt", "warn", "mute", "unmute", "kick", "blacklist", "unblacklist", "cancel_action", "retry_action":
 		return "groups.manage"
 	case "subscribe", "rule", "ai_execute":
 		return "groups.configure"
@@ -457,7 +462,7 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 			trigger = applyAdmission
 		}
 		return s.admission(ctx, tx, p, c, cmd.Target, trigger)
-	case "extend", "exempt":
+	case "extend", "exempt", "unexempt":
 		var m Member
 		if e := tx.Get(bucket(c.ID, "members"), cmd.Target, &m); e != nil {
 			return out, e
@@ -465,18 +470,72 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		if strings.TrimSpace(cmd.Text) == "" {
 			return out, ErrInvalid
 		}
-		if cmd.Kind == "extend" {
+		if m.State == "removed" {
+			return out, ErrConflict
+		}
+		switch cmd.Kind {
+		case "extend":
 			if cmd.Seconds == 0 {
 				return out, ErrInvalid
 			}
-			m.Deadline = s.now().Add(time.Duration(cmd.Seconds) * time.Second)
+			base := s.now()
+			if m.Deadline.After(base) {
+				base = m.Deadline
+			}
+			m.Deadline = base.Add(time.Duration(cmd.Seconds) * time.Second)
 			m.Extended = true
 			m.State = "extended"
-		} else {
-			m.Deadline = time.Time{}
-			m.Extended = false
+		case "exempt":
 			m.Exempt = true
+			m.Reminder = time.Time{}
+			m.Extended = false
+			m.Deadline = time.Time{}
 			m.State = "exempt"
+		case "unexempt":
+			if !m.Exempt {
+				return Result{State: "noop", Action: cmd.Kind, Detail: m.State}, nil
+			}
+			m.Exempt = false
+			m.Extended = false
+			m.Deadline = time.Time{}
+			if m.State == "exempt" {
+				if !m.Joined && c.Mode == "before" {
+					m.State = "awaiting_verification"
+				} else {
+					m.State = "grace"
+				}
+			}
+			if e := tx.Put(bucket(c.ID, "members"), cmd.Target, m); e != nil {
+				return out, e
+			}
+			var adm Result
+			if c.BotEnabled {
+				var e error
+				adm, e = s.admission(ctx, tx, p, c, cmd.Target, checkAdmission)
+				if e != nil {
+					return out, e
+				}
+			} else {
+				ok, e := s.eligible(ctx, tx, c, m)
+				if e != nil {
+					return out, e
+				}
+				switch {
+				case ok:
+					m.State = "restored"
+				case !m.Joined && c.Mode == "before":
+					m.State = "awaiting_verification"
+				default:
+					m.State = "grace"
+					m.Deadline = s.now().Add(time.Duration(c.GraceSeconds) * time.Second)
+				}
+				if e := tx.Put(bucket(c.ID, "members"), cmd.Target, m); e != nil {
+					return out, e
+				}
+				adm = Result{State: m.State}
+			}
+			adm.Action = "unexempt"
+			return adm, s.audit(tx, p, c.ID, "unexempt", cmd.Target, adm.State)
 		}
 		out.State = m.State
 		if e := tx.Put(bucket(c.ID, "members"), cmd.Target, m); e != nil {

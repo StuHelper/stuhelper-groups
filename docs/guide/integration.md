@@ -410,7 +410,15 @@ Command 是以 kind 为判别字段的 oneOf，每个分支禁止无关字段并
 
 apply、password、dice、self_mute、report 属于用户命令，从认证身份取得操作者，不接受 target。其余命令用于管理端，按群和操作能力授权。前端应按 OpenAPI 的分支类型构造请求。
 
-批量命令使用独立 BatchCommand，支持 warn、mute、unmute、kick、recheck、extend、exempt、card。target 由 targets 数组逐项填入，命令中不接收 target。每批最多 100 个对象，preview 不写业务数据，执行逐项返回结果。
+批量命令使用 BatchCommand，支持 warn、mute、unmute、kick、recheck、extend、exempt、unexempt、card。targets 按顺序提供 1 至 100 个不同目标。预览在同一只读事务中检查权限并计算各目标结果，提交时按当前状态重新判断。
+
+批量警告、禁言、解禁和踢出只对当前已入群的成员排队。缺少成员记录时返回 `not_found`，未入群或已移出时返回 `not_joined`。这些目标不创建动作、执行审计或投递事件，其他有效目标继续处理。
+
+响应保留全部目标的 `items`。`executed` 和 `skipped` 各自按输入顺序排列，空清单返回 `[]`。预览中 `executed` 列出预计会处理的项目。提交后 `pending` 表示已排队，调用方可用动作 ID 查询机器人结果。
+
+`skipped` 每项包含 `target`、稳定原因码 `reason_code` 和中文说明 `reason`。机器人关闭、队列已满、无需撤销豁免等情况也在此列出。相同幂等键和请求可在收据保留期内取回原结果，基础设施故障后重试会接续尚未完成的目标。
+
+extend 以当前时间与既有截止时间的较大值为基准顺延秒数，不会缩短剩余宽限期。unexempt 撤销成员豁免后立即按当前真实资格重算，转入 restored、awaiting_verification 或新的 grace 宽限期并记录审计。
 
 Problem.code 是固定枚举，可选携带脱敏子码 reason、关联字段名 field 与冷却秒数 retry_after_seconds（个人冷却时同步返回 HTTP Retry-After 头）。Result 可选返回 max_value、seconds、pity_remaining，供多语言客户端与机器人按翻译键参数化渲染骰子面数、禁言时长和保底剩余次数。
 

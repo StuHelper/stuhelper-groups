@@ -413,6 +413,7 @@ func TestExplicitErrorResponsesAndBulkDiscriminator(t *testing.T) {
 	invalid["command"] = map[string]any{"kind": "mute", "seconds": 30, "target": user.Key()}
 	problem(t, api(t, f, manager, "POST", path, "extra-target", invalid), 422, "groups_unprocessable")
 	invalid["command"] = map[string]any{"kind": "mute", "seconds": 30}
+	putBatchMember(t, f, user.Key(), "restored", true)
 	w := api(t, f, manager, "POST", path, "batch", invalid)
 	if w.Code != 200 || count(t, f, "g/actions") != 1 {
 		t.Fatal(w.Code, w.Body.String())
