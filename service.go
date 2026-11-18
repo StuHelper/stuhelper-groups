@@ -67,12 +67,12 @@ func (s *Service) auth(ctx context.Context, p account.Principal, c string, g Gro
 	}
 	return nil
 }
-func (s *Service) event(tx Tx, g, kind string, data any) error {
+func (s *Service) event(ctx context.Context, tx Tx, g, kind string, data any) error {
 	b, e := json.Marshal(data)
 	if e != nil {
 		return e
 	}
-	return tx.Emit(Event{SpecVersion: "1.0", ID: uuid.NewString(), Source: "groups", Type: "groups." + kind, Subject: g, Time: s.now(), Data: b})
+	return tx.Emit(Event{SpecVersion: "1.0", ID: uuid.NewString(), Source: "groups", Type: "groups." + kind, Subject: g, TraceParent: TraceParentFromContext(ctx), Time: s.now(), Data: b})
 }
 func (s *Service) audit(tx Tx, p account.Principal, g, kind, target, result string) error {
 	actor := p.Key()
@@ -186,7 +186,7 @@ func capability(kind string) string {
 	}
 	return ""
 }
-func (s *Service) queue(tx Tx, p account.Principal, c GroupConfig, cmd Command, cap string) (Result, error) {
+func (s *Service) queue(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, cmd Command, cap string) (Result, error) {
 	if !c.BotEnabled {
 		return Result{}, ErrDisabled
 	}
@@ -201,10 +201,15 @@ func (s *Service) queue(tx Tx, p account.Principal, c GroupConfig, cmd Command, 
 	if e := tx.Put(bucket(c.ID, "actions"), a.ID, a); e != nil {
 		return Result{}, e
 	}
+	if tp := TraceParentFromContext(ctx); tp != "" {
+		if e := tx.Put(bucket(c.ID, "action_traces"), a.ID, tp); e != nil {
+			return Result{}, e
+		}
+	}
 	if e := s.audit(tx, p, c.ID, cmd.Kind, cmd.Target, "pending"); e != nil {
 		return Result{}, e
 	}
-	if e := s.event(tx, c.ID, "action.requested", map[string]string{"id": a.ID}); e != nil {
+	if e := s.event(ctx, tx, c.ID, "action.requested", map[string]string{"id": a.ID}); e != nil {
 		return Result{}, e
 	}
 	return Result{ID: a.ID, State: "pending", Action: cmd.Kind}, nil
@@ -457,7 +462,7 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		if (cmd.Kind == "forward" || cmd.Kind == "recall") && !valid(cmd.Message, 128) {
 			return out, ErrInvalid
 		}
-		return s.queue(tx, p, c, cmd, cap)
+		return s.queue(ctx, tx, p, c, cmd, cap)
 	}
 	return out, ErrInvalid
 }
@@ -546,18 +551,18 @@ func (s *Service) admissionWithFacts(ctx context.Context, tx Tx, p account.Princ
 		m.Deadline = time.Time{}
 		m.Extended = false
 		if !m.Joined && previous != "restored" && c.Mode == "before" {
-			if _, e := s.queue(tx, p, c, Command{Kind: "approve", Target: owner}, "admission"); e != nil {
+			if _, e := s.queue(ctx, tx, p, c, Command{Kind: "approve", Target: owner}, "admission"); e != nil {
 				return out, e
 			}
 		}
 		if m.Joined && history.Muted {
-			if _, e := s.queue(tx, p, c, Command{Kind: "unmute", Target: owner, Text: "admission_restored"}, "admission"); e != nil {
+			if _, e := s.queue(ctx, tx, p, c, Command{Kind: "unmute", Target: owner, Text: "admission_restored"}, "admission"); e != nil {
 				return out, e
 			}
 			history.Muted = false
 		}
 		if m.Joined && !history.Admitted && c.Welcome != "" {
-			if _, e := s.queue(tx, p, c, Command{Kind: "welcome", Target: owner, Text: c.Welcome + "\n" + c.RulesTemplate}, "admission"); e != nil {
+			if _, e := s.queue(ctx, tx, p, c, Command{Kind: "welcome", Target: owner, Text: c.Welcome + "\n" + c.RulesTemplate}, "admission"); e != nil {
 				return out, e
 			}
 		}
@@ -581,20 +586,20 @@ func (s *Service) admissionWithFacts(ctx context.Context, tx Tx, p account.Princ
 			}
 		}
 		if m.State != "removal_pending" && !s.now().Before(m.Deadline) {
-			out, e = s.queue(tx, p, c, Command{Kind: "kick", Target: owner, Text: "eligibility_expired"}, "admission")
+			out, e = s.queue(ctx, tx, p, c, Command{Kind: "kick", Target: owner, Text: "eligibility_expired"}, "admission")
 			if e != nil {
 				return out, e
 			}
 			m.State = "removal_pending"
 		}
 		if m.State != "removal_pending" && (m.Reminder.IsZero() || c.ReminderSeconds > 0 && !s.now().Before(m.Reminder.Add(time.Duration(c.ReminderSeconds)*time.Second))) {
-			if _, e := s.queue(tx, p, c, Command{Kind: "remind", Target: owner, Text: "verification_required"}, "admission"); e != nil {
+			if _, e := s.queue(ctx, tx, p, c, Command{Kind: "remind", Target: owner, Text: "verification_required"}, "admission"); e != nil {
 				return out, e
 			}
 			m.Reminder = s.now()
 		}
 		if joinedNow && c.Mode == "muted" {
-			if _, e := s.queue(tx, p, c, Command{Kind: "mute", Target: owner, Seconds: c.GraceSeconds, Text: "admission"}, "admission"); e != nil {
+			if _, e := s.queue(ctx, tx, p, c, Command{Kind: "mute", Target: owner, Seconds: c.GraceSeconds, Text: "admission"}, "admission"); e != nil {
 				return out, e
 			}
 			history.Muted = true
@@ -666,7 +671,7 @@ func (s *Service) play(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	m.Failures++
 	if n < c.MuteProbability || (c.Pity > 0 && m.Failures >= c.Pity) {
 		m.Failures = 0
-		out, e = s.queue(tx, p, c, Command{Kind: "mute", Target: p.Key(), Seconds: c.MuteSeconds, Text: "entertainment"}, "entertainment")
+		out, e = s.queue(ctx, tx, p, c, Command{Kind: "mute", Target: p.Key(), Seconds: c.MuteSeconds, Text: "entertainment"}, "entertainment")
 		if e != nil {
 			return out, e
 		}

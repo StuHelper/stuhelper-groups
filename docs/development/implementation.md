@@ -52,7 +52,9 @@ OpenAPI 0.4.0 使用 /api/v1/groups 前缀，Go/TypeScript 客户端、HTTP Hand
 
 业务写入、审计和 outbox 在同一事务，提交后 pg_notify。inbox 拒绝同 ID 内容变化，忽略重复与旧修订。发送器使用部分索引、LISTEN、60 秒补读及退避队列。
 
-群列表返回 GroupSummary，集合各有独立分页类型。配置采用 expected_revision 比较更新，口令只在请求中接收并保存带盐摘要。命令按 kind 验证必填字段，错误码采用 groups_ 枚举。
+群列表返回 GroupSummary，集合各有独立分页类型并直接解码为目标结构体。HTTP 路由、Event 与 UpstreamEvent 支持透传可选 traceparent，串联 outbox、Execute 与 Fanout 链路追踪。
+
+配置采用 expected_revision 比较更新，口令只在请求中接收并保存带盐摘要。命令按 kind 验证必填字段，错误码采用 groups_ 枚举。
 
 outbox 提供带排除主题和 limit 的 PendingOutbox，以及幂等 ConfirmOutbox。GroupsForOwner 提供有界成员反查，Consume 按上游 owner 在同一事务内重算关联群，Sweep 保留为周期性核对与期限处理。
 
@@ -64,7 +66,7 @@ Consume 接受 qq-binding.owner-bindings.changed.v1，并按提供方实际封�
 
 隔离 PostgreSQL 18.6 覆盖独立集合的分页与授权、群摘要计数、并发配置冲突、口令不泄露、命令判别校验，以及建表初始化及其幂等性、运行身份允许访问本模块数据且拒绝其他 schema 和 DDL、并发幂等、越权及撤权、期限边界、失败与超时、事件顺序和回滚不发通知。
 
-规格 QQ-01 至 QQ-10、BE-01 至 BE-03 的后端测试函数登记在 module.yaml。QQ-10 的菜单位置由前端和 Koishi 完成，本仓测试覆盖撤回内容权限和娱乐动作边界。
+规格 QQ-01 至 QQ-12、MP-07、BE-01 至 BE-03 的后端测试函数登记在 module.yaml。QQ-10 的菜单位置由前端和 Koishi 完成，本仓测试覆盖撤回内容权限和娱乐动作边界。
 
 本地检查执行生成一致性、仓库规则、文档、模块边界、gofmt、go vet、go test -race、go build 和 workflow 校验。远程 CI 验证公开源码组合。真实账号验收、backend 跨仓装配、部署和性能基准待执行。
 

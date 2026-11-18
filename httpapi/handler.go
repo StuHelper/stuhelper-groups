@@ -3,6 +3,7 @@ package httpapi
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -20,6 +21,23 @@ import (
 
 type Identity func(*http.Request) (account.Principal, error)
 
+func handleGroupPage[T any](
+	mux *http.ServeMux,
+	wrap func(func(http.ResponseWriter, *http.Request, account.Principal)) http.HandlerFunc,
+	pattern string,
+	fn func(context.Context, account.Principal, string, string, int) (g.Page[T], error),
+) {
+	mux.HandleFunc(pattern, wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+		cursor, limit, e := pagination(r)
+		if e != nil {
+			write(w, nil, e)
+			return
+		}
+		v, e := fn(r.Context(), p, r.PathValue("group"), cursor, limit)
+		write(w, v, e)
+	}))
+}
+
 func Handler(s *g.Service, identity Identity) http.Handler {
 	mux := http.NewServeMux()
 	wrap := func(fn func(http.ResponseWriter, *http.Request, account.Principal)) http.HandlerFunc {
@@ -32,6 +50,9 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 			if e != nil || !p.Valid() {
 				write(w, nil, g.ErrUnauthenticated)
 				return
+			}
+			if tp := r.Header.Get("Traceparent"); tp != "" {
+				r = r.WithContext(g.WithTraceParent(r.Context(), tp))
 			}
 			fn(w, r, p)
 		}
@@ -102,96 +123,16 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		v, e := s.Blacklists(r.Context(), p, r.Header.Get("Idempotency-Key"), in)
 		write(w, v, e)
 	}))
-	mux.HandleFunc("GET /api/v1/groups/{group}/members", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := pagination(r)
-		if e != nil {
-			write(w, nil, e)
-			return
-		}
-		v, e := s.Members(r.Context(), p, r.PathValue("group"), cursor, limit)
-		write(w, v, e)
-	}))
-	mux.HandleFunc("GET /api/v1/groups/{group}/actions", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := pagination(r)
-		if e != nil {
-			write(w, nil, e)
-			return
-		}
-		v, e := s.Actions(r.Context(), p, r.PathValue("group"), cursor, limit)
-		write(w, v, e)
-	}))
-	mux.HandleFunc("GET /api/v1/groups/{group}/reports", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := pagination(r)
-		if e != nil {
-			write(w, nil, e)
-			return
-		}
-		v, e := s.Reports(r.Context(), p, r.PathValue("group"), cursor, limit)
-		write(w, v, e)
-	}))
-	mux.HandleFunc("GET /api/v1/groups/{group}/hits", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := pagination(r)
-		if e != nil {
-			write(w, nil, e)
-			return
-		}
-		v, e := s.Hits(r.Context(), p, r.PathValue("group"), cursor, limit)
-		write(w, v, e)
-	}))
-	mux.HandleFunc("GET /api/v1/groups/{group}/messages", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := pagination(r)
-		if e != nil {
-			write(w, nil, e)
-			return
-		}
-		v, e := s.Messages(r.Context(), p, r.PathValue("group"), cursor, limit)
-		write(w, v, e)
-	}))
-	mux.HandleFunc("GET /api/v1/groups/{group}/subscriptions", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := pagination(r)
-		if e != nil {
-			write(w, nil, e)
-			return
-		}
-		v, e := s.Subscriptions(r.Context(), p, r.PathValue("group"), cursor, limit)
-		write(w, v, e)
-	}))
-	mux.HandleFunc("GET /api/v1/groups/{group}/blacklist", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := pagination(r)
-		if e != nil {
-			write(w, nil, e)
-			return
-		}
-		v, e := s.Blacklist(r.Context(), p, r.PathValue("group"), cursor, limit)
-		write(w, v, e)
-	}))
-	mux.HandleFunc("GET /api/v1/groups/{group}/warnings", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := pagination(r)
-		if e != nil {
-			write(w, nil, e)
-			return
-		}
-		v, e := s.Warnings(r.Context(), p, r.PathValue("group"), cursor, limit)
-		write(w, v, e)
-	}))
-	mux.HandleFunc("GET /api/v1/groups/{group}/watch", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := pagination(r)
-		if e != nil {
-			write(w, nil, e)
-			return
-		}
-		v, e := s.Watch(r.Context(), p, r.PathValue("group"), cursor, limit)
-		write(w, v, e)
-	}))
-	mux.HandleFunc("GET /api/v1/groups/{group}/deliveries", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		cursor, limit, e := pagination(r)
-		if e != nil {
-			write(w, nil, e)
-			return
-		}
-		v, e := s.Deliveries(r.Context(), p, r.PathValue("group"), cursor, limit)
-		write(w, v, e)
-	}))
+	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/members", s.Members)
+	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/actions", s.Actions)
+	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/reports", s.Reports)
+	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/hits", s.Hits)
+	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/messages", s.Messages)
+	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/subscriptions", s.Subscriptions)
+	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/blacklist", s.Blacklist)
+	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/warnings", s.Warnings)
+	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/watch", s.Watch)
+	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/deliveries", s.Deliveries)
 	return mux
 }
 func pagination(r *http.Request) (string, int, error) {

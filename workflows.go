@@ -49,8 +49,11 @@ func (s *Service) Sweep(ctx context.Context, g, cursor string) (string, error) {
 // Fanout consumes committed disposition events, independently queuing each
 // enabled recipient. Delivery state is the recipient action's actual state.
 func (s *Service) Fanout(ctx context.Context, e Event) error {
-	if e.Source != "groups" || e.Type != "groups.action.result" {
+	if e.Source != "groups" || e.Type != "groups.action.result" || (e.TraceParent != "" && !validTraceParent(e.TraceParent)) {
 		return ErrInvalid
+	}
+	if e.TraceParent != "" {
+		ctx = WithTraceParent(ctx, e.TraceParent)
 	}
 	return s.run(ctx, func(tx Tx) error {
 		copy := e
@@ -122,7 +125,7 @@ func (s *Service) queueDelivery(ctx context.Context, tx Tx, source GroupConfig, 
 	if err := s.auth(ctx, actor, "groups.messages.send", receiver); err != nil {
 		return Result{}, err
 	}
-	return s.queue(tx, actor, receiver, Command{Kind: "send", Receiver: source.ID, Text: "group_event:" + origin.ID + ":" + origin.State}, "groups.messages.send")
+	return s.queue(ctx, tx, actor, receiver, Command{Kind: "send", Receiver: source.ID, Text: "group_event:" + origin.ID + ":" + origin.State}, "groups.messages.send")
 }
 func (s *Service) frequency(tx Tx, c GroupConfig, cmd Command, preview bool) (bool, error) {
 	if c.FrequencyLimit == 0 || c.FrequencySeconds == 0 {
@@ -153,8 +156,11 @@ func (s *Service) frequency(tx Tx, c GroupConfig, cmd Command, preview bool) (bo
 // A web application alone cannot claim that a QQ user has already joined.
 func (s *Service) MemberEvent(ctx context.Context, g string, event Event, owner string) error {
 	stream := g + "/members/" + owner
-	if !valid(g, 128) || event.Source != "qq-bot" || (event.Subject != g && event.Subject != stream) || !valid(owner, 2048) || !slices.Contains([]string{"groups.member_joined", "groups.member_left"}, event.Type) {
+	if !valid(g, 128) || event.Source != "qq-bot" || (event.TraceParent != "" && !validTraceParent(event.TraceParent)) || (event.Subject != g && event.Subject != stream) || !valid(owner, 2048) || !slices.Contains([]string{"groups.member_joined", "groups.member_left"}, event.Type) {
 		return ErrInvalid
+	}
+	if event.TraceParent != "" && TraceParentFromContext(ctx) == "" {
+		ctx = WithTraceParent(ctx, event.TraceParent)
 	}
 	return s.run(ctx, func(tx Tx) error {
 		payload, e := json.Marshal(struct {

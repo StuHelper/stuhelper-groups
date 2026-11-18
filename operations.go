@@ -26,8 +26,11 @@ type Message struct {
 // Only authenticated bot adapters may provide the actual group and sender.
 func (s *Service) Ingest(ctx context.Context, g string, event Event, m Message) error {
 	stream := g + "/messages/" + m.ID
-	if !valid(g, 128) || event.Source != "qq-bot" || (event.Subject != g && event.Subject != stream) || event.Type != "groups.message" || !valid(m.ID, 128) || !valid(m.Owner, 2048) || !validText(m.Body, 8192) {
+	if !valid(g, 128) || event.Source != "qq-bot" || (event.TraceParent != "" && !validTraceParent(event.TraceParent)) || (event.Subject != g && event.Subject != stream) || event.Type != "groups.message" || !valid(m.ID, 128) || !valid(m.Owner, 2048) || !validText(m.Body, 8192) {
 		return ErrInvalid
+	}
+	if event.TraceParent != "" && TraceParentFromContext(ctx) == "" {
+		ctx = WithTraceParent(ctx, event.TraceParent)
 	}
 	if len(m.Attachments) > 20 {
 		return ErrInvalid
@@ -86,7 +89,7 @@ func (s *Service) Ingest(ctx context.Context, g string, event Event, m Message) 
 		if e = tx.Put(bucket(g, "messages"), m.ID, m); e != nil {
 			return e
 		}
-		return s.event(tx, g, "message.changed", map[string]string{"id": m.ID})
+		return s.event(ctx, tx, g, "message.changed", map[string]string{"id": m.ID})
 	})
 }
 
@@ -162,7 +165,7 @@ func (s *Service) rule(ctx context.Context, tx Tx, p account.Principal, c GroupC
 				return out, e
 			}
 		} else {
-			if _, e = s.queue(tx, p, c, command, cap); e != nil {
+			if _, e = s.queue(ctx, tx, p, c, command, cap); e != nil {
 				return out, e
 			}
 		}
@@ -243,7 +246,7 @@ func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupC
 		if e = s.auth(ctx, p, "groups.manage", c); e != nil {
 			return out, e
 		}
-		if _, e = s.queue(tx, p, c, Command{Kind: "remind", Target: cmd.Target, Text: "card_noncompliant"}, "groups.manage"); e != nil {
+		if _, e = s.queue(ctx, tx, p, c, Command{Kind: "remind", Target: cmd.Target, Text: "card_noncompliant"}, "groups.manage"); e != nil {
 			return out, e
 		}
 	}
@@ -253,10 +256,10 @@ func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	if e = s.auth(ctx, p, "groups.manage", c); e != nil {
 		return out, e
 	}
-	return s.queue(tx, p, c, Command{Kind: "card", Target: cmd.Target, Text: text}, "groups.manage")
+	return s.queue(ctx, tx, p, c, Command{Kind: "card", Target: cmd.Target, Text: text}, "groups.manage")
 }
 
-func (s *Service) cancelAction(tx Tx, g string, a *Action, reason string) error {
+func (s *Service) cancelAction(ctx context.Context, tx Tx, g string, a *Action, reason string) error {
 	a.State = "cancelled"
 	a.LeaseUntil = nil
 	if reason != "" {
@@ -265,20 +268,23 @@ func (s *Service) cancelAction(tx Tx, g string, a *Action, reason string) error 
 	if err := s.applyMuteOutcome(tx, g, *a); err != nil {
 		return err
 	}
+	if err := tx.Delete(bucket(g, "action_traces"), a.ID); err != nil {
+		return err
+	}
 	if e := tx.Put(bucket(g, "actions"), a.ID, *a); e != nil {
 		return e
 	}
 	if e := s.audit(tx, a.Actor.Principal(), g, a.Command.Kind, a.Command.Target, a.State); e != nil {
 		return e
 	}
-	return s.event(tx, g, "action.result", map[string]string{"id": a.ID, "state": a.State})
+	return s.event(ctx, tx, g, "action.result", map[string]string{"id": a.ID, "state": a.State})
 }
 
 func (s *Service) authorizePending(ctx context.Context, tx Tx, g string, a *Action) error {
 	var c GroupConfig
 	if e := tx.Get("config", g, &c); e != nil {
 		if errors.Is(e, ErrNotFound) {
-			return s.cancelAction(tx, g, a, e.Error())
+			return s.cancelAction(ctx, tx, g, a, e.Error())
 		}
 		return e
 	}
@@ -293,7 +299,7 @@ func (s *Service) authorizePending(ctx context.Context, tx Tx, g string, a *Acti
 		}
 		cancel := (a.Command.Kind != "approve" && !m.Joined) || (a.Command.Kind == "approve" && m.Joined) || (a.Command.Kind == "kick" && (ok || m.Exempt || s.now().Before(m.Deadline))) || (a.Command.Kind == "remind" && (ok || m.Exempt)) || (a.Command.Kind == "approve" && !ok) || (a.Command.Kind == "welcome" && !ok) || (a.Command.Kind == "mute" && (ok || m.Exempt)) || (a.Command.Kind == "unmute" && !ok)
 		if cancel {
-			return s.cancelAction(tx, g, a, "")
+			return s.cancelAction(ctx, tx, g, a, "")
 		}
 	} else if a.Capability == "entertainment" {
 		var m Member
@@ -305,12 +311,12 @@ func (s *Service) authorizePending(ctx context.Context, tx Tx, g string, a *Acti
 			return e
 		}
 		if !ok || c.MuteProbability == 0 || a.Command.Target != a.Actor.Key() {
-			return s.cancelAction(tx, g, a, "")
+			return s.cancelAction(ctx, tx, g, a, "")
 		}
 	} else {
 		if e := s.auth(ctx, a.Actor.Principal(), a.Capability, c); e != nil {
 			if errors.Is(e, ErrForbidden) || errors.Is(e, ErrUnauthenticated) {
-				return s.cancelAction(tx, g, a, e.Error())
+				return s.cancelAction(ctx, tx, g, a, e.Error())
 			}
 			return e
 		}
@@ -319,19 +325,19 @@ func (s *Service) authorizePending(ctx context.Context, tx Tx, g string, a *Acti
 		var source GroupConfig
 		if e := tx.Get("config", a.Command.Receiver, &source); e != nil {
 			if errors.Is(e, ErrNotFound) {
-				return s.cancelAction(tx, g, a, ErrNotFound.Error())
+				return s.cancelAction(ctx, tx, g, a, ErrNotFound.Error())
 			}
 			return e
 		}
 		if e := s.auth(ctx, a.Actor.Principal(), "groups.read", source); e != nil {
 			if errors.Is(e, ErrForbidden) || errors.Is(e, ErrUnauthenticated) {
-				return s.cancelAction(tx, g, a, e.Error())
+				return s.cancelAction(ctx, tx, g, a, e.Error())
 			}
 			return e
 		}
 	}
 	if !c.BotEnabled {
-		return s.cancelAction(tx, g, a, ErrDisabled.Error())
+		return s.cancelAction(ctx, tx, g, a, ErrDisabled.Error())
 	}
 	return nil
 }
@@ -344,6 +350,12 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 	e := s.run(ctx, func(tx Tx) error {
 		if e := tx.Get(bucket(g, "actions"), id, &a); e != nil {
 			return e
+		}
+		if TraceParentFromContext(ctx) == "" {
+			var storedTP string
+			if tx.Get(bucket(g, "action_traces"), id, &storedTP) == nil && validTraceParent(storedTP) {
+				ctx = WithTraceParent(ctx, storedTP)
+			}
 		}
 		if a.State == "succeeded" || a.State == "failed" || a.State == "cancelled" {
 			return nil
@@ -400,6 +412,11 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 	finish, cancelFinish := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer cancelFinish()
 	err := s.run(finish, func(tx Tx) error {
+		if a.State != "unknown" {
+			if err := tx.Delete(bucket(g, "action_traces"), id); err != nil {
+				return err
+			}
+		}
 		if err := s.applyMuteOutcome(tx, g, a); err != nil {
 			return err
 		}
@@ -440,7 +457,7 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 					if err = s.audit(tx, a.Actor.Principal(), g, "mute", a.Command.Target, "cancelled"); err != nil {
 						return err
 					}
-				} else if _, qErr := s.queue(tx, a.Actor.Principal(), c, Command{Kind: "mute", Target: a.Command.Target, Seconds: c.MuteSeconds, Text: "warning_limit"}, "groups.manage"); qErr != nil {
+				} else if _, qErr := s.queue(finish, tx, a.Actor.Principal(), c, Command{Kind: "mute", Target: a.Command.Target, Seconds: c.MuteSeconds, Text: "warning_limit"}, "groups.manage"); qErr != nil {
 					if !errors.Is(qErr, ErrDisabled) && !errors.Is(qErr, ErrCooldown) {
 						return qErr
 					}
@@ -453,7 +470,7 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 		if err := s.audit(tx, a.Actor.Principal(), g, a.Command.Kind, a.Command.Target, a.State); err != nil {
 			return err
 		}
-		return s.event(tx, g, "action.result", map[string]string{"id": id, "state": a.State})
+		return s.event(finish, tx, g, "action.result", map[string]string{"id": id, "state": a.State})
 	})
 	if err != nil {
 		return a, err
