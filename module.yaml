@@ -72,6 +72,7 @@ scenario_tests:
   QQ-10:
     - contract_test.go#TestAPIPrefixMatchesContractRoutesAndGeneratedClient
     - integration_test.go#TestRetentionInboxRollbackAndNoRecallViewAudit
+    - bot_ingress_test.go#TestBotIngressObjectStreamsAndRecalledAttachments
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
   BE-01:
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
