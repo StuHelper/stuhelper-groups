@@ -70,6 +70,7 @@ scenario_tests:
     - outbox_resilience_test.go#TestFanoutReceiverFailuresDoNotBlockHealthyTargetsOrSourceOutbox
     - batch_retry_test.go#TestBatchPreflightAndRetry
     - text_validation_test.go#TestTextValidationAtBoundaries
+    - receipt_scope_test.go#TestReceiptScopeAndLegacyReplay
     - delivery_membership_test.go#TestPendingOutboxExclusionLimitOrderingAndConfirmation
     - delivery_membership_test.go#TestRelayStopsFailedSubjectWithinBatchAndDeliversOthers
     - api_v03_test.go#TestEveryCollectionTypedPaginationAndAuthorization

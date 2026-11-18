@@ -87,9 +87,25 @@ type receipt struct {
 	Result json.RawMessage
 }
 
-func replay(tx Tx, owner, key string, input, out any) (bool, error) {
+func validKey(v string) bool {
+	if len(v) < 1 || len(v) > 128 {
+		return false
+	}
+	for i := 0; i < len(v); i++ {
+		if v[i] < ' ' || v[i] > '~' {
+			return false
+		}
+	}
+	return true
+}
+
+func replay(tx Tx, owner, operation, object, key string, input, out any) (bool, error) {
 	var r receipt
-	e := tx.Get("receipts", hash([]string{owner, key}), &r)
+	e := tx.Get("receipts", hash([]string{owner, operation, object, key}), &r)
+	if errors.Is(e, ErrNotFound) {
+		// Legacy receipts have only the digest to identify the original operation.
+		e = tx.Get("receipts", hash([]string{owner, key}), &r)
+	}
 	if errors.Is(e, ErrNotFound) {
 		return false, nil
 	}
@@ -101,12 +117,12 @@ func replay(tx Tx, owner, key string, input, out any) (bool, error) {
 	}
 	return true, json.Unmarshal(r.Result, out)
 }
-func save(tx Tx, owner, key string, input, out any) error {
+func save(tx Tx, owner, operation, object, key string, input, out any) error {
 	b, e := json.Marshal(out)
 	if e != nil {
 		return e
 	}
-	return tx.Put("receipts", hash([]string{owner, key}), receipt{hash(input), b})
+	return tx.Put("receipts", hash([]string{owner, operation, object, key}), receipt{hash(input), b})
 }
 func validateConfig(c GroupConfig) error {
 	if strings.TrimSpace(c.Name) == "" || !validText(c.Name, 128) || strings.ContainsFunc(c.Name, unicode.IsControl) || c.ID == "me" || c.ID == "*" || c.School == "*" || !valid(c.ID, 128) || !valid(c.School, 128) || !slices.Contains([]string{"before", "muted", "password"}, c.Mode) {
@@ -198,7 +214,7 @@ func (s *Service) Command(ctx context.Context, p account.Principal, g, key strin
 	if !p.Valid() {
 		return out, ErrUnauthenticated
 	}
-	if !valid(key, 128) || !valid(g, 128) || !validText(cmd.Text, 8192) || !validText(cmd.Message, 128) || !validText(cmd.Receiver, 128) || !validText(cmd.Target, 2048) || cmd.Seconds < 0 || cmd.Seconds > 31536000 {
+	if !validKey(key) || !valid(g, 128) || !validText(cmd.Text, 8192) || !validText(cmd.Message, 128) || !validText(cmd.Receiver, 128) || !validText(cmd.Target, 2048) || cmd.Seconds < 0 || cmd.Seconds > 31536000 {
 		return out, ErrInvalid
 	}
 	e := s.run(ctx, func(tx Tx) error {
@@ -240,7 +256,7 @@ func (s *Service) Command(ctx context.Context, p account.Principal, g, key strin
 			Group   string
 			Command Command
 		}{g, cmd}
-		ok, e := replay(tx, p.Key(), key, input, &out)
+		ok, e := replay(tx, p.Key(), "command", g, key, input, &out)
 		if e != nil || ok {
 			return e
 		}
@@ -248,7 +264,7 @@ func (s *Service) Command(ctx context.Context, p account.Principal, g, key strin
 		if e != nil {
 			return e
 		}
-		return save(tx, p.Key(), key, input, out)
+		return save(tx, p.Key(), "command", g, key, input, out)
 	})
 	return out, e
 }
