@@ -54,7 +54,7 @@ func listRecords[T any](s *Service, ctx context.Context, p account.Principal, g,
 	if !p.Valid() {
 		return out, ErrUnauthenticated
 	}
-	if limit < 1 || limit > 100 || len(cursor) > 4096 {
+	if !valid(g, 128) || limit < 1 || limit > 100 || !validCursor(cursor, 4096) {
 		return out, ErrInvalid
 	}
 	e := s.run(ctx, func(tx Tx) error {
@@ -97,11 +97,16 @@ func listRecords[T any](s *Service, ctx context.Context, p account.Principal, g,
 				if e = json.Unmarshal(r.Data, &d); e != nil {
 					return e
 				}
-				var action Action
-				if e = tx.Get(bucket(d.Receiver, "actions"), d.Action, &action); e != nil {
-					return e
+				state := d.State
+				if d.Action != "" {
+					var action Action
+					if e = tx.Get(bucket(d.Receiver, "actions"), d.Action, &action); e == nil {
+						state = action.State
+					} else if !errors.Is(e, ErrNotFound) || state == "" {
+						return e
+					}
 				}
-				record["state"], e = json.Marshal(action.State)
+				record["state"], e = json.Marshal(state)
 				if e != nil {
 					return e
 				}
@@ -172,7 +177,7 @@ func (s *Service) Groups(ctx context.Context, p account.Principal, cursor string
 	if !p.Valid() {
 		return out, ErrUnauthenticated
 	}
-	if limit < 1 || limit > 100 || len(cursor) > 4096 {
+	if limit < 1 || limit > 100 || !validCursor(cursor, 4096) {
 		return out, ErrInvalid
 	}
 	e := s.run(ctx, func(tx Tx) error {

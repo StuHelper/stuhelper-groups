@@ -54,12 +54,16 @@ func (r *Repository) ReadAccount(ctx context.Context, s aq.Selection) ([]aq.Reco
 	return out, nil
 }
 
-const accountQuerySQL = `WITH records AS (SELECT 'groups:'||r.query_id::text AS id,COALESCE(NULLIF(c.data->>'school',''),'*') AS school,c.id AS grp,
+const accountQuerySQL = `WITH records AS (SELECT 'groups:'||r.query_id::text AS id,COALESCE(NULLIF(c.data->>'school',''),'*') AS school,split_part(r.bucket,'/',1) AS grp,
  r.query_changed_at AS changed,
- COALESCE(r.data->>'state','')<>'removed' AS current,
- jsonb_strip_nulls(jsonb_build_object('kind',split_part(r.bucket,'/',2),'state',r.data->>'state','joined',r.data->>'joined','deadline',r.data->>'deadline','exempt',r.data->>'exempt','extended',r.data->>'extended','count',r.data->>'count','until',r.data->>'until','permanent',r.data->>'permanent','action',COALESCE(r.data->'command'->>'kind',r.data->>'action'),'result',r.data->>'result')) AS fields,''::text AS sensitive
- FROM groups.records r JOIN groups.records c ON c.bucket='config' AND c.id=split_part(r.bucket,'/',1)
- WHERE ((split_part(r.bucket,'/',2) IN ('members','blacklist','warnings','watch') AND r.id=$1)
+ CASE split_part(r.bucket,'/',2)
+ WHEN 'blacklist' THEN COALESCE((r.data->>'permanent')::boolean,false) OR COALESCE((r.data->>'until')::timestamptz > now(),false)
+ WHEN 'watch' THEN COALESCE((r.data->>'enabled')::boolean,false)
+ ELSE COALESCE(r.data->>'state','')<>'removed' END AS current,
+ jsonb_strip_nulls(jsonb_build_object('kind',split_part(r.bucket,'/',2),'state',r.data->>'state','joined',r.data->>'joined','deadline',r.data->>'deadline','enabled',r.data->>'enabled','exempt',r.data->>'exempt','extended',r.data->>'extended','count',r.data->>'count','until',r.data->>'until','permanent',r.data->>'permanent','action',COALESCE(r.data->'command'->>'kind',r.data->>'action'),'result',r.data->>'result')) AS fields,''::text AS sensitive
+ FROM groups.records r LEFT JOIN groups.records c ON c.bucket='config' AND c.id=split_part(r.bucket,'/',1)
+ WHERE (c.id IS NOT NULL OR r.bucket IN ('*/blacklist','*/audit'))
+ AND ((split_part(r.bucket,'/',2) IN ('members','blacklist','warnings','watch') AND r.id=$1)
  OR (split_part(r.bucket,'/',2)='actions' AND r.data->'command'->>'target'=$1)
  OR (split_part(r.bucket,'/',2)='audit' AND (r.data->>'target'=$1 OR r.data->>'actor'=$1)) OR (split_part(r.bucket,'/',2) IN ('actions','audit') AND r.data->'actor'->>'issuer'=$7 AND r.data->'actor'->>'subject'=$8))) SELECT id,school,grp,changed,current,fields,sensitive FROM records
  WHERE id COLLATE "C">$2 COLLATE "C"

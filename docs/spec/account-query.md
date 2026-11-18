@@ -1,7 +1,7 @@
 ---
 type: spec
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-18
 ---
 
 # groups 按账号信息查询
@@ -29,7 +29,9 @@ Query 的 String 和 GoString 隐去所有查询参数。错误不包含查询�
 
 返回成员资格和入群认证状态、截止时间、豁免、延期、警告、黑名单、关注与管理动作及审计结果。管理记录包含目标账号受到的处置及该账号作为操作者的记录。
 
-学校与群来自 config，记录先与本域授权范围求交再分页。不会返回 QQ 号码、认证材料、消息内容或管理命令中的自由文本。成员记录保留 removed 状态，Current=false。
+群内记录的学校与群来自 config。平台黑名单和对应审计只向同时覆盖全部学校和群的查询返回。过期封禁与已停用关注的 Current 为 false，关注记录另含 enabled。
+
+记录先与本域授权范围求交再分页。不会返回 QQ 号码、认证材料、消息内容或管理命令中的自由文本。成员记录保留 removed 状态，Current=false。
 
 装配使用 accountquery.Service{Repo: repository, Auth: authorizer, Audit: auditor}。postgres.Repository 实现 ReadAccount；这是可信内部存储端口，外部入口必须调用 Service.Query。
 

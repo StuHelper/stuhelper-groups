@@ -36,7 +36,8 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 128
+              "maxLength": 128,
+              "pattern": "^[ -~]{1,128}$"
             }
           }
         ],
@@ -230,7 +231,8 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 128
+              "maxLength": 128,
+              "pattern": "^[ -~]{1,128}$"
             }
           }
         ],
@@ -348,7 +350,8 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 128
+              "maxLength": 128,
+              "pattern": "^[ -~]{1,128}$"
             }
           }
         ],
@@ -457,7 +460,8 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 128
+              "maxLength": 128,
+              "pattern": "^[ -~]{1,128}$"
             }
           }
         ],
@@ -2779,7 +2783,8 @@
                 "kick",
                 "blacklist"
               ]
-            }
+            },
+            "uniqueItems": true
           },
           "welcome": {
             "type": "string",
