@@ -6,6 +6,8 @@ updated: 2026-11-18
 
 # Groups 实施状态
 
+目标群关闭机器人、队列满或操作者撤权时，源群继续投递。警告成功后，派生禁言被拒也会保存警告结果。
+
 ## 当前实现
 
 OpenAPI 0.4.0 使用 /api/v1/groups 前缀，Go/TypeScript 客户端、HTTP Handler、Service 与 PostgreSQL Repository 已建立。群与学校关联、分范围管理、本人申请进度、三项绑定和资格判断、动态口令、宽限期、恢复、延期、豁免与自动移出均由服务端处理。

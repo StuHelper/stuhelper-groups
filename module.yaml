@@ -61,6 +61,9 @@ scenario_tests:
     - facts_test.go#TestGroupFactsFiltersFieldsAtServiceBoundary
     - integration_test.go#TestRulesCardsReportAndBatchPreview
   QQ-08:
+    - outbox_resilience_test.go#TestUnknownWarningAfterRevocationUsesActualResult
+    - outbox_resilience_test.go#TestExecuteRevocationCancelsActionAndFinishPreservesExecutedWarn
+    - outbox_resilience_test.go#TestFanoutReceiverFailuresDoNotBlockHealthyTargetsOrSourceOutbox
     - delivery_membership_test.go#TestPendingOutboxExclusionLimitOrderingAndConfirmation
     - delivery_membership_test.go#TestRelayStopsFailedSubjectWithinBatchAndDeliversOthers
     - api_v03_test.go#TestEveryCollectionTypedPaginationAndAuthorization
