@@ -1,8 +1,11 @@
 package groups_test
 
 import (
+	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -218,5 +221,101 @@ func TestBatchDryRunPreviewAccuracyAuthorizationAndLongIdempotencyKey(t *testing
 	}
 	if _, err := f.s.Batch(ctx, manager, "g", longKey, g.Bulk{Targets: []string{joinedGrace.Key()}, Command: g.Command{Kind: "kick"}}); !errors.Is(err, g.ErrConflict) {
 		t.Fatalf("expected conflict when reusing 128-char batch key with different input, got %v", err)
+	}
+}
+
+func TestUnexemptPendingApplicantAndExistingExtension(t *testing.T) {
+	f := setup(t)
+	f.facts.set(false)
+	extended := f.now.Add(8 * 24 * time.Hour)
+	if err := f.r.Transaction(ctx, func(tx g.Tx) error {
+		if err := tx.Put("g/members", user.Key(), g.Member{Owner: user.Key(), State: "exempt", Exempt: true}); err != nil {
+			return err
+		}
+		return tx.Put("g/members", outsider.Key(), g.Member{Owner: outsider.Key(), Joined: true, State: "extended", Extended: true, Deadline: extended})
+	}); err != nil {
+		t.Fatal(err)
+	}
+	cmd := g.Command{Kind: "unexempt", Text: "ended", Target: outsider.Key()}
+	before := count(t, f, "g/audit")
+	if out := command(t, f, manager, "noop", cmd); out.State != "noop" || count(t, f, "g/audit") != before {
+		t.Fatal(out)
+	}
+	if m := member(t, f, "g", outsider); !m.Extended || !m.Deadline.Equal(extended) {
+		t.Fatal(m)
+	}
+	cmd.Target = user.Key()
+	if out := command(t, f, manager, "resume", cmd); out.State != "awaiting_verification" {
+		t.Fatal(out)
+	}
+	if m := member(t, f, "g", user); m.Joined || !m.Deadline.IsZero() {
+		t.Fatal(m)
+	}
+	f.facts.set(true)
+	command(t, f, manager, "eligible-again", g.Command{Kind: "recheck", Target: user.Key()})
+	actions, err := f.s.Actions(ctx, manager, "g", "", 10)
+	if err != nil || len(actions.Items) != 1 || actions.Items[0].Command.Kind != "approve" {
+		t.Fatal(actions, err)
+	}
+}
+
+func TestBatchPreviewReservesAllActionsAndIsolatesFactFailure(t *testing.T) {
+	f := setup(t)
+	cfg := config()
+	cfg.RemindCard = true
+	cfg.AutoCard = true
+	if _, err := configureCurrent(t, f, manager, "card-setup", cfg); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.r.Transaction(ctx, func(tx g.Tx) error {
+		for i := range 998 {
+			id := fmt.Sprintf("fill-%03d", i)
+			if err := tx.Put("g/actions", id, g.Action{ID: id, Group: "g", State: "pending"}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	bad := account.Principal{Issuer: "test", Subject: "bad"}
+	f.s.Facts = groupFactsFunc(func(_ context.Context, _ account.Principal, owner, school string) (g.Facts, error) {
+		if owner == bad.Key() {
+			return g.Facts{}, g.ErrUnavailable
+		}
+		return f.facts.value, nil
+	})
+	before := databaseDigest(t, f)
+	page, err := f.s.Batch(ctx, manager, "g", "card-preview", g.Bulk{Targets: []string{bad.Key(), user.Key(), outsider.Key()}, Preview: true, Command: g.Command{Kind: "card", Text: "old"}})
+	if err != nil || len(page.Items) != 3 {
+		t.Fatal(page, err)
+	}
+	if page.Items[0].Result.Detail != g.ErrUnavailable.Error() || page.Items[1].Result.State != "would_queue" || page.Items[2].Result.Detail != g.ErrCooldown.Error() {
+		t.Fatal(page)
+	}
+	if databaseDigest(t, f) != before {
+		t.Fatal("preview persisted changes")
+	}
+}
+
+func TestBatchReplaysEarlierChildKey(t *testing.T) {
+	f := setup(t)
+	key := "legacy-batch"
+	target := user.Key()
+	cmd := g.Command{Kind: "warn", Text: "reason", Target: target}
+	if err := f.s.MemberEvent(ctx, "g", event("joined", "qq-bot", "g", "groups.member_joined", 1), target); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := json.Marshal(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldKey := key + "-" + fmt.Sprintf("%x", sha256.Sum256(raw))[:20]
+	original := command(t, f, manager, oldKey, cmd)
+	before := count(t, f, "g/actions")
+	cmd.Target = ""
+	page, err := f.s.Batch(ctx, manager, "g", key, g.Bulk{Targets: []string{target}, Command: cmd})
+	if err != nil || len(page.Items) != 1 || page.Items[0].Result.ID != original.ID || count(t, f, "g/actions") != before {
+		t.Fatal(page, err)
 	}
 }
