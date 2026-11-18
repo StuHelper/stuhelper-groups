@@ -293,6 +293,8 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 			m.Extended = true
 			m.State = "extended"
 		} else {
+			m.Deadline = time.Time{}
+			m.Extended = false
 			m.Exempt = true
 			m.State = "exempt"
 		}
@@ -625,11 +627,11 @@ func (s *Service) play(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	if e := tx.Get(bucket(c.ID, "members"), p.Key(), &m); e != nil {
 		return out, e
 	}
-	ok, e := s.eligible(ctx, tx, c, m)
+	ok, e := s.canPlay(ctx, tx, c, m)
 	if e != nil {
 		return out, e
 	}
-	if !m.Joined || !ok || m.State == "removed" {
+	if !ok {
 		return out, ErrForbidden
 	}
 	if cmd.Kind == "dice" {
@@ -647,6 +649,12 @@ func (s *Service) play(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	if c.MuteProbability == 0 {
 		return out, ErrDisabled
 	}
+	var pending string
+	if err := tx.Get(bucket(c.ID, "self_mutes"), m.Owner, &pending); err == nil {
+		return out, ErrCooldown
+	} else if !errors.Is(err, ErrNotFound) {
+		return out, err
+	}
 	if s.now().Before(m.LastPlay.Add(time.Duration(c.CooldownSeconds)*time.Second)) || s.now().Before(m.MutedUntil) {
 		return out, ErrCooldown
 	}
@@ -661,6 +669,9 @@ func (s *Service) play(ctx context.Context, tx Tx, p account.Principal, c GroupC
 		out, e = s.queue(tx, p, c, Command{Kind: "mute", Target: p.Key(), Seconds: c.MuteSeconds, Text: "entertainment"}, "entertainment")
 		if e != nil {
 			return out, e
+		}
+		if err := tx.Put(bucket(c.ID, "self_mutes"), m.Owner, out.ID); err != nil {
+			return out, err
 		}
 		m.MutedUntil = s.now().Add(time.Duration(c.MuteSeconds) * time.Second)
 	}

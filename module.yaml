@@ -92,6 +92,7 @@ scenario_tests:
   BE-01:
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
   BE-02:
+    - entertainment_state_test.go#TestExemptionAndMuteOutcome
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
   BE-03:
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation

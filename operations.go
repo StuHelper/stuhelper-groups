@@ -260,6 +260,9 @@ func (s *Service) cancelAction(tx Tx, g string, a *Action, reason string) error 
 	if reason != "" {
 		a.Result = reason
 	}
+	if err := s.applyMuteOutcome(tx, g, *a); err != nil {
+		return err
+	}
 	if e := tx.Put(bucket(g, "actions"), a.ID, *a); e != nil {
 		return e
 	}
@@ -295,11 +298,11 @@ func (s *Service) authorizePending(ctx context.Context, tx Tx, g string, a *Acti
 		if e := tx.Get(bucket(g, "members"), a.Command.Target, &m); e != nil {
 			return e
 		}
-		ok, e := s.eligible(ctx, tx, c, m)
+		ok, e := s.canPlay(ctx, tx, c, m)
 		if e != nil {
 			return e
 		}
-		if !m.Joined || !ok || c.MuteProbability == 0 || a.Command.Target != a.Actor.Key() {
+		if !ok || c.MuteProbability == 0 || a.Command.Target != a.Actor.Key() {
 			return s.cancelAction(tx, g, a, "")
 		}
 	} else {
@@ -395,6 +398,9 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 	finish, cancelFinish := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer cancelFinish()
 	err := s.run(finish, func(tx Tx) error {
+		if err := s.applyMuteOutcome(tx, g, a); err != nil {
+			return err
+		}
 		if err := tx.Put(bucket(g, "actions"), id, a); err != nil {
 			return err
 		}
@@ -512,4 +518,41 @@ func (s *Service) Cleanup(ctx context.Context, g, cursor string) (string, error)
 		return nil
 	})
 	return next, e
+}
+
+func (s *Service) applyMuteOutcome(tx Tx, g string, a Action) error {
+	self := a.Capability == "entertainment" && a.Command.Kind == "mute"
+	unmuted := a.Command.Kind == "unmute" && a.State == "succeeded"
+	if (!self && !unmuted) || a.State == "unknown" {
+		return nil
+	}
+	var m Member
+	err := tx.Get(bucket(g, "members"), a.Command.Target, &m)
+	if errors.Is(err, ErrNotFound) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if self {
+		var id string
+		err := tx.Get(bucket(g, "self_mutes"), m.Owner, &id)
+		if err != nil && !errors.Is(err, ErrNotFound) {
+			return err
+		}
+		if err == nil && id != a.ID {
+			return nil
+		}
+		if errors.Is(err, ErrNotFound) && m.LastPlay.After(a.Created) {
+			return nil
+		}
+		if err := tx.Delete(bucket(g, "self_mutes"), m.Owner); err != nil {
+			return err
+		}
+	}
+	m.MutedUntil = time.Time{}
+	if self && a.State == "succeeded" {
+		m.MutedUntil = s.now().Add(time.Duration(a.Command.Seconds) * time.Second)
+	}
+	return tx.Put(bucket(g, "members"), m.Owner, m)
 }

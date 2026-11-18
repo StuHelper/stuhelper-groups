@@ -111,3 +111,14 @@ func (s *Service) restricted(tx Tx, id, owner string) (bool, error) {
 	}
 	return false, nil
 }
+
+func (s *Service) canPlay(ctx context.Context, tx Tx, c GroupConfig, m Member) (bool, error) {
+	if !m.Joined || m.State == "removed" {
+		return false, nil
+	}
+	if m.Exempt {
+		blocked, err := s.restricted(tx, c.ID, m.Owner)
+		return !blocked, err
+	}
+	return s.eligible(ctx, tx, c, m)
+}
