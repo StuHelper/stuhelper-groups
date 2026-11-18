@@ -32,6 +32,8 @@ updated: 2026-11-18
 
 链接协议名按大小写无关匹配，一条消息命中多个关键词时只记录一个关键词标签。
 
+分页集合只接受声明的查询参数。契约描述群和学校标识、骰子与黑名单时长限制。投递列表的契约操作名为 listDeliveries，Go 和 TypeScript SDK 兼容原有 listDeliverys 名称。
+
 ## 当前实现
 
 OpenAPI 0.4.0 使用 /api/v1/groups 前缀，Go/TypeScript 客户端、HTTP Handler、Service 与 PostgreSQL Repository 已建立。群与学校关联、分范围管理、本人申请进度、三项绑定和资格判断、动态口令、宽限期、恢复、延期、豁免与自动移出均由服务端处理。

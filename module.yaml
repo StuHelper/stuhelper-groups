@@ -73,6 +73,9 @@ scenario_tests:
     - receipt_scope_test.go#TestReceiptScopeAndLegacyReplay
     - unsubscribe_test.go#TestDisableExistingSubscriptionWithSourceGrant
     - rule_labels_test.go#TestRuleLabels
+    - collection_contract_test.go#TestConfigurationContractRejectsInvalidSettings
+    - collection_contract_test.go#TestDeliverySDKCompatibility
+    - collection_contract_test.go#TestCollectionUnknownQuery
     - delivery_membership_test.go#TestPendingOutboxExclusionLimitOrderingAndConfirmation
     - delivery_membership_test.go#TestRelayStopsFailedSubjectWithinBatchAndDeliversOthers
     - api_v03_test.go#TestEveryCollectionTypedPaginationAndAuthorization
