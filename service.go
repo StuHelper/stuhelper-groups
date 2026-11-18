@@ -137,8 +137,11 @@ func (s *Service) saveReceipt(tx Tx, owner, operation, object, key string, input
 	return tx.Put("receipts", hash([]string{owner, operation, object, key}), receipt{Digest: hash(input), Result: b, CreatedAt: s.now()})
 }
 func validateConfig(c GroupConfig) error {
-	if c.ID == "me" || c.ID == "*" || !valid(c.ID, 128) {
+	if c.ID == "directory" || c.ID == "me" || c.ID == "*" || !valid(c.ID, 128) {
 		return NewErrorDetail(ErrInvalid, "invalid_field", "id", 0)
+	}
+	if !slices.Contains([]string{"", "school", "department", "grade", "course", "club"}, c.Category) || !utf8.ValidString(c.Description) || utf8.RuneCountInString(c.Description) > 512 || strings.ContainsFunc(c.Description, func(r rune) bool { return unicode.IsControl(r) && r != '\n' }) || !utf8.ValidString(c.PasswordHint) || utf8.RuneCountInString(c.PasswordHint) > 256 || strings.ContainsFunc(c.PasswordHint, unicode.IsControl) {
+		return ErrInvalid
 	}
 	if c.School == "*" || !valid(c.School, 128) {
 		return NewErrorDetail(ErrInvalid, "invalid_field", "school", 0)

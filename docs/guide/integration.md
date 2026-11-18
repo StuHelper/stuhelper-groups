@@ -1,7 +1,7 @@
 ---
 type: guide
 status: Accepted
-updated: 2026-11-18
+updated: 2026-11-19
 ---
 
 # Groups 装配指南
@@ -319,6 +319,7 @@ OpenAPI 与模块版本为 0.4.0，HTTP 路由使用 /api/v1/groups 前缀。SDK
 | 方法与路径 | 请求 / 响应 | 用途 |
 | --- | --- | --- |
 | GET /api/v1/groups | GroupSummaryPage | 群摘要与计数 |
+| GET /api/v1/groups/directory | DirectoryGroupPage | 学生端公开群目录发现 |
 | GET /api/v1/groups/me | MyGroupPage | 本人的群、申请与下一步动作 |
 | GET /api/v1/groups/{group} | GroupConfig | 当前配置与 revision |
 | PUT /api/v1/groups/{group} | GroupConfigInput / GroupConfig | 创建或更新配置 |
@@ -371,7 +372,11 @@ next_actions 是 Web 动作类别，不是权限令牌。前端将 bind_qq、ver
 
 此接口复用入群与执行前检查的资格判定，只读取数据，不执行入群批准、提醒、移出，不写业务查看审计、inbox 或 outbox。实际状态推进仍由 Consume、Sweep 和机器人回执负责。
 
-0.4.0 新增 listMyGroups SDK 方法，现有管理接口与 progress 路径继续保留。me 是该静态路径保留的群 ID，新配置不能使用这个 ID。
+0.4.0 新增 listMyGroups 与 listGroupDirectory SDK 方法，现有管理接口与 progress 路径继续保留。me 与 directory 是静态路径保留的群 ID，新配置不能使用这两个 ID。
+
+GET /api/v1/groups/directory 支持按 school、category、cursor、limit 查询 discoverable=true 的群公开卡片，包含分类、简介、准入摘要、口令提示与本人状态，不暴露完整群号或管理计数。
+
+要求学生资格的群仅在请求人具备该校当前有效校园资格时返回，不要求学生资格的群对已登录且未被限制的用户公开可见。MyGroup 在口令模式配置了 password_hint 时一并返回该提示。
 
 ### 群摘要与列表
 

@@ -288,6 +288,93 @@ func (e DiceCommandKind) Valid() bool {
 	}
 }
 
+// Defines values for DirectoryGroupCategory.
+const (
+	DirectoryGroupCategoryClub       DirectoryGroupCategory = "club"
+	DirectoryGroupCategoryCourse     DirectoryGroupCategory = "course"
+	DirectoryGroupCategoryDepartment DirectoryGroupCategory = "department"
+	DirectoryGroupCategoryEmpty      DirectoryGroupCategory = ""
+	DirectoryGroupCategoryGrade      DirectoryGroupCategory = "grade"
+	DirectoryGroupCategorySchool     DirectoryGroupCategory = "school"
+)
+
+// Valid indicates whether the value is a known member of the DirectoryGroupCategory enum.
+func (e DirectoryGroupCategory) Valid() bool {
+	switch e {
+	case DirectoryGroupCategoryClub:
+		return true
+	case DirectoryGroupCategoryCourse:
+		return true
+	case DirectoryGroupCategoryDepartment:
+		return true
+	case DirectoryGroupCategoryEmpty:
+		return true
+	case DirectoryGroupCategoryGrade:
+		return true
+	case DirectoryGroupCategorySchool:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DirectoryGroupMode.
+const (
+	DirectoryGroupModeBefore   DirectoryGroupMode = "before"
+	DirectoryGroupModeMuted    DirectoryGroupMode = "muted"
+	DirectoryGroupModePassword DirectoryGroupMode = "password"
+)
+
+// Valid indicates whether the value is a known member of the DirectoryGroupMode enum.
+func (e DirectoryGroupMode) Valid() bool {
+	switch e {
+	case DirectoryGroupModeBefore:
+		return true
+	case DirectoryGroupModeMuted:
+		return true
+	case DirectoryGroupModePassword:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DirectoryGroupState.
+const (
+	DirectoryGroupStateAwaitingVerification DirectoryGroupState = "awaiting_verification"
+	DirectoryGroupStateEmpty                DirectoryGroupState = ""
+	DirectoryGroupStateExempt               DirectoryGroupState = "exempt"
+	DirectoryGroupStateExtended             DirectoryGroupState = "extended"
+	DirectoryGroupStateGrace                DirectoryGroupState = "grace"
+	DirectoryGroupStateRemovalPending       DirectoryGroupState = "removal_pending"
+	DirectoryGroupStateRequested            DirectoryGroupState = "requested"
+	DirectoryGroupStateRestored             DirectoryGroupState = "restored"
+)
+
+// Valid indicates whether the value is a known member of the DirectoryGroupState enum.
+func (e DirectoryGroupState) Valid() bool {
+	switch e {
+	case DirectoryGroupStateAwaitingVerification:
+		return true
+	case DirectoryGroupStateEmpty:
+		return true
+	case DirectoryGroupStateExempt:
+		return true
+	case DirectoryGroupStateExtended:
+		return true
+	case DirectoryGroupStateGrace:
+		return true
+	case DirectoryGroupStateRemovalPending:
+		return true
+	case DirectoryGroupStateRequested:
+		return true
+	case DirectoryGroupStateRestored:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ExemptBatchCommandKind.
 const (
 	ExemptBatchCommandKindExempt ExemptBatchCommandKind = "exempt"
@@ -405,6 +492,36 @@ func (e GroupConfigAutoActions) Valid() bool {
 	}
 }
 
+// Defines values for GroupConfigCategory.
+const (
+	GroupConfigCategoryClub       GroupConfigCategory = "club"
+	GroupConfigCategoryCourse     GroupConfigCategory = "course"
+	GroupConfigCategoryDepartment GroupConfigCategory = "department"
+	GroupConfigCategoryEmpty      GroupConfigCategory = ""
+	GroupConfigCategoryGrade      GroupConfigCategory = "grade"
+	GroupConfigCategorySchool     GroupConfigCategory = "school"
+)
+
+// Valid indicates whether the value is a known member of the GroupConfigCategory enum.
+func (e GroupConfigCategory) Valid() bool {
+	switch e {
+	case GroupConfigCategoryClub:
+		return true
+	case GroupConfigCategoryCourse:
+		return true
+	case GroupConfigCategoryDepartment:
+		return true
+	case GroupConfigCategoryEmpty:
+		return true
+	case GroupConfigCategoryGrade:
+		return true
+	case GroupConfigCategorySchool:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GroupConfigMode.
 const (
 	GroupConfigModeBefore   GroupConfigMode = "before"
@@ -447,6 +564,36 @@ func (e GroupConfigInputAutoActions) Valid() bool {
 	case GroupConfigInputAutoActionsRecall:
 		return true
 	case GroupConfigInputAutoActionsWarn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GroupConfigInputCategory.
+const (
+	GroupConfigInputCategoryClub       GroupConfigInputCategory = "club"
+	GroupConfigInputCategoryCourse     GroupConfigInputCategory = "course"
+	GroupConfigInputCategoryDepartment GroupConfigInputCategory = "department"
+	GroupConfigInputCategoryEmpty      GroupConfigInputCategory = ""
+	GroupConfigInputCategoryGrade      GroupConfigInputCategory = "grade"
+	GroupConfigInputCategorySchool     GroupConfigInputCategory = "school"
+)
+
+// Valid indicates whether the value is a known member of the GroupConfigInputCategory enum.
+func (e GroupConfigInputCategory) Valid() bool {
+	switch e {
+	case GroupConfigInputCategoryClub:
+		return true
+	case GroupConfigInputCategoryCourse:
+		return true
+	case GroupConfigInputCategoryDepartment:
+		return true
+	case GroupConfigInputCategoryEmpty:
+		return true
+	case GroupConfigInputCategoryGrade:
+		return true
+	case GroupConfigInputCategorySchool:
 		return true
 	default:
 		return false
@@ -1083,6 +1230,33 @@ func (e WatchCommandKind) Valid() bool {
 	}
 }
 
+// Defines values for ListGroupDirectoryParamsCategory.
+const (
+	ListGroupDirectoryParamsCategoryClub       ListGroupDirectoryParamsCategory = "club"
+	ListGroupDirectoryParamsCategoryCourse     ListGroupDirectoryParamsCategory = "course"
+	ListGroupDirectoryParamsCategoryDepartment ListGroupDirectoryParamsCategory = "department"
+	ListGroupDirectoryParamsCategoryGrade      ListGroupDirectoryParamsCategory = "grade"
+	ListGroupDirectoryParamsCategorySchool     ListGroupDirectoryParamsCategory = "school"
+)
+
+// Valid indicates whether the value is a known member of the ListGroupDirectoryParamsCategory enum.
+func (e ListGroupDirectoryParamsCategory) Valid() bool {
+	switch e {
+	case ListGroupDirectoryParamsCategoryClub:
+		return true
+	case ListGroupDirectoryParamsCategoryCourse:
+		return true
+	case ListGroupDirectoryParamsCategoryDepartment:
+		return true
+	case ListGroupDirectoryParamsCategoryGrade:
+		return true
+	case ListGroupDirectoryParamsCategorySchool:
+		return true
+	default:
+		return false
+	}
+}
+
 // Action defines model for Action.
 type Action struct {
 	Actor      Actor         `json:"actor"`
@@ -1299,6 +1473,51 @@ type DiceCommand struct {
 // DiceCommandKind defines model for DiceCommand.Kind.
 type DiceCommandKind string
 
+// DirectoryGroup defines model for DirectoryGroup.
+type DirectoryGroup struct {
+	AcceptAlumni    bool                   `json:"accept_alumni"`
+	AcceptTemporary bool                   `json:"accept_temporary"`
+	Category        DirectoryGroupCategory `json:"category"`
+	Description     string                 `json:"description"`
+
+	// Id Internal group ID.
+	Id string `json:"id"`
+
+	// Joined True only when the caller's own membership has been confirmed by the bot.
+	Joined bool               `json:"joined"`
+	Mode   DirectoryGroupMode `json:"mode"`
+	Name   string             `json:"name"`
+
+	// Number Masked group number showing at most the final four digits; empty when not recorded.
+	Number string `json:"number"`
+
+	// PasswordHint Optional hint describing where to locate the dynamic password when requires_password is true.
+	PasswordHint     *string `json:"password_hint,omitempty"`
+	RequireStudent   bool    `json:"require_student"`
+	RequiresPassword bool    `json:"requires_password"`
+	School           string  `json:"school"`
+
+	// State Caller's own active membership or application state, or empty when none.
+	State DirectoryGroupState `json:"state"`
+}
+
+// DirectoryGroupCategory defines model for DirectoryGroup.Category.
+type DirectoryGroupCategory string
+
+// DirectoryGroupMode defines model for DirectoryGroup.Mode.
+type DirectoryGroupMode string
+
+// DirectoryGroupState Caller's own active membership or application state, or empty when none.
+type DirectoryGroupState string
+
+// DirectoryGroupPage defines model for DirectoryGroupPage.
+type DirectoryGroupPage struct {
+	Items []DirectoryGroup `json:"items"`
+
+	// NextCursor Last scanned group ID if another page may exist, or empty when exhausted.
+	NextCursor string `json:"next_cursor"`
+}
+
 // ExemptBatchCommand Management command; requires current group-scoped capability.
 type ExemptBatchCommand struct {
 	Kind ExemptBatchCommandKind `json:"kind"`
@@ -1360,31 +1579,37 @@ type ForwardCommandKind string
 
 // GroupConfig defines model for GroupConfig.
 type GroupConfig struct {
-	AcceptAlumni     bool                     `json:"accept_alumni"`
-	AcceptTemporary  bool                     `json:"accept_temporary"`
-	AutoActions      []GroupConfigAutoActions `json:"auto_actions"`
-	AutoCard         bool                     `json:"auto_card"`
-	BlockLinks       bool                     `json:"block_links"`
-	BotEnabled       bool                     `json:"bot_enabled"`
-	CardTemplate     string                   `json:"card_template"`
-	CheckCard        bool                     `json:"check_card"`
-	CooldownSeconds  int64                    `json:"cooldown_seconds"`
-	DiceSides        int64                    `json:"dice_sides"`
-	FrequencyLimit   int64                    `json:"frequency_limit"`
-	FrequencySeconds int64                    `json:"frequency_seconds"`
-	GraceSeconds     int64                    `json:"grace_seconds"`
-	Id               string                   `json:"id"`
-	Keywords         []string                 `json:"keywords"`
-	Mode             GroupConfigMode          `json:"mode"`
-	MuteProbability  int64                    `json:"mute_probability"`
-	MuteSeconds      int64                    `json:"mute_seconds"`
-	Name             string                   `json:"name"`
+	AcceptAlumni    bool                     `json:"accept_alumni"`
+	AcceptTemporary bool                     `json:"accept_temporary"`
+	AutoActions     []GroupConfigAutoActions `json:"auto_actions"`
+	AutoCard        bool                     `json:"auto_card"`
+	BlockLinks      bool                     `json:"block_links"`
+	BotEnabled      bool                     `json:"bot_enabled"`
+	CardTemplate    string                   `json:"card_template"`
+	Category        GroupConfigCategory      `json:"category"`
+	CheckCard       bool                     `json:"check_card"`
+	CooldownSeconds int64                    `json:"cooldown_seconds"`
+	Description     string                   `json:"description"`
+	DiceSides       int64                    `json:"dice_sides"`
+
+	// Discoverable Whether the group appears in the student-facing directory.
+	Discoverable     bool            `json:"discoverable"`
+	FrequencyLimit   int64           `json:"frequency_limit"`
+	FrequencySeconds int64           `json:"frequency_seconds"`
+	GraceSeconds     int64           `json:"grace_seconds"`
+	Id               string          `json:"id"`
+	Keywords         []string        `json:"keywords"`
+	Mode             GroupConfigMode `json:"mode"`
+	MuteProbability  int64           `json:"mute_probability"`
+	MuteSeconds      int64           `json:"mute_seconds"`
+	Name             string          `json:"name"`
 
 	// Number Masked QQ group number; only its final four digits are shown.
 	Number string `json:"number"`
 
 	// PasswordEpoch Monotonic generation counter incremented whenever the dynamic password is set, rotated or cleared.
 	PasswordEpoch    *int64 `json:"password_epoch,omitempty"`
+	PasswordHint     string `json:"password_hint"`
 	PasswordSet      bool   `json:"password_set"`
 	Pity             int64  `json:"pity"`
 	RemindCard       bool   `json:"remind_card"`
@@ -1402,6 +1627,9 @@ type GroupConfig struct {
 // GroupConfigAutoActions defines model for GroupConfig.AutoActions.
 type GroupConfigAutoActions string
 
+// GroupConfigCategory defines model for GroupConfig.Category.
+type GroupConfigCategory string
+
 // GroupConfigMode defines model for GroupConfig.Mode.
 type GroupConfigMode string
 
@@ -1414,9 +1642,18 @@ type GroupConfigInput struct {
 	BlockLinks      bool                          `json:"block_links"`
 	BotEnabled      bool                          `json:"bot_enabled"`
 	CardTemplate    string                        `json:"card_template"`
-	CheckCard       bool                          `json:"check_card"`
-	CooldownSeconds int64                         `json:"cooldown_seconds"`
-	DiceSides       int64                         `json:"dice_sides"`
+
+	// Category Optional directory category; empty when uncategorized.
+	Category        *GroupConfigInputCategory `json:"category,omitempty"`
+	CheckCard       bool                      `json:"check_card"`
+	CooldownSeconds int64                     `json:"cooldown_seconds"`
+
+	// Description Optional public group summary shown in the directory.
+	Description *string `json:"description,omitempty"`
+	DiceSides   int64   `json:"dice_sides"`
+
+	// Discoverable Optional directory visibility flag; defaults to false when omitted.
+	Discoverable *bool `json:"discoverable,omitempty"`
 
 	// ExpectedRevision 0 creates a group; otherwise must equal the current revision. A successful update increments revision by one.
 	ExpectedRevision int64                `json:"expected_revision"`
@@ -1434,7 +1671,10 @@ type GroupConfigInput struct {
 	Number *string `json:"number,omitempty"`
 
 	// Password Omitted preserves password; empty clears it (not allowed in password mode). Never returned or saved as plaintext.
-	Password         *string `json:"password,omitempty"`
+	Password *string `json:"password,omitempty"`
+
+	// PasswordHint Optional hint telling applicants where to obtain the dynamic password.
+	PasswordHint     *string `json:"password_hint,omitempty"`
 	Pity             int64   `json:"pity"`
 	RemindCard       bool    `json:"remind_card"`
 	ReminderSeconds  int64   `json:"reminder_seconds"`
@@ -1449,6 +1689,9 @@ type GroupConfigInput struct {
 
 // GroupConfigInputAutoActions defines model for GroupConfigInput.AutoActions.
 type GroupConfigInputAutoActions string
+
+// GroupConfigInputCategory Optional directory category; empty when uncategorized.
+type GroupConfigInputCategory string
 
 // GroupConfigInputMode defines model for GroupConfigInput.Mode.
 type GroupConfigInputMode string
@@ -1616,6 +1859,9 @@ type MyGroup struct {
 
 	// Number Masked group number, showing at most the final four digits; empty when not recorded.
 	Number string `json:"number"`
+
+	// PasswordHint Optional hint describing where to locate the dynamic password; present only when requires_password is true and a hint is configured.
+	PasswordHint *string `json:"password_hint,omitempty"`
 
 	// RequiresPassword The group uses password mode. A previously accepted password is not listed as missing.
 	RequiresPassword bool   `json:"requires_password"`
@@ -1934,6 +2180,17 @@ type ListGroupsParams struct {
 type BlacklistsParams struct {
 	IdempotencyKey string `json:"Idempotency-Key"`
 }
+
+// ListGroupDirectoryParams defines parameters for ListGroupDirectory.
+type ListGroupDirectoryParams struct {
+	School   *string                           `form:"school,omitempty" json:"school,omitempty"`
+	Category *ListGroupDirectoryParamsCategory `form:"category,omitempty" json:"category,omitempty"`
+	Cursor   *string                           `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit    *int                              `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListGroupDirectoryParamsCategory defines parameters for ListGroupDirectory.
+type ListGroupDirectoryParamsCategory string
 
 // ListMyGroupsParams defines parameters for ListMyGroups.
 type ListMyGroupsParams struct {
@@ -3475,6 +3732,11 @@ type ClientInterface interface {
 	// Takes a body of the `application/json` content type.
 	Blacklists(ctx context.Context, params *BlacklistsParams, body BlacklistsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListGroupDirectory performs a GET /api/v1/groups/directory (the `ListGroupDirectory` operationId) request.
+	//
+	// Authenticated user discovery directory for managed QQ groups with discoverable=true. Groups requiring student verification are visible only when the caller currently holds valid campus eligibility in that school; groups without student requirement remain publicly discoverable to authenticated users. Discloses only masked group numbers, admission summary and the caller's own joined/state.
+	ListGroupDirectory(ctx context.Context, params *ListGroupDirectoryParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListMyGroups performs a GET /api/v1/groups/me (the `ListMyGroups` operationId) request.
 	//
 	// Authenticated user only; no owner/issuer/subject parameter or management role is accepted. Includes joined memberships and active applications in configured groups; excludes removed or unmanaged groups. Ordered by group ID in bytewise ascending order. Read-only: no admission, punishment, inbox or audit writes.
@@ -3599,6 +3861,21 @@ func (c *Client) BlacklistsWithBody(ctx context.Context, params *BlacklistsParam
 // Takes a body of the `application/json` content type.
 func (c *Client) Blacklists(ctx context.Context, params *BlacklistsParams, body BlacklistsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewBlacklistsRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListGroupDirectory performs a GET /api/v1/groups/directory (the `ListGroupDirectory` operationId) request.
+//
+// Authenticated user discovery directory for managed QQ groups with discoverable=true. Groups requiring student verification are visible only when the caller currently holds valid campus eligibility in that school; groups without student requirement remain publicly discoverable to authenticated users. Discloses only masked group numbers, admission summary and the caller's own joined/state.
+func (c *Client) ListGroupDirectory(ctx context.Context, params *ListGroupDirectoryParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListGroupDirectoryRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -4013,6 +4290,96 @@ func NewBlacklistsRequestWithBody(server string, params *BlacklistsParams, conte
 
 		req.Header.Set("Idempotency-Key", headerParam0)
 
+	}
+
+	return req, nil
+}
+
+// NewListGroupDirectoryRequest constructs an http.Request for the ListGroupDirectory method
+func NewListGroupDirectoryRequest(server string, params *ListGroupDirectoryParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/groups/directory")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.School != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "school", *params.School, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Category != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "category", *params.Category, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
 	}
 
 	return req, nil
@@ -5196,6 +5563,13 @@ type ClientWithResponsesInterface interface {
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	BlacklistsWithResponse(ctx context.Context, params *BlacklistsParams, body BlacklistsJSONRequestBody, reqEditors ...RequestEditorFn) (*BlacklistsResponse, error)
 
+	// ListGroupDirectoryWithResponse performs a GET /api/v1/groups/directory (the `ListGroupDirectory` operationId) request.
+	//
+	// Authenticated user discovery directory for managed QQ groups with discoverable=true. Groups requiring student verification are visible only when the caller currently holds valid campus eligibility in that school; groups without student requirement remain publicly discoverable to authenticated users. Discloses only masked group numbers, admission summary and the caller's own joined/state.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ListGroupDirectoryWithResponse(ctx context.Context, params *ListGroupDirectoryParams, reqEditors ...RequestEditorFn) (*ListGroupDirectoryResponse, error)
+
 	// ListMyGroupsWithResponse performs a GET /api/v1/groups/me (the `ListMyGroups` operationId) request.
 	//
 	// Authenticated user only; no owner/issuer/subject parameter or management role is accepted. Includes joined memberships and active applications in configured groups; excludes removed or unmanaged groups. Ordered by group ID in bytewise ascending order. Read-only: no admission, punishment, inbox or audit writes.
@@ -5474,6 +5848,75 @@ func (r BlacklistsResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r BlacklistsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListGroupDirectoryResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *DirectoryGroupPage
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListGroupDirectoryResponse) GetJSON200() *DirectoryGroupPage {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListGroupDirectoryResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListGroupDirectoryResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListGroupDirectoryResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r ListGroupDirectoryResponse) GetJSON503() *Problem {
+	return r.JSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListGroupDirectoryResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListGroupDirectoryResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListGroupDirectoryResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListGroupDirectoryResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -6835,6 +7278,19 @@ func (c *ClientWithResponses) BlacklistsWithResponse(ctx context.Context, params
 	return ParseBlacklistsResponse(rsp)
 }
 
+// ListGroupDirectoryWithResponse performs a GET /api/v1/groups/directory (the `ListGroupDirectory` operationId) request.
+//
+// Authenticated user discovery directory for managed QQ groups with discoverable=true. Groups requiring student verification are visible only when the caller currently holds valid campus eligibility in that school; groups without student requirement remain publicly discoverable to authenticated users. Discloses only masked group numbers, admission summary and the caller's own joined/state.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ListGroupDirectoryWithResponse(ctx context.Context, params *ListGroupDirectoryParams, reqEditors ...RequestEditorFn) (*ListGroupDirectoryResponse, error) {
+	rsp, err := c.ListGroupDirectory(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListGroupDirectoryResponse(rsp)
+}
+
 // ListMyGroupsWithResponse performs a GET /api/v1/groups/me (the `ListMyGroups` operationId) request.
 //
 // Authenticated user only; no owner/issuer/subject parameter or management role is accepted. Includes joined memberships and active applications in configured groups; excludes removed or unmanaged groups. Ordered by group ID in bytewise ascending order. Read-only: no admission, punishment, inbox or audit writes.
@@ -7195,6 +7651,60 @@ func ParseBlacklistsResponse(rsp *http.Response) (*BlacklistsResponse, error) {
 			return nil, err
 		}
 		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListGroupDirectoryResponse parses an HTTP response from a ListGroupDirectoryWithResponse call
+func ParseListGroupDirectoryResponse(rsp *http.Response) (*ListGroupDirectoryResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListGroupDirectoryResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DirectoryGroupPage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
 		var dest Problem

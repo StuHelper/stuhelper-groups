@@ -42,6 +42,10 @@ func NewErrorDetail(base error, reason, field string, retryAfter int64) error {
 type GroupSettings struct {
 	Name             string   `json:"name"`
 	BotEnabled       bool     `json:"bot_enabled"`
+	Discoverable     bool     `json:"discoverable"`
+	Category         string   `json:"category"`
+	Description      string   `json:"description"`
+	PasswordHint     string   `json:"password_hint"`
 	Welcome          string   `json:"welcome"`
 	RulesTemplate    string   `json:"rules_template"`
 	CheckCard        bool     `json:"check_card"`
@@ -238,6 +242,7 @@ type ReadTx interface {
 	GroupCounts([]string) (map[string]GroupCounts, error)
 	OwnerGroups(owner, cursor string, limit int, includeApplicants bool) (Page[ManagedGroup], error)
 	OwnerGroupRecords(owner, cursor string, limit int, includeApplicants bool) (Page[OwnerGroupRecord], error)
+	DirectoryGroups(owner, school, category, cursor string, limit int) ([]DirectoryRecord, error)
 }
 type Tx interface {
 	ReadTx

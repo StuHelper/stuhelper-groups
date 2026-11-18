@@ -32,6 +32,8 @@ scenario_tests:
     - postgres/account_query_test.go#TestAccountQueryScopePaginationAndRuntime
   QQ-01:
     - admission_transition_test.go#TestJoinedAdmissionTransitions
+    - directory_test.go#TestGroupDirectoryDiscoveryFilteringVisibilityAndPasswordHint
+    - directory_test.go#TestGroupDirectoryValidationSDKAndFailureBoundaries
     - delivery_membership_test.go#TestGroupsForOwnerPaginationAndBounds
     - api_v03_test.go#TestGroupSummaryCountsMaskingAndScope
     - api_v03_test.go#TestConfigurationRevisionPasswordAndReplay

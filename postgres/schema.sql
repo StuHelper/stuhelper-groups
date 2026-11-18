@@ -35,6 +35,10 @@ CREATE INDEX IF NOT EXISTS groups_outbox_delivery_pending ON groups.outbox
 CREATE INDEX IF NOT EXISTS groups_members_by_owner ON groups.records(id,bucket)
  WHERE right(bucket,8)='/members';
 
+-- Student directory lookup scans only groups explicitly marked discoverable.
+CREATE INDEX IF NOT EXISTS groups_discoverable_config ON groups.records(id COLLATE "C")
+ WHERE bucket='config' AND data->>'discoverable'='true';
+
 CREATE UNIQUE INDEX IF NOT EXISTS groups_account_query_id ON groups.records(query_id);
 
 CREATE INDEX IF NOT EXISTS groups_account_subject ON groups.records(id)

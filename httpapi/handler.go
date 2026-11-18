@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"sync"
 	"unicode/utf8"
@@ -64,6 +65,16 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 			return
 		}
 		v, e := s.MyGroups(r.Context(), p, cursor, limit)
+		write(w, v, e)
+	}))
+	mux.HandleFunc("GET /api/v1/groups/directory", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+		q := r.URL.Query()
+		cursor, limit, e := pagination(r, "school", "category")
+		if e != nil {
+			write(w, nil, e)
+			return
+		}
+		v, e := s.Directory(r.Context(), p, g.DirectoryQuery{School: q.Get("school"), Category: q.Get("category"), Cursor: cursor, Limit: limit})
 		write(w, v, e)
 	}))
 	mux.HandleFunc("GET /api/v1/groups/{group}", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
@@ -136,13 +147,13 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 	handleGroupPage(mux, wrap, "GET /api/v1/groups/{group}/audit", s.Audits)
 	return mux
 }
-func pagination(r *http.Request) (string, int, error) {
+func pagination(r *http.Request, extra ...string) (string, int, error) {
 	q, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
 		return "", 0, g.ErrInvalid
 	}
-	for name := range q {
-		if name != "cursor" && name != "limit" {
+	for name, values := range q {
+		if len(values) != 1 || (name != "cursor" && name != "limit" && !slices.Contains(extra, name)) {
 			return "", 0, g.ErrInvalid
 		}
 	}
