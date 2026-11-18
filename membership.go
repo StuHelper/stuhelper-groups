@@ -147,11 +147,14 @@ func (s *Service) consumeEvent(ctx context.Context, envelope Event, owner string
 				return needFacts
 			}
 			for _, group := range groups {
+				if err := call.Err(); err != nil {
+					return err
+				}
 				var c GroupConfig
 				if err := tx.Get("config", group.ID, &c); err != nil {
 					return err
 				}
-				if _, err := s.admissionWithFacts(call, tx, account.Principal{}, c, owner, false, cache); err != nil {
+				if _, err := s.admissionWithFacts(call, tx, account.Principal{}, c, owner, checkAdmission, cache); err != nil {
 					return err
 				}
 			}
