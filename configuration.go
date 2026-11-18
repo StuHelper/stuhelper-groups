@@ -60,8 +60,20 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 	if !validKey(key) {
 		return out, ErrInvalid
 	}
-	if !valid(in.ID, 128) || !valid(in.School, 128) || in.ExpectedRevision < 0 || in.Password != nil && !validText(*in.Password, 256) || in.Number != nil && !groupNumber.MatchString(*in.Number) {
-		return out, ErrUnprocessable
+	if !valid(in.ID, 128) {
+		return out, NewErrorDetail(ErrUnprocessable, "invalid_field", "id", 0)
+	}
+	if !valid(in.School, 128) {
+		return out, NewErrorDetail(ErrUnprocessable, "invalid_field", "school", 0)
+	}
+	if in.ExpectedRevision < 0 {
+		return out, NewErrorDetail(ErrUnprocessable, "invalid_field", "expected_revision", 0)
+	}
+	if in.Password != nil && !validText(*in.Password, 256) {
+		return out, NewErrorDetail(ErrUnprocessable, "invalid_field", "password", 0)
+	}
+	if in.Number != nil && !groupNumber.MatchString(*in.Number) {
+		return out, NewErrorDetail(ErrUnprocessable, "invalid_field", "number", 0)
 	}
 	if in.Keywords == nil {
 		in.Keywords = []string{}
@@ -80,7 +92,7 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 			return e
 		}
 		if e == nil && old.School != c.School {
-			return ErrConflict
+			return NewErrorDetail(ErrConflict, "school_immutable", "school", 0)
 		}
 		// Authorize against current scope before replay, but replay before revision checks.
 		ok, e := replay(tx, p.Key(), "configure", c.ID, key, in, &out)
@@ -88,7 +100,7 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 			return e
 		}
 		if old.Revision != in.ExpectedRevision {
-			return ErrConflict
+			return NewErrorDetail(ErrConflict, "revision_mismatch", "expected_revision", 0)
 		}
 		record := configRecord{GroupConfig: c, PasswordDigest: old.PasswordDigest}
 		record.Number = old.Number
@@ -108,6 +120,10 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 		record.PasswordSet = record.PasswordDigest != ""
 		record.Revision = old.Revision + 1
 		if e = validateConfig(record.GroupConfig); e != nil {
+			var detail *ErrorDetail
+			if errors.As(e, &detail) {
+				return NewErrorDetail(ErrUnprocessable, detail.Reason, detail.Field, 0)
+			}
 			return ErrUnprocessable
 		}
 		if e = tx.Put("config", c.ID, record); e != nil {

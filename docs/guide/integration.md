@@ -402,7 +402,7 @@ apply、password、dice、self_mute、report 属于用户命令，从认证身�
 
 批量命令使用独立 BatchCommand，支持 warn、mute、unmute、kick、recheck、extend、exempt、card。target 由 targets 数组逐项填入，命令中不接收 target。每批最多 100 个对象，preview 不写业务数据，执行逐项返回结果。
 
-Problem.code 是固定枚举，所有操作明确列出响应码。HTTP 400 表示 JSON、分页或幂等键格式错误；401 表示未认证，403 表示越权，404 表示对象不存在。HTTP 409 包括修订或幂等冲突以及冷却/容量限制。
+Problem.code 是固定枚举，可选携带脱敏子码 reason、关联字段名 field 与冷却秒数 retry_after_seconds（个人冷却时同步返回 HTTP Retry-After 头）。Result 可选返回 max_value、seconds、pity_remaining，供多语言客户端与机器人按翻译键参数化渲染骰子面数、禁言时长和保底剩余次数。
 
 HTTP 422 表示请求不符合分支字段要求或功能未启用，分别使用 groups_unprocessable、groups_disabled。HTTP 503 使用 groups_unavailable，表示依赖不可用或返回事实无法验证。错误响应不返回内部异常文本。
 

@@ -227,7 +227,7 @@ func (s *Service) card(ctx context.Context, tx Tx, p account.Principal, c GroupC
 		return out, e
 	}
 	if !c.CheckCard || c.CardTemplate == "" {
-		return out, ErrDisabled
+		return out, NewErrorDetail(ErrDisabled, "card_check_disabled", "check_card", 0)
 	}
 	text, complete, err := renderCard(c.CardTemplate, f.Fields)
 	if err != nil {
@@ -361,7 +361,7 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 			return nil
 		}
 		if a.State == "executing" {
-			return ErrConflict
+			return NewErrorDetail(ErrConflict, "action_executing", "", 0)
 		}
 		lookup = a.State == "unknown"
 		if !lookup {

@@ -124,7 +124,7 @@ func replay(tx ReadTx, owner, operation, object, key string, input, out any) (bo
 		return false, e
 	}
 	if r.Digest != hash(input) {
-		return false, ErrConflict
+		return false, NewErrorDetail(ErrConflict, "idempotency_mismatch", "", 0)
 	}
 	return true, json.Unmarshal(r.Result, out)
 }
@@ -136,46 +136,92 @@ func save(tx Tx, owner, operation, object, key string, input, out any) error {
 	return tx.Put("receipts", hash([]string{owner, operation, object, key}), receipt{hash(input), b})
 }
 func validateConfig(c GroupConfig) error {
-	if strings.TrimSpace(c.Name) == "" || !validText(c.Name, 128) || strings.ContainsFunc(c.Name, unicode.IsControl) || c.ID == "me" || c.ID == "*" || c.School == "*" || !valid(c.ID, 128) || !valid(c.School, 128) || !slices.Contains([]string{"before", "muted", "password"}, c.Mode) {
-		return ErrInvalid
+	if c.ID == "me" || c.ID == "*" || !valid(c.ID, 128) {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "id", 0)
 	}
-	for _, n := range []int64{c.GraceSeconds, c.ReminderSeconds, c.RetentionSeconds, c.CooldownSeconds} {
-		if n < 0 || n > 31536000 {
-			return ErrInvalid
-		}
+	if c.School == "*" || !valid(c.School, 128) {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "school", 0)
 	}
-	if c.DiceSides < 0 || c.DiceSides == 1 || c.DiceSides > 1000000 || c.MuteProbability < 0 || c.MuteProbability > 100 || c.MuteSeconds < 0 || c.MuteSeconds > 2592000 || c.Pity < 0 || c.Pity > 10000 || c.RepeatThreshold < 0 || c.RepeatThreshold > 1000 || len(c.Keywords) > 100 || !validText(c.CardTemplate, 1024) {
-		return ErrInvalid
+	if strings.TrimSpace(c.Name) == "" || !validText(c.Name, 128) || strings.ContainsFunc(c.Name, unicode.IsControl) {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "name", 0)
+	}
+	if !slices.Contains([]string{"before", "muted", "password"}, c.Mode) {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "mode", 0)
+	}
+	if c.GraceSeconds <= 0 || c.GraceSeconds > 31536000 {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "grace_seconds", 0)
+	}
+	if c.ReminderSeconds < 0 || c.ReminderSeconds > 31536000 {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "reminder_seconds", 0)
+	}
+	if c.RetentionSeconds < 0 || c.RetentionSeconds > 31536000 {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "retention_seconds", 0)
+	}
+	if c.CooldownSeconds < 0 || c.CooldownSeconds > 31536000 {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "cooldown_seconds", 0)
+	}
+	if c.DiceSides < 0 || c.DiceSides == 1 || c.DiceSides > 1000000 {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "dice_sides", 0)
+	}
+	if c.MuteProbability < 0 || c.MuteProbability > 100 {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "mute_probability", 0)
+	}
+	if c.MuteSeconds < 0 || c.MuteSeconds > 2592000 {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "mute_seconds", 0)
+	}
+	if c.Pity < 0 || c.Pity > 10000 {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "pity", 0)
+	}
+	if c.RepeatThreshold < 0 || c.RepeatThreshold > 1000 {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "repeat_threshold", 0)
+	}
+	if len(c.Keywords) > 100 {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "keywords", 0)
+	}
+	if !validText(c.CardTemplate, 1024) {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "card_template", 0)
 	}
 	if _, _, err := renderCard(c.CardTemplate, nil); err != nil {
-		return ErrInvalid
+		return NewErrorDetail(ErrInvalid, "invalid_field", "card_template", 0)
 	}
-	if !validText(c.Welcome, 2048) || !validText(c.RulesTemplate, 8192) || c.FrequencySeconds < 0 || c.FrequencySeconds > 86400 || c.FrequencyLimit < 0 || c.FrequencyLimit > 10000 || c.WarningLimit < 0 || c.WarningLimit > 10000 {
-		return ErrInvalid
+	if !validText(c.Welcome, 2048) {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "welcome", 0)
 	}
-	if c.GraceSeconds == 0 {
-		return ErrInvalid
+	if !validText(c.RulesTemplate, 8192) {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "rules_template", 0)
 	}
-	if c.MuteProbability > 0 && (c.MuteSeconds == 0 || c.CooldownSeconds == 0) {
-		return ErrInvalid
+	if c.FrequencySeconds < 0 || c.FrequencySeconds > 86400 {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "frequency_seconds", 0)
+	}
+	if c.FrequencyLimit < 0 || c.FrequencyLimit > 10000 {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "frequency_limit", 0)
+	}
+	if c.WarningLimit < 0 || c.WarningLimit > 10000 {
+		return NewErrorDetail(ErrInvalid, "invalid_field", "warning_limit", 0)
+	}
+	if c.MuteProbability > 0 && c.MuteSeconds == 0 {
+		return NewErrorDetail(ErrInvalid, "missing_mute_seconds", "mute_seconds", 0)
+	}
+	if c.MuteProbability > 0 && c.CooldownSeconds == 0 {
+		return NewErrorDetail(ErrInvalid, "missing_cooldown_seconds", "cooldown_seconds", 0)
 	}
 	if c.Mode == "password" && !c.PasswordSet {
-		return ErrInvalid
+		return NewErrorDetail(ErrInvalid, "missing_password", "password", 0)
 	}
 	for _, k := range c.Keywords {
 		if strings.TrimSpace(k) == "" || !validText(k, 256) {
-			return ErrInvalid
+			return NewErrorDetail(ErrInvalid, "invalid_field", "keywords", 0)
 		}
 	}
 	if slices.Contains(c.AutoActions, "mute") && c.MuteSeconds == 0 {
-		return ErrInvalid
+		return NewErrorDetail(ErrInvalid, "missing_mute_seconds", "mute_seconds", 0)
 	}
 	for i, a := range c.AutoActions {
 		if slices.Contains(c.AutoActions[:i], a) {
 			return ErrInvalid
 		}
 		if !slices.Contains([]string{"warn", "recall", "mute", "kick", "blacklist"}, a) {
-			return ErrInvalid
+			return NewErrorDetail(ErrInvalid, "invalid_field", "auto_actions", 0)
 		}
 	}
 	return nil
@@ -199,14 +245,14 @@ func capability(kind string) string {
 }
 func (s *Service) queue(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, cmd Command, cap string) (Result, error) {
 	if !c.BotEnabled {
-		return Result{}, ErrDisabled
+		return Result{}, NewErrorDetail(ErrDisabled, "bot_disabled", "bot_enabled", 0)
 	}
 	pending, e := tx.PendingActions(c.ID)
 	if e != nil {
 		return Result{}, e
 	}
 	if pending >= 1000 {
-		return Result{}, ErrCooldown
+		return Result{}, NewErrorDetail(ErrCooldown, "action_queue_full", "", 0)
 	}
 	a := Action{ID: uuid.NewString(), Group: c.ID, Actor: Actor(p), Capability: cap, Command: cmd, State: "pending", Created: s.now()}
 	if e := tx.Put(bucket(c.ID, "actions"), a.ID, a); e != nil {
@@ -434,7 +480,7 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		return out, s.audit(tx, p, c.ID, cmd.Kind, cmd.Target, m.State)
 	case "password":
 		if c.Mode != "password" {
-			return out, ErrDisabled
+			return out, NewErrorDetail(ErrDisabled, "password_mode_disabled", "mode", 0)
 		}
 		var stored configRecord
 		if e := tx.Get("config", c.ID, &stored); e != nil {
@@ -711,7 +757,7 @@ func (s *Service) random(n int64) (int64, error) {
 func (s *Service) play(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, cmd Command) (Result, error) {
 	out := Result{State: "completed", Action: cmd.Kind}
 	if !c.BotEnabled {
-		return out, ErrDisabled
+		return out, NewErrorDetail(ErrDisabled, "bot_disabled", "bot_enabled", 0)
 	}
 	var m Member
 	if e := tx.Get(bucket(c.ID, "members"), p.Key(), &m); e != nil {
@@ -726,33 +772,44 @@ func (s *Service) play(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	}
 	if cmd.Kind == "dice" {
 		if c.DiceSides < 2 {
-			return out, ErrDisabled
+			return out, NewErrorDetail(ErrDisabled, "dice_disabled", "dice_sides", 0)
 		}
 		n, e := s.random(c.DiceSides)
+		sides := c.DiceSides
 		out.Value = n + 1
 		out.Detail = "dice_sides"
+		out.MaxValue = &sides
 		if e != nil {
 			return out, e
 		}
 		return out, s.audit(tx, p, c.ID, "dice", p.Key(), "completed")
 	}
 	if c.MuteProbability == 0 {
-		return out, ErrDisabled
+		return out, NewErrorDetail(ErrDisabled, "self_mute_disabled", "mute_probability", 0)
+	}
+	now := s.now()
+	until := m.LastPlay.Add(time.Duration(c.CooldownSeconds) * time.Second)
+	if m.MutedUntil.After(until) {
+		until = m.MutedUntil
+	}
+	if now.Before(until) {
+		retryAfter := int64((until.Sub(now) + time.Second - 1) / time.Second)
+		if retryAfter < 1 {
+			retryAfter = 1
+		}
+		return out, NewErrorDetail(ErrCooldown, "member_cooldown", "", retryAfter)
 	}
 	var pending string
 	if err := tx.Get(bucket(c.ID, "self_mutes"), m.Owner, &pending); err == nil {
-		return out, ErrCooldown
+		return out, NewErrorDetail(ErrCooldown, "member_cooldown", "", 0)
 	} else if !errors.Is(err, ErrNotFound) {
 		return out, err
-	}
-	if s.now().Before(m.LastPlay.Add(time.Duration(c.CooldownSeconds)*time.Second)) || s.now().Before(m.MutedUntil) {
-		return out, ErrCooldown
 	}
 	n, e := s.random(100)
 	if e != nil {
 		return out, e
 	}
-	m.LastPlay = s.now()
+	m.LastPlay = now
 	m.Failures++
 	if n < c.MuteProbability || (c.Pity > 0 && m.Failures >= c.Pity) {
 		m.Failures = 0
@@ -760,10 +817,28 @@ func (s *Service) play(ctx context.Context, tx Tx, p account.Principal, c GroupC
 		if e != nil {
 			return out, e
 		}
+		secs := c.MuteSeconds
+		out.Seconds = &secs
+		out.Detail = "self_mute_triggered"
+		if c.Pity > 0 {
+			zero := int64(0)
+			out.PityRemaining = &zero
+		}
 		if err := tx.Put(bucket(c.ID, "self_mutes"), m.Owner, out.ID); err != nil {
 			return out, err
 		}
-		m.MutedUntil = s.now().Add(time.Duration(c.MuteSeconds) * time.Second)
+		m.MutedUntil = now.Add(time.Duration(c.MuteSeconds) * time.Second)
+	} else {
+		zero := int64(0)
+		out.Seconds = &zero
+		out.Detail = "self_mute_missed"
+		if c.Pity > 0 {
+			rem := c.Pity - m.Failures
+			if rem < 0 {
+				rem = 0
+			}
+			out.PityRemaining = &rem
+		}
 	}
 	return out, tx.Put(bucket(c.ID, "members"), p.Key(), m)
 }

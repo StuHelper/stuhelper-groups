@@ -186,16 +186,31 @@ func decode(w http.ResponseWriter, r *http.Request, schema string, v any) error 
 	if e != nil {
 		return g.ErrUnavailable
 	}
-	if e = doc.Components.Schemas[schema].Value.VisitJSON(value); e != nil {
-		return g.ErrUnprocessable
+	definition := doc.Components.Schemas[schema].Value
+	if e = definition.VisitJSON(value); e != nil {
+		var fieldError *openapi3.SchemaError
+		if schema == "GroupConfigInput" && errors.As(e, &fieldError) {
+			if path := fieldError.JSONPointer(); len(path) > 0 && definition.Properties[path[0]] != nil {
+				return g.NewErrorDetail(g.ErrUnprocessable, "invalid_field", path[0], 0)
+			}
+		}
+		return g.NewErrorDetail(g.ErrUnprocessable, "schema_validation_failed", "", 0)
 	}
 	d := json.NewDecoder(bytes.NewReader(data))
 	d.DisallowUnknownFields()
 	if e = d.Decode(v); e != nil {
-		return g.ErrUnprocessable
+		return g.NewErrorDetail(g.ErrUnprocessable, "schema_validation_failed", "", 0)
 	}
 	return nil
 }
+
+type problemResponse struct {
+	Code              string `json:"code"`
+	Reason            string `json:"reason,omitempty"`
+	Field             string `json:"field,omitempty"`
+	RetryAfterSeconds *int64 `json:"retry_after_seconds,omitempty"`
+}
+
 func write(w http.ResponseWriter, v any, e error) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
@@ -216,8 +231,19 @@ func write(w http.ResponseWriter, v any, e error) {
 				break
 			}
 		}
+		resp := problemResponse{Code: code}
+		var detail *g.ErrorDetail
+		if errors.As(e, &detail) && detail != nil {
+			resp.Reason = detail.Reason
+			resp.Field = detail.Field
+			if detail.RetryAfterSeconds > 0 {
+				retry := detail.RetryAfterSeconds
+				resp.RetryAfterSeconds = &retry
+				w.Header().Set("Retry-After", strconv.FormatInt(retry, 10))
+			}
+		}
 		w.WriteHeader(status)
-		_ = json.NewEncoder(w).Encode(map[string]string{"code": code})
+		_ = json.NewEncoder(w).Encode(resp)
 		return
 	}
 	_ = json.NewEncoder(w).Encode(v)

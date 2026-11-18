@@ -107,9 +107,13 @@ scenario_tests:
   MP-07:
     - observability_pagination_test.go#TestTraceParentPropagationAcrossHTTPOutboxBotFanoutAndUpstream
   BE-01:
+    - problem_metadata_test.go#TestEntertainmentStructuredResultMetadataAndSDK
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
   BE-02:
     - entertainment_state_test.go#TestExemptionAndMuteOutcome
+    - problem_metadata_test.go#TestEntertainmentStructuredResultMetadataAndSDK
+    - problem_metadata_test.go#TestProblemSubcodesRetryAfterAndConfigFieldDiagnostics
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
   BE-03:
+    - problem_metadata_test.go#TestProblemSubcodesRetryAfterAndConfigFieldDiagnostics
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation

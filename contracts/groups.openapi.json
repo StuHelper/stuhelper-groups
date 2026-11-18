@@ -1895,6 +1895,24 @@
           "detail": {
             "type": "string",
             "maxLength": 2048
+          },
+          "max_value": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "Configured upper bound for randomized commands such as dice_sides."
+          },
+          "seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "description": "Effective duration in seconds for timed dispositions or voluntary self_mute."
+          },
+          "pity_remaining": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "description": "Remaining attempts before guaranteed pity trigger when pity > 0."
           }
         },
         "required": [
@@ -1923,6 +1941,39 @@
               "groups_unavailable"
             ],
             "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. groups_unauthenticated: Missing or invalid authenticated identity. groups_forbidden: Current identity cannot perform this operation. groups_not_found: Requested group, member, message or related object does not exist. groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled. groups_cooldown: Cooldown or pending action capacity prevents this operation. groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified."
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "member_cooldown",
+              "action_queue_full",
+              "revision_mismatch",
+              "school_immutable",
+              "idempotency_mismatch",
+              "action_executing",
+              "bot_disabled",
+              "password_mode_disabled",
+              "dice_disabled",
+              "self_mute_disabled",
+              "card_check_disabled",
+              "invalid_field",
+              "missing_mute_seconds",
+              "missing_cooldown_seconds",
+              "missing_password",
+              "schema_validation_failed"
+            ],
+            "description": "Optional sanitized subcode for localized UI and bot prompts."
+          },
+          "field": {
+            "type": "string",
+            "maxLength": 128,
+            "description": "Optional request field name associated with validation or conflict errors."
+          },
+          "retry_after_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "Optional remaining cooldown seconds; paired with the HTTP Retry-After header."
           }
         },
         "required": [
