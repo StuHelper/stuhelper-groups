@@ -71,6 +71,7 @@ scenario_tests:
     - batch_retry_test.go#TestBatchPreflightAndRetry
     - text_validation_test.go#TestTextValidationAtBoundaries
     - receipt_scope_test.go#TestReceiptScopeAndLegacyReplay
+    - unsubscribe_test.go#TestDisableExistingSubscriptionWithSourceGrant
     - delivery_membership_test.go#TestPendingOutboxExclusionLimitOrderingAndConfirmation
     - delivery_membership_test.go#TestRelayStopsFailedSubjectWithinBatchAndDeliversOthers
     - api_v03_test.go#TestEveryCollectionTypedPaginationAndAuthorization

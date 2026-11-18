@@ -391,23 +391,42 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 	case "card":
 		return s.card(ctx, tx, p, c, cmd)
 	case "subscribe":
-		rows, err := tx.List(bucket(c.ID, "subscriptions"), "", 100)
-		if err != nil {
-			return out, err
-		}
-		var exists map[string]any
-		if len(rows) >= 100 && errors.Is(tx.Get(bucket(c.ID, "subscriptions"), cmd.Receiver, &exists), ErrNotFound) {
+		if !valid(cmd.Receiver, 128) {
 			return out, ErrInvalid
 		}
-		var receiver GroupConfig
-		if e := tx.Get("config", cmd.Receiver, &receiver); e != nil {
-			return out, e
+		var prior Subscription
+		err := tx.Get(bucket(c.ID, "subscriptions"), cmd.Receiver, &prior)
+		exists := err == nil
+		if err != nil && !errors.Is(err, ErrNotFound) {
+			return out, err
 		}
-		if e := s.auth(ctx, p, "groups.messages.send", receiver); e != nil {
-			return out, e
+		state := "disabled"
+		if cmd.Enabled {
+			var receiver GroupConfig
+			if err := tx.Get("config", cmd.Receiver, &receiver); err != nil {
+				return out, err
+			}
+			if err := s.auth(ctx, p, "groups.messages.send", receiver); err != nil {
+				return out, err
+			}
+			if !exists {
+				rows, err := tx.List(bucket(c.ID, "subscriptions"), "", 100)
+				if err != nil {
+					return out, err
+				}
+				if len(rows) >= 100 {
+					return out, ErrInvalid
+				}
+			}
+			state = "enabled"
+		} else if !exists {
+			return out, ErrNotFound
 		}
 		out.ID = cmd.Receiver
-		return out, tx.Put(bucket(c.ID, "subscriptions"), cmd.Receiver, map[string]any{"receiver": cmd.Receiver, "enabled": cmd.Enabled, "actor": Actor(p)})
+		if err := tx.Put(bucket(c.ID, "subscriptions"), cmd.Receiver, map[string]any{"receiver": cmd.Receiver, "enabled": cmd.Enabled, "actor": Actor(p)}); err != nil {
+			return out, err
+		}
+		return out, s.audit(tx, p, c.ID, "subscribe", cmd.Receiver, state)
 	case "warn", "mute", "unmute", "kick", "send", "forward", "recall":
 		if cmd.Kind == "forward" {
 			if e := s.auth(ctx, p, "groups.messages.read", c); e != nil {
