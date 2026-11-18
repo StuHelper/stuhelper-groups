@@ -80,7 +80,7 @@ func TestGroupFactsRejectsUnknownContradictoryAndFailedFacts(t *testing.T) {
 		})
 	}
 	for i, bad := range []g.Facts{
-		{Alumni: true}, {Temporary: true}, {Student: true},
+		{StudentKnown: true, Student: true, StageKnown: true, Alumni: true, Temporary: true}, {StudentKnown: true, StageKnown: true, Temporary: true}, {Alumni: true}, {Temporary: true}, {Student: true},
 		{Fields: map[string]g.CardField{"email": {Allowed: true, Available: true, Value: "unexpected"}}},
 		{Fields: map[string]g.CardField{"gender": {Allowed: true, Available: true, Value: "guessed"}}},
 	} {
