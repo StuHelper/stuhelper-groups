@@ -130,7 +130,7 @@ func TestGroupDirectoryDiscoveryFilteringVisibilityAndPasswordHint(t *testing.T)
 	if page.Items[0].ID != "buaa-course-os" || page.Items[0].Number != "*****4321" || !page.Items[0].Joined || page.Items[0].State != "restored" || page.Items[0].PasswordHint != "" {
 		t.Fatalf("unexpected course directory card: %+v", page.Items[0])
 	}
-	if page.Items[1].ID != "buaa-freshman-2026" || page.Items[1].Number != "******4455" || page.Items[1].Joined || page.Items[1].State != "grace" || page.Items[1].PasswordHint != "口令见迎新通知单右下角" {
+	if page.Items[1].ID != "buaa-freshman-2026" || page.Items[1].Number != "******4455" || page.Items[1].Joined || page.Items[1].State != "awaiting_verification" || page.Items[1].PasswordHint != "口令见迎新通知单右下角" {
 		t.Fatalf("unexpected freshman directory card: %+v", page.Items[1])
 	}
 	raw, _ := json.Marshal(page)

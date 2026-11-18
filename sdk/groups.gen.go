@@ -50,34 +50,37 @@ func (e ActionState) Valid() bool {
 
 // Defines values for ActionCommandKind.
 const (
-	ActionCommandKindAiExecute   ActionCommandKind = "ai_execute"
-	ActionCommandKindAnalyze     ActionCommandKind = "analyze"
-	ActionCommandKindApply       ActionCommandKind = "apply"
-	ActionCommandKindApprove     ActionCommandKind = "approve"
-	ActionCommandKindBlacklist   ActionCommandKind = "blacklist"
-	ActionCommandKindCard        ActionCommandKind = "card"
-	ActionCommandKindDice        ActionCommandKind = "dice"
-	ActionCommandKindExempt      ActionCommandKind = "exempt"
-	ActionCommandKindExtend      ActionCommandKind = "extend"
-	ActionCommandKindFeedback    ActionCommandKind = "feedback"
-	ActionCommandKindForward     ActionCommandKind = "forward"
-	ActionCommandKindKick        ActionCommandKind = "kick"
-	ActionCommandKindMute        ActionCommandKind = "mute"
-	ActionCommandKindPassword    ActionCommandKind = "password"
-	ActionCommandKindPreview     ActionCommandKind = "preview"
-	ActionCommandKindRecall      ActionCommandKind = "recall"
-	ActionCommandKindRecheck     ActionCommandKind = "recheck"
-	ActionCommandKindRemind      ActionCommandKind = "remind"
-	ActionCommandKindReport      ActionCommandKind = "report"
-	ActionCommandKindRule        ActionCommandKind = "rule"
-	ActionCommandKindSelfMute    ActionCommandKind = "self_mute"
-	ActionCommandKindSend        ActionCommandKind = "send"
-	ActionCommandKindSubscribe   ActionCommandKind = "subscribe"
-	ActionCommandKindUnblacklist ActionCommandKind = "unblacklist"
-	ActionCommandKindUnmute      ActionCommandKind = "unmute"
-	ActionCommandKindWarn        ActionCommandKind = "warn"
-	ActionCommandKindWatch       ActionCommandKind = "watch"
-	ActionCommandKindWelcome     ActionCommandKind = "welcome"
+	ActionCommandKindAiExecute    ActionCommandKind = "ai_execute"
+	ActionCommandKindAnalyze      ActionCommandKind = "analyze"
+	ActionCommandKindApply        ActionCommandKind = "apply"
+	ActionCommandKindApprove      ActionCommandKind = "approve"
+	ActionCommandKindBlacklist    ActionCommandKind = "blacklist"
+	ActionCommandKindCancelAction ActionCommandKind = "cancel_action"
+	ActionCommandKindCard         ActionCommandKind = "card"
+	ActionCommandKindCardPreview  ActionCommandKind = "card_preview"
+	ActionCommandKindDice         ActionCommandKind = "dice"
+	ActionCommandKindExempt       ActionCommandKind = "exempt"
+	ActionCommandKindExtend       ActionCommandKind = "extend"
+	ActionCommandKindFeedback     ActionCommandKind = "feedback"
+	ActionCommandKindForward      ActionCommandKind = "forward"
+	ActionCommandKindKick         ActionCommandKind = "kick"
+	ActionCommandKindMute         ActionCommandKind = "mute"
+	ActionCommandKindPassword     ActionCommandKind = "password"
+	ActionCommandKindPreview      ActionCommandKind = "preview"
+	ActionCommandKindRecall       ActionCommandKind = "recall"
+	ActionCommandKindRecheck      ActionCommandKind = "recheck"
+	ActionCommandKindRemind       ActionCommandKind = "remind"
+	ActionCommandKindReport       ActionCommandKind = "report"
+	ActionCommandKindRetryAction  ActionCommandKind = "retry_action"
+	ActionCommandKindRule         ActionCommandKind = "rule"
+	ActionCommandKindSelfMute     ActionCommandKind = "self_mute"
+	ActionCommandKindSend         ActionCommandKind = "send"
+	ActionCommandKindSubscribe    ActionCommandKind = "subscribe"
+	ActionCommandKindUnblacklist  ActionCommandKind = "unblacklist"
+	ActionCommandKindUnmute       ActionCommandKind = "unmute"
+	ActionCommandKindWarn         ActionCommandKind = "warn"
+	ActionCommandKindWatch        ActionCommandKind = "watch"
+	ActionCommandKindWelcome      ActionCommandKind = "welcome"
 )
 
 // Valid indicates whether the value is a known member of the ActionCommandKind enum.
@@ -93,7 +96,11 @@ func (e ActionCommandKind) Valid() bool {
 		return true
 	case ActionCommandKindBlacklist:
 		return true
+	case ActionCommandKindCancelAction:
+		return true
 	case ActionCommandKindCard:
+		return true
+	case ActionCommandKindCardPreview:
 		return true
 	case ActionCommandKindDice:
 		return true
@@ -120,6 +127,8 @@ func (e ActionCommandKind) Valid() bool {
 	case ActionCommandKindRemind:
 		return true
 	case ActionCommandKindReport:
+		return true
+	case ActionCommandKindRetryAction:
 		return true
 	case ActionCommandKindRule:
 		return true
@@ -204,6 +213,21 @@ func (e BlacklistCommandKind) Valid() bool {
 	}
 }
 
+// Defines values for CancelActionCommandKind.
+const (
+	CancelActionCommandKindCancelAction CancelActionCommandKind = "cancel_action"
+)
+
+// Valid indicates whether the value is a known member of the CancelActionCommandKind enum.
+func (e CancelActionCommandKind) Valid() bool {
+	switch e {
+	case CancelActionCommandKindCancelAction:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CardBatchCommandKind.
 const (
 	CardBatchCommandKindCard CardBatchCommandKind = "card"
@@ -228,6 +252,21 @@ const (
 func (e CardCommandKind) Valid() bool {
 	switch e {
 	case CardCommandKindCard:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CardPreviewCommandKind.
+const (
+	CardPreviewCommandKindCardPreview CardPreviewCommandKind = "card_preview"
+)
+
+// Valid indicates whether the value is a known member of the CardPreviewCommandKind enum.
+func (e CardPreviewCommandKind) Valid() bool {
+	switch e {
+	case CardPreviewCommandKindCardPreview:
 		return true
 	default:
 		return false
@@ -663,6 +702,39 @@ func (e MyGroupEligibility) Valid() bool {
 	}
 }
 
+// Defines values for MyGroupMissingCardFields.
+const (
+	MyGroupMissingCardFieldsDepartment MyGroupMissingCardFields = "department"
+	MyGroupMissingCardFieldsGender     MyGroupMissingCardFields = "gender"
+	MyGroupMissingCardFieldsGrade      MyGroupMissingCardFields = "grade"
+	MyGroupMissingCardFieldsName       MyGroupMissingCardFields = "name"
+	MyGroupMissingCardFieldsNickname   MyGroupMissingCardFields = "nickname"
+	MyGroupMissingCardFieldsSchool     MyGroupMissingCardFields = "school"
+	MyGroupMissingCardFieldsStudentId  MyGroupMissingCardFields = "student_id"
+)
+
+// Valid indicates whether the value is a known member of the MyGroupMissingCardFields enum.
+func (e MyGroupMissingCardFields) Valid() bool {
+	switch e {
+	case MyGroupMissingCardFieldsDepartment:
+		return true
+	case MyGroupMissingCardFieldsGender:
+		return true
+	case MyGroupMissingCardFieldsGrade:
+		return true
+	case MyGroupMissingCardFieldsName:
+		return true
+	case MyGroupMissingCardFieldsNickname:
+		return true
+	case MyGroupMissingCardFieldsSchool:
+		return true
+	case MyGroupMissingCardFieldsStudentId:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MyGroupMissingConditions.
 const (
 	MyGroupMissingConditionsAlumniNotAccepted    MyGroupMissingConditions = "alumni_not_accepted"
@@ -840,6 +912,66 @@ func (e ProblemCode) Valid() bool {
 	}
 }
 
+// Defines values for ProblemReason.
+const (
+	ActionExecuting        ProblemReason = "action_executing"
+	ActionQueueFull        ProblemReason = "action_queue_full"
+	BotDisabled            ProblemReason = "bot_disabled"
+	CardCheckDisabled      ProblemReason = "card_check_disabled"
+	DiceDisabled           ProblemReason = "dice_disabled"
+	IdempotencyMismatch    ProblemReason = "idempotency_mismatch"
+	InvalidField           ProblemReason = "invalid_field"
+	MemberCooldown         ProblemReason = "member_cooldown"
+	MissingCooldownSeconds ProblemReason = "missing_cooldown_seconds"
+	MissingMuteSeconds     ProblemReason = "missing_mute_seconds"
+	MissingPassword        ProblemReason = "missing_password"
+	PasswordModeDisabled   ProblemReason = "password_mode_disabled"
+	RevisionMismatch       ProblemReason = "revision_mismatch"
+	SchemaValidationFailed ProblemReason = "schema_validation_failed"
+	SchoolImmutable        ProblemReason = "school_immutable"
+	SelfMuteDisabled       ProblemReason = "self_mute_disabled"
+)
+
+// Valid indicates whether the value is a known member of the ProblemReason enum.
+func (e ProblemReason) Valid() bool {
+	switch e {
+	case ActionExecuting:
+		return true
+	case ActionQueueFull:
+		return true
+	case BotDisabled:
+		return true
+	case CardCheckDisabled:
+		return true
+	case DiceDisabled:
+		return true
+	case IdempotencyMismatch:
+		return true
+	case InvalidField:
+		return true
+	case MemberCooldown:
+		return true
+	case MissingCooldownSeconds:
+		return true
+	case MissingMuteSeconds:
+		return true
+	case MissingPassword:
+		return true
+	case PasswordModeDisabled:
+		return true
+	case RevisionMismatch:
+		return true
+	case SchemaValidationFailed:
+		return true
+	case SchoolImmutable:
+		return true
+	case SelfMuteDisabled:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RecallCommandKind.
 const (
 	RecallCommandKindRecall RecallCommandKind = "recall"
@@ -894,6 +1026,54 @@ const (
 func (e ReportCommandKind) Valid() bool {
 	switch e {
 	case ReportCommandKindReport:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ResultMissingFields.
+const (
+	ResultMissingFieldsDepartment ResultMissingFields = "department"
+	ResultMissingFieldsGender     ResultMissingFields = "gender"
+	ResultMissingFieldsGrade      ResultMissingFields = "grade"
+	ResultMissingFieldsName       ResultMissingFields = "name"
+	ResultMissingFieldsNickname   ResultMissingFields = "nickname"
+	ResultMissingFieldsSchool     ResultMissingFields = "school"
+	ResultMissingFieldsStudentId  ResultMissingFields = "student_id"
+)
+
+// Valid indicates whether the value is a known member of the ResultMissingFields enum.
+func (e ResultMissingFields) Valid() bool {
+	switch e {
+	case ResultMissingFieldsDepartment:
+		return true
+	case ResultMissingFieldsGender:
+		return true
+	case ResultMissingFieldsGrade:
+		return true
+	case ResultMissingFieldsName:
+		return true
+	case ResultMissingFieldsNickname:
+		return true
+	case ResultMissingFieldsSchool:
+		return true
+	case ResultMissingFieldsStudentId:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RetryActionCommandKind.
+const (
+	RetryActionCommandKindRetryAction RetryActionCommandKind = "retry_action"
+)
+
+// Valid indicates whether the value is a known member of the RetryActionCommandKind enum.
+func (e RetryActionCommandKind) Valid() bool {
+	switch e {
+	case RetryActionCommandKindRetryAction:
 		return true
 	default:
 		return false
@@ -1149,6 +1329,24 @@ type ApplyCommand struct {
 // ApplyCommandKind defines model for ApplyCommand.Kind.
 type ApplyCommandKind string
 
+// AuditEntry defines model for AuditEntry.
+type AuditEntry struct {
+	Action string    `json:"action"`
+	Actor  string    `json:"actor"`
+	Id     string    `json:"id"`
+	Result string    `json:"result"`
+	Target string    `json:"target"`
+	Time   time.Time `json:"time"`
+}
+
+// AuditPage defines model for AuditPage.
+type AuditPage struct {
+	Items []AuditEntry `json:"items"`
+
+	// NextCursor Opaque cursor for the next scan, or empty when exhausted.
+	NextCursor string `json:"next_cursor"`
+}
+
 // BatchCommand defines model for BatchCommand.
 type BatchCommand struct {
 	union json.RawMessage
@@ -1205,6 +1403,16 @@ type BulkResult struct {
 	} `json:"items"`
 }
 
+// CancelActionCommand Management command; cancels a pending bot action without affecting executing or unknown actions.
+type CancelActionCommand struct {
+	Kind   CancelActionCommandKind `json:"kind"`
+	Target string                  `json:"target"`
+	Text   *string                 `json:"text,omitempty"`
+}
+
+// CancelActionCommandKind defines model for CancelActionCommand.Kind.
+type CancelActionCommandKind string
+
 // CardBatchCommand Management command; requires current group-scoped capability.
 type CardBatchCommand struct {
 	Kind CardBatchCommandKind `json:"kind"`
@@ -1223,6 +1431,18 @@ type CardCommand struct {
 
 // CardCommandKind defines model for CardCommand.Kind.
 type CardCommandKind string
+
+// CardPreviewCommand Read-only management command; previews expected card rendering and missing profile fields without queuing bot actions.
+type CardPreviewCommand struct {
+	Kind   CardPreviewCommandKind `json:"kind"`
+	Target string                 `json:"target"`
+
+	// Text Optional candidate card_template override; uses the group's stored card_template when omitted or empty.
+	Text *string `json:"text,omitempty"`
+}
+
+// CardPreviewCommandKind defines model for CardPreviewCommand.Kind.
+type CardPreviewCommandKind string
 
 // Command defines model for Command.
 type Command struct {
@@ -1385,7 +1605,10 @@ type GroupConfig struct {
 	Name             string          `json:"name"`
 
 	// Number Masked QQ group number; only its final four digits are shown.
-	Number           string `json:"number"`
+	Number string `json:"number"`
+
+	// PasswordEpoch Monotonic generation counter incremented whenever the dynamic password is set, rotated or cleared.
+	PasswordEpoch    *int64 `json:"password_epoch,omitempty"`
 	PasswordHint     string `json:"password_hint"`
 	PasswordSet      bool   `json:"password_set"`
 	Pity             int64  `json:"pity"`
@@ -1554,6 +1777,9 @@ type Member struct {
 	Owner      string    `json:"owner"`
 	Password   bool      `json:"password"`
 
+	// PasswordEpoch Dynamic password generation matched by this member.
+	PasswordEpoch *int64 `json:"password_epoch,omitempty"`
+
 	// Reminder UTC timestamp. 0001-01-01T00:00:00Z means no deadline/event is currently set.
 	Reminder time.Time `json:"reminder"`
 	State    string    `json:"state"`
@@ -1621,6 +1847,9 @@ type MyGroup struct {
 	// Joined True only after the bot confirms group membership; an application does not imply joining.
 	Joined bool `json:"joined"`
 
+	// MissingCardFields Optional card template field keys not yet disclosed or available for this group's card check; never contains field values.
+	MissingCardFields *[]MyGroupMissingCardFields `json:"missing_card_fields,omitempty"`
+
 	// MissingConditions Confirmed unmet conditions only. restricted discloses no blacklist reasons or management data.
 	MissingConditions []MyGroupMissingConditions `json:"missing_conditions"`
 	Name              string                     `json:"name"`
@@ -1647,6 +1876,9 @@ type MyGroup struct {
 
 // MyGroupEligibility Current prerequisite assessment, separate from recorded membership/approval or exemption. Any required unknown fact prevents eligible.
 type MyGroupEligibility string
+
+// MyGroupMissingCardFields defines model for MyGroup.MissingCardFields.
+type MyGroupMissingCardFields string
 
 // MyGroupMissingConditions defines model for MyGroup.MissingConditions.
 type MyGroupMissingConditions string
@@ -1692,10 +1924,22 @@ type PreviewCommandKind string
 type Problem struct {
 	// Code groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. groups_unauthenticated: Missing or invalid authenticated identity. groups_forbidden: Current identity cannot perform this operation. groups_not_found: Requested group, member, message or related object does not exist. groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled. groups_cooldown: Cooldown or pending action capacity prevents this operation. groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.
 	Code ProblemCode `json:"code"`
+
+	// Field Optional request field name associated with validation or conflict errors.
+	Field *string `json:"field,omitempty"`
+
+	// Reason Optional sanitized subcode for localized UI and bot prompts.
+	Reason *ProblemReason `json:"reason,omitempty"`
+
+	// RetryAfterSeconds Optional remaining cooldown seconds; paired with the HTTP Retry-After header.
+	RetryAfterSeconds *int64 `json:"retry_after_seconds,omitempty"`
 }
 
 // ProblemCode groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. groups_unauthenticated: Missing or invalid authenticated identity. groups_forbidden: Current identity cannot perform this operation. groups_not_found: Requested group, member, message or related object does not exist. groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled. groups_cooldown: Cooldown or pending action capacity prevents this operation. groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.
 type ProblemCode string
+
+// ProblemReason Optional sanitized subcode for localized UI and bot prompts.
+type ProblemReason string
 
 // RecallCommand Management command; requires current group-scoped capability.
 type RecallCommand struct {
@@ -1758,9 +2002,34 @@ type Result struct {
 	Action string `json:"action"`
 	Detail string `json:"detail"`
 	Id     string `json:"id"`
-	State  string `json:"state"`
-	Value  int64  `json:"value"`
+
+	// MaxValue Configured upper bound for randomized commands such as dice_sides.
+	MaxValue *int64 `json:"max_value,omitempty"`
+
+	// MissingFields Optional list of card template field keys not yet disclosed or available.
+	MissingFields *[]ResultMissingFields `json:"missing_fields,omitempty"`
+
+	// PityRemaining Remaining attempts before guaranteed pity trigger when pity > 0.
+	PityRemaining *int64 `json:"pity_remaining,omitempty"`
+
+	// Seconds Effective duration in seconds for timed dispositions or voluntary self_mute.
+	Seconds *int64 `json:"seconds,omitempty"`
+	State   string `json:"state"`
+	Value   int64  `json:"value"`
 }
+
+// ResultMissingFields defines model for Result.MissingFields.
+type ResultMissingFields string
+
+// RetryActionCommand Management command; queues a controlled retry for a confirmed failed bot action.
+type RetryActionCommand struct {
+	Kind   RetryActionCommandKind `json:"kind"`
+	Target string                 `json:"target"`
+	Text   *string                `json:"text,omitempty"`
+}
+
+// RetryActionCommandKind defines model for RetryActionCommand.Kind.
+type RetryActionCommandKind string
 
 // RuleCommand Management command; requires current group-scoped capability.
 type RuleCommand struct {
@@ -1936,6 +2205,12 @@ type ConfigureGroupParams struct {
 
 // ListActionsParams defines parameters for ListActions.
 type ListActionsParams struct {
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListAuditParams defines parameters for ListAudit.
+type ListAuditParams struct {
 	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
 	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
 }
@@ -2945,6 +3220,40 @@ func (t *Command) MergeCardCommand(v CardCommand) error {
 	return err
 }
 
+// AsCardPreviewCommand returns the union data inside the Command as a CardPreviewCommand
+func (t Command) AsCardPreviewCommand() (CardPreviewCommand, error) {
+	var body CardPreviewCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCardPreviewCommand overwrites any union data inside the Command as the provided CardPreviewCommand
+func (t *Command) FromCardPreviewCommand(v CardPreviewCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"card_preview"}`))
+	t.union = b
+	return err
+}
+
+// MergeCardPreviewCommand performs a merge with any union data inside the Command, using the provided CardPreviewCommand
+func (t *Command) MergeCardPreviewCommand(v CardPreviewCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"card_preview"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 // AsAnalyzeCommand returns the union data inside the Command as a AnalyzeCommand
 func (t Command) AsAnalyzeCommand() (AnalyzeCommand, error) {
 	var body AnalyzeCommand
@@ -3183,6 +3492,74 @@ func (t *Command) MergeAiExecuteCommand(v AiExecuteCommand) error {
 	return err
 }
 
+// AsCancelActionCommand returns the union data inside the Command as a CancelActionCommand
+func (t Command) AsCancelActionCommand() (CancelActionCommand, error) {
+	var body CancelActionCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCancelActionCommand overwrites any union data inside the Command as the provided CancelActionCommand
+func (t *Command) FromCancelActionCommand(v CancelActionCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"cancel_action"}`))
+	t.union = b
+	return err
+}
+
+// MergeCancelActionCommand performs a merge with any union data inside the Command, using the provided CancelActionCommand
+func (t *Command) MergeCancelActionCommand(v CancelActionCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"cancel_action"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsRetryActionCommand returns the union data inside the Command as a RetryActionCommand
+func (t Command) AsRetryActionCommand() (RetryActionCommand, error) {
+	var body RetryActionCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRetryActionCommand overwrites any union data inside the Command as the provided RetryActionCommand
+func (t *Command) FromRetryActionCommand(v RetryActionCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"retry_action"}`))
+	t.union = b
+	return err
+}
+
+// MergeRetryActionCommand performs a merge with any union data inside the Command, using the provided RetryActionCommand
+func (t *Command) MergeRetryActionCommand(v RetryActionCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"retry_action"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 func (t Command) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"kind"`
@@ -3205,8 +3582,12 @@ func (t Command) ValueByDiscriminator() (interface{}, error) {
 		return t.AsApplyCommand()
 	case "blacklist":
 		return t.AsBlacklistCommand()
+	case "cancel_action":
+		return t.AsCancelActionCommand()
 	case "card":
 		return t.AsCardCommand()
+	case "card_preview":
+		return t.AsCardPreviewCommand()
 	case "dice":
 		return t.AsDiceCommand()
 	case "exempt":
@@ -3231,6 +3612,8 @@ func (t Command) ValueByDiscriminator() (interface{}, error) {
 		return t.AsRecheckCommand()
 	case "report":
 		return t.AsReportCommand()
+	case "retry_action":
+		return t.AsRetryActionCommand()
 	case "rule":
 		return t.AsRuleCommand()
 	case "self_mute":
@@ -3375,6 +3758,11 @@ type ClientInterface interface {
 	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
 	ListActions(ctx context.Context, group string, params *ListActionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListAudit performs a GET /api/v1/groups/{group}/audit (the `ListAudit` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; requires groups.configure on the target group. Contains only sanitized management audit metadata and never records or exposes recalled message bodies.
+	ListAudit(ctx context.Context, group string, params *ListAuditParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// BatchWithBody performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request,
 	// with any type of body and a specified content type.
 	BatchWithBody(ctx context.Context, group string, params *BatchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3398,7 +3786,7 @@ type ClientInterface interface {
 
 	// ListDeliverys performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
 	//
-	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	// Lists delivery results. The SDK also accepts the legacy listDeliverys spelling.
 	ListDeliverys(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListHits performs a GET /api/v1/groups/{group}/hits (the `ListHits` operationId) request.
@@ -3569,6 +3957,21 @@ func (c *Client) ListActions(ctx context.Context, group string, params *ListActi
 	return c.Client.Do(req)
 }
 
+// ListAudit performs a GET /api/v1/groups/{group}/audit (the `ListAudit` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; requires groups.configure on the target group. Contains only sanitized management audit metadata and never records or exposes recalled message bodies.
+func (c *Client) ListAudit(ctx context.Context, group string, params *ListAuditParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListAuditRequest(c.Server, group, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // BatchWithBody performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request,
 // with any type of body and a specified content type.
 func (c *Client) BatchWithBody(ctx context.Context, group string, params *BatchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -3642,7 +4045,7 @@ func (c *Client) Command(ctx context.Context, group string, params *CommandParam
 
 // ListDeliverys performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
 //
-// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+// Lists delivery results. The SDK also accepts the legacy listDeliverys spelling.
 func (c *Client) ListDeliverys(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListDeliverysRequest(c.Server, group, params)
 	if err != nil {
@@ -4159,6 +4562,79 @@ func NewListActionsRequest(server string, group string, params *ListActionsParam
 	}
 
 	operationPath := fmt.Sprintf("/api/v1/groups/%s/actions", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListAuditRequest constructs an http.Request for the ListAudit method
+func NewListAuditRequest(server string, group string, params *ListAuditParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "group", group, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/groups/%s/audit", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -5123,6 +5599,13 @@ type ClientWithResponsesInterface interface {
 	// Returns a wrapper object for the known response body format(s).
 	ListActionsWithResponse(ctx context.Context, group string, params *ListActionsParams, reqEditors ...RequestEditorFn) (*ListActionsResponse, error)
 
+	// ListAuditWithResponse performs a GET /api/v1/groups/{group}/audit (the `ListAudit` operationId) request.
+	//
+	// Ascending record ID in bytewise (C collation) order; requires groups.configure on the target group. Contains only sanitized management audit metadata and never records or exposes recalled message bodies.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ListAuditWithResponse(ctx context.Context, group string, params *ListAuditParams, reqEditors ...RequestEditorFn) (*ListAuditResponse, error)
+
 	// BatchWithBodyWithResponse performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request,
 	// with any type of body and a specified content type.
 	//
@@ -5152,7 +5635,7 @@ type ClientWithResponsesInterface interface {
 
 	// ListDeliverysWithResponse performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
 	//
-	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	// Lists delivery results. The SDK also accepts the legacy listDeliverys spelling.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	ListDeliverysWithResponse(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*ListDeliverysResponse, error)
@@ -5738,6 +6221,82 @@ func (r ListActionsResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r ListActionsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListAuditResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *AuditPage
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Problem
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Problem
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Problem
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Problem
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListAuditResponse) GetJSON200() *AuditPage {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListAuditResponse) GetJSON400() *Problem {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListAuditResponse) GetJSON401() *Problem {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListAuditResponse) GetJSON403() *Problem {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r ListAuditResponse) GetJSON404() *Problem {
+	return r.JSON404
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r ListAuditResponse) GetJSON503() *Problem {
+	return r.JSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListAuditResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListAuditResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListAuditResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListAuditResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -6791,6 +7350,19 @@ func (c *ClientWithResponses) ListActionsWithResponse(ctx context.Context, group
 	return ParseListActionsResponse(rsp)
 }
 
+// ListAuditWithResponse performs a GET /api/v1/groups/{group}/audit (the `ListAudit` operationId) request.
+//
+// Ascending record ID in bytewise (C collation) order; requires groups.configure on the target group. Contains only sanitized management audit metadata and never records or exposes recalled message bodies.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ListAuditWithResponse(ctx context.Context, group string, params *ListAuditParams, reqEditors ...RequestEditorFn) (*ListAuditResponse, error) {
+	rsp, err := c.ListAudit(ctx, group, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListAuditResponse(rsp)
+}
+
 // BatchWithBodyWithResponse performs a POST /api/v1/groups/{group}/batch (the `Batch` operationId) request,
 // with any type of body and a specified content type.
 //
@@ -6850,7 +7422,7 @@ func (c *ClientWithResponses) CommandWithResponse(ctx context.Context, group str
 
 // ListDeliverysWithResponse performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
 //
-// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+// Lists delivery results. The SDK also accepts the legacy listDeliverys spelling.
 //
 // Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ListDeliverysWithResponse(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*ListDeliverysResponse, error) {
@@ -7345,6 +7917,67 @@ func ParseListActionsResponse(rsp *http.Response) (*ListActionsResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest ActionPage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListAuditResponse parses an HTTP response from a ListAuditWithResponse call
+func ParseListAuditResponse(rsp *http.Response) (*ListAuditResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListAuditResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AuditPage
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

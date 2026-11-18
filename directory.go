@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"strings"
 	"time"
-	"unicode"
-	"unicode/utf8"
 
 	"github.com/StuHelper/stuhelper-platform/account"
 )
@@ -42,20 +41,7 @@ type DirectoryQuery struct {
 	Limit    int
 }
 
-func validCursor(v string, maxLen int) bool {
-	return len(v) <= maxLen && utf8.ValidString(v) && !containsControlOrSlash(v)
-}
-
-func containsControlOrSlash(v string) bool {
-	for _, r := range v {
-		if unicode.IsControl(r) || r == '/' {
-			return true
-		}
-	}
-	return false
-}
-
-func activeBlacklist(tx Tx, group, owner string, now time.Time) (bool, error) {
+func activeBlacklist(tx ReadTx, group, owner string, now time.Time) (bool, error) {
 	var block Blacklist
 	e := tx.Get(bucket(group, "blacklist"), owner, &block)
 	if errors.Is(e, ErrNotFound) {
@@ -76,7 +62,7 @@ func (s *Service) Directory(ctx context.Context, p account.Principal, q Director
 	if !p.Valid() {
 		return out, ErrUnauthenticated
 	}
-	if q.Limit < 1 || q.Limit > 100 || !validCursor(q.Cursor, 128) {
+	if q.Limit < 1 || q.Limit > 100 || (!validCursor(q.Cursor, 128) || strings.Contains(q.Cursor, "/")) {
 		return out, ErrInvalid
 	}
 	if q.School != "" && (q.School == "*" || !valid(q.School, 128)) {
@@ -87,7 +73,7 @@ func (s *Service) Directory(ctx context.Context, p account.Principal, q Director
 	}
 	call, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	e := s.run(call, func(tx Tx) error {
+	e := s.runRead(call, func(tx ReadTx) error {
 		globallyBlocked, err := activeBlacklist(tx, "*", p.Key(), s.now())
 		if err != nil {
 			return err
