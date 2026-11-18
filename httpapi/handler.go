@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"sync"
 
@@ -35,12 +36,6 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 		}
 	}
 	mux.HandleFunc("GET /api/v1/groups/me", wrap(func(w http.ResponseWriter, r *http.Request, p account.Principal) {
-		for name := range r.URL.Query() {
-			if name != "cursor" && name != "limit" {
-				write(w, nil, g.ErrInvalid)
-				return
-			}
-		}
 		cursor, limit, e := pagination(r)
 		if e != nil {
 			write(w, nil, e)
@@ -199,7 +194,15 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 	return mux
 }
 func pagination(r *http.Request) (string, int, error) {
-	q := r.URL.Query()
+	q, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		return "", 0, g.ErrInvalid
+	}
+	for name := range q {
+		if name != "cursor" && name != "limit" {
+			return "", 0, g.ErrInvalid
+		}
+	}
 	if len(q["limit"]) > 1 || len(q["cursor"]) > 1 || len(q.Get("cursor")) > 4096 {
 		return "", 0, g.ErrInvalid
 	}

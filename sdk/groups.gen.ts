@@ -261,7 +261,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering. */
+        /** @description Lists delivery results. The operationId retains the spelling used by the published 0.4 SDK. */
         get: operations["listDeliverys"];
         put?: never;
         post?: never;
