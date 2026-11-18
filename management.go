@@ -24,7 +24,7 @@ type BulkResult struct {
 
 func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string, in Bulk) (BulkResult, error) {
 	out := BulkResult{Items: []BulkItem{}}
-	if len(in.Targets) < 1 || len(in.Targets) > 100 || !valid(key, 100) || !slices.Contains([]string{"warn", "mute", "unmute", "kick", "recheck", "extend", "exempt", "card"}, in.Command.Kind) {
+	if len(in.Targets) < 1 || len(in.Targets) > 100 || !validKey(key) || !slices.Contains([]string{"warn", "mute", "unmute", "kick", "recheck", "extend", "exempt", "card"}, in.Command.Kind) {
 		return out, ErrInvalid
 	}
 	seen := map[string]bool{}
@@ -78,7 +78,11 @@ func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string,
 			})
 			r = Result{State: "preview", Action: cmd.Kind, Detail: "target:" + target}
 		} else {
-			r, e = s.Command(ctx, p, g, key+"-"+hash(target)[:20], cmd)
+			childKey := key + "-" + hash(target)[:20]
+			if len(key) > 100 {
+				childKey = hash([]string{"batch", g, key, target})
+			}
+			r, e = s.Command(ctx, p, g, childKey, cmd)
 		}
 		if e != nil {
 			r = Result{State: "rejected", Detail: ErrUnavailable.Error()}
@@ -104,7 +108,7 @@ type BlacklistInput struct {
 
 func (s *Service) Blacklists(ctx context.Context, p account.Principal, key string, in BlacklistInput) (Result, error) {
 	out := Result{State: "completed"}
-	if len(in.Groups) < 1 || len(in.Groups) > 100 || !valid(in.Target, 2048) || !valid(key, 128) || strings.TrimSpace(in.Reason) == "" || len(in.Reason) > 2048 || in.Seconds < 0 || in.Seconds > 31536000 {
+	if len(in.Groups) < 1 || len(in.Groups) > 100 || !valid(in.Target, 2048) || !validKey(key) || strings.TrimSpace(in.Reason) == "" || len(in.Reason) > 2048 || in.Seconds < 0 || in.Seconds > 31536000 {
 		return out, ErrInvalid
 	}
 	e := s.run(ctx, func(tx Tx) error {
@@ -136,7 +140,10 @@ func (s *Service) Blacklists(ctx context.Context, p account.Principal, key strin
 				return e
 			}
 		}
-		ok, e := replay(tx, p.Key(), key, in, &out)
+		groups := slices.Clone(in.Groups)
+		slices.Sort(groups)
+		object := hash(groups)
+		ok, e := replay(tx, p.Key(), "blacklists", object, key, in, &out)
 		if e != nil || ok {
 			return e
 		}
@@ -153,7 +160,7 @@ func (s *Service) Blacklists(ctx context.Context, p account.Principal, key strin
 				return e
 			}
 		}
-		return save(tx, p.Key(), key, in, out)
+		return save(tx, p.Key(), "blacklists", object, key, in, out)
 	})
 	return out, e
 }

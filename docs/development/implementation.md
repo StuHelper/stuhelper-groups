@@ -1,10 +1,12 @@
 ---
 type: development
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-18
 ---
 
 # Groups 实施状态
+
+同一操作者可在不同群和动作中复用键。收据兼容升级前已完成的请求，同一作用域的不同载荷仍会冲突。
 
 ## 当前实现
 
