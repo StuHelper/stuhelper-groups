@@ -38,6 +38,9 @@ func (r *Repository) Relay(ctx context.Context, deliver func(context.Context, g.
 		}
 		failed := map[string]bool{}
 		for _, event := range pending {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
 			if failed[event.Subject] {
 				continue
 			}
@@ -45,8 +48,13 @@ func (r *Repository) Relay(ctx context.Context, deliver func(context.Context, g.
 			err := deliver(call, event)
 			cancel()
 			if err == nil {
-				e = r.ConfirmOutbox(ctx, event.ID)
+				confirm, stop := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+				e = r.ConfirmOutbox(confirm, event.ID)
+				stop()
 			} else {
+				if err := ctx.Err(); err != nil {
+					return err
+				}
 				failed[event.Subject] = true
 				e = r.Failed(ctx, event.ID, r.now())
 			}

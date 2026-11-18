@@ -262,6 +262,9 @@ func TestTypedCollectionDecodingAndGenericPageRoutes(t *testing.T) {
 	}, g.Message{ID: "m1", Owner: user.Key(), Body: "spam link http://example.com", Attachments: []string{"att-1"}}); err != nil {
 		t.Fatal(err)
 	}
+	if err := f.s.MemberEvent(ctx, "g", event("reporter-joined", "qq-bot", "g", "groups.member_joined", 1), user.Key()); err != nil {
+		t.Fatal(err)
+	}
 	command(t, f, user, "report-1", g.Command{Kind: "report", Message: "m1", Text: "spamming"})
 	command(t, f, manager, "rule-1", g.Command{Kind: "rule", Target: user.Key(), Message: "m1", Text: "spam"})
 	if _, err := f.s.Command(ctx, root, "g", "sub-1", g.Command{Kind: "subscribe", Receiver: "recv", Enabled: true}); err != nil {

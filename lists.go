@@ -69,7 +69,7 @@ func listRecords[T any](s *Service, ctx context.Context, p account.Principal, g,
 	if !p.Valid() {
 		return out, ErrUnauthenticated
 	}
-	if limit < 1 || limit > 100 || len(cursor) > 4096 {
+	if !valid(g, 128) || limit < 1 || limit > 100 || !validCursor(cursor, 4096) {
 		return out, ErrInvalid
 	}
 	e := s.run(ctx, func(tx Tx) error {
@@ -103,11 +103,14 @@ func listRecords[T any](s *Service, ctx context.Context, p account.Principal, g,
 					continue
 				}
 			case *Delivery:
-				var action Action
-				if e = tx.Get(bucket(v.Receiver, "actions"), v.Action, &action); e != nil {
-					return e
+				if v.Action != "" {
+					var action Action
+					if err := tx.Get(bucket(v.Receiver, "actions"), v.Action, &action); err == nil {
+						v.State = action.State
+					} else if !errors.Is(err, ErrNotFound) || v.State == "" {
+						return err
+					}
 				}
-				v.State = action.State
 			}
 			out.Items = append(out.Items, item)
 		}
@@ -167,7 +170,7 @@ func (s *Service) Groups(ctx context.Context, p account.Principal, cursor string
 	if !p.Valid() {
 		return out, ErrUnauthenticated
 	}
-	if limit < 1 || limit > 100 || len(cursor) > 4096 {
+	if limit < 1 || limit > 100 || !validCursor(cursor, 4096) {
 		return out, ErrInvalid
 	}
 	e := s.run(ctx, func(tx Tx) error {
