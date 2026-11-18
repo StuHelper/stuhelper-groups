@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"unicode/utf8"
 
 	g "github.com/StuHelper/stuhelper-groups"
 	"github.com/StuHelper/stuhelper-platform/account"
@@ -200,7 +201,7 @@ func Handler(s *g.Service, identity Identity) http.Handler {
 }
 func pagination(r *http.Request) (string, int, error) {
 	q := r.URL.Query()
-	if len(q["limit"]) > 1 || len(q["cursor"]) > 1 || len(q.Get("cursor")) > 4096 {
+	if len(q["limit"]) > 1 || len(q["cursor"]) > 1 {
 		return "", 0, g.ErrInvalid
 	}
 	limit := 50
@@ -217,12 +218,23 @@ func pagination(r *http.Request) (string, int, error) {
 var contract = sync.OnceValues(func() (*openapi3.T, error) { return openapi3.NewLoader().LoadFromData(g.OpenAPI()) })
 
 func decode(w http.ResponseWriter, r *http.Request, schema string, v any) error {
-	r.Body = http.MaxBytesReader(w, r.Body, 32768)
+	// Allow escaped Unicode at the schema limits, including 100 batch targets.
+	var limit int64 = 128 << 10
+	switch schema {
+	case "GroupConfigInput":
+		limit = 512 << 10
+	case "Bulk", "BlacklistInput":
+		limit = 3 << 20
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, limit)
 	data, e := io.ReadAll(r.Body)
 	if e != nil {
 		return g.ErrInvalid
 	}
 	var value any
+	if !utf8.Valid(data) {
+		return g.ErrInvalid
+	}
 	if e = json.Unmarshal(data, &value); e != nil {
 		return g.ErrInvalid
 	}
