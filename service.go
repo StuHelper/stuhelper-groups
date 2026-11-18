@@ -134,7 +134,10 @@ func validateConfig(c GroupConfig) error {
 	if slices.Contains(c.AutoActions, "mute") && c.MuteSeconds == 0 {
 		return ErrInvalid
 	}
-	for _, a := range c.AutoActions {
+	for i, a := range c.AutoActions {
+		if slices.Contains(c.AutoActions[:i], a) {
+			return ErrInvalid
+		}
 		if !slices.Contains([]string{"warn", "recall", "mute", "kick", "blacklist"}, a) {
 			return ErrInvalid
 		}
@@ -228,7 +231,11 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 	out := Result{State: "completed"}
 	switch cmd.Kind {
 	case "apply", "recheck":
-		return s.admission(ctx, tx, p, c, cmd.Target, cmd.Kind == "apply")
+		trigger := checkAdmission
+		if cmd.Kind == "apply" {
+			trigger = applyAdmission
+		}
+		return s.admission(ctx, tx, p, c, cmd.Target, trigger)
 	case "extend", "exempt":
 		var m Member
 		if e := tx.Get(bucket(c.ID, "members"), cmd.Target, &m); e != nil {
@@ -272,7 +279,7 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		if e := tx.Put(bucket(c.ID, "members"), cmd.Target, m); e != nil {
 			return out, e
 		}
-		return s.admission(ctx, tx, p, c, cmd.Target, false)
+		return s.admission(ctx, tx, p, c, cmd.Target, checkAdmission)
 	case "dice", "self_mute":
 		return s.play(ctx, tx, p, c, cmd)
 	case "blacklist":
@@ -304,6 +311,9 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		var r map[string]any
 		if e := tx.Get(bucket(c.ID, "reports"), cmd.Target, &r); e != nil {
 			return out, e
+		}
+		if r["state"] == "pending_execution" || r["state"] == "resolved" {
+			return out, ErrConflict
 		}
 		messageID, _ := r["message"].(string)
 		var message Message
@@ -401,7 +411,19 @@ func (s *Service) eligible(ctx context.Context, tx Tx, c GroupConfig, m Member) 
 	result, e := s.assessEligibility(ctx, tx, c, m, nil)
 	return e == nil && result.state == "eligible", e
 }
-func (s *Service) admission(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, owner string, apply bool) (Result, error) {
+
+type admissionTrigger int
+
+const (
+	checkAdmission admissionTrigger = iota
+	applyAdmission
+	joinAdmission
+)
+
+// Stored separately from the public Member response, for this membership only.
+type admissionHistory struct{ Admitted, Muted bool }
+
+func (s *Service) admission(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, owner string, trigger admissionTrigger) (Result, error) {
 	out := Result{}
 	if !valid(owner, 2048) {
 		return out, ErrInvalid
@@ -413,16 +435,37 @@ func (s *Service) admission(ctx context.Context, tx Tx, p account.Principal, c G
 		return out, e
 	}
 	if m.State == "removed" {
-		if !apply {
+		if trigger == checkAdmission {
 			return Result{State: "removed"}, nil
 		}
 		fresh = true
 	}
 	if fresh {
-		if !apply {
+		if trigger == checkAdmission {
 			return out, ErrNotFound
 		}
 		m = Member{Owner: owner, State: "requested"}
+	}
+	joinedNow := trigger == joinAdmission && !m.Joined
+	var history admissionHistory
+	if m.Joined {
+		err := tx.Get(bucket(c.ID, "admissions"), owner, &history)
+		if err != nil && !errors.Is(err, ErrNotFound) {
+			return out, err
+		}
+		// Existing restored members were already admitted before this marker existed.
+		if errors.Is(err, ErrNotFound) && m.State == "restored" {
+			history.Admitted = true
+		}
+	}
+	if joinedNow {
+		m.Joined = true
+		m.State = "requested"
+		m.Deadline = time.Time{}
+		m.Reminder = time.Time{}
+		if err := tx.Delete(bucket(c.ID, "admissions"), owner); err != nil {
+			return out, err
+		}
 	}
 	previous := m.State
 	ok, e := s.eligible(ctx, tx, c, m)
@@ -436,48 +479,64 @@ func (s *Service) admission(ctx context.Context, tx Tx, p account.Principal, c G
 		m.State = "restored"
 		m.Deadline = time.Time{}
 		m.Extended = false
-	case fresh:
-		m.State = "grace"
-		m.Deadline = s.now().Add(time.Duration(c.GraceSeconds) * time.Second)
-	case m.Deadline.IsZero():
-		m.State = "grace"
-		m.Deadline = s.now().Add(time.Duration(c.GraceSeconds) * time.Second)
-	}
-	if c.Mode == "before" && !ok && (fresh || m.State == "awaiting_verification") {
+		if !m.Joined && previous != "restored" && c.Mode == "before" {
+			if _, e := s.queue(tx, p, c, Command{Kind: "approve", Target: owner}, "admission"); e != nil {
+				return out, e
+			}
+		}
+		if m.Joined && history.Muted {
+			if _, e := s.queue(tx, p, c, Command{Kind: "unmute", Target: owner, Text: "admission_restored"}, "admission"); e != nil {
+				return out, e
+			}
+			history.Muted = false
+		}
+		if m.Joined && !history.Admitted && c.Welcome != "" {
+			if _, e := s.queue(tx, p, c, Command{Kind: "welcome", Target: owner, Text: c.Welcome + "\n" + c.RulesTemplate}, "admission"); e != nil {
+				return out, e
+			}
+		}
+		history.Admitted = m.Joined
+	case !m.Joined:
 		m.State = "awaiting_verification"
-	}
-	if !ok && !m.Exempt && m.State != "awaiting_verification" && m.State != "removed" && m.State != "removal_pending" && !s.now().Before(m.Deadline) {
-		r, e := s.queue(tx, p, c, Command{Kind: "kick", Target: owner, Text: "eligibility_expired"}, "admission")
-		if e != nil {
-			return out, e
+		m.Deadline = time.Time{}
+		m.Reminder = time.Time{}
+	default:
+		if m.Deadline.IsZero() {
+			m.State = "grace"
+			m.Deadline = s.now().Add(time.Duration(c.GraceSeconds) * time.Second)
 		}
-		m.State = "removal_pending"
-		out = r
-	}
-	if !ok && !m.Exempt && (m.Reminder.IsZero() || (c.ReminderSeconds > 0 && !s.now().Before(m.Reminder.Add(time.Duration(c.ReminderSeconds)*time.Second)))) {
-		if _, e := s.queue(tx, p, c, Command{Kind: "remind", Target: owner, Text: "verification_required"}, "admission"); e != nil {
-			return out, e
+		if m.State == "removal_pending" {
+			pending, err := tx.PendingAdmissionKick(c.ID, owner)
+			if err != nil {
+				return out, err
+			}
+			if !pending {
+				m.State = "grace"
+			}
 		}
-		m.Reminder = s.now()
-	}
-	if fresh && c.Mode == "muted" && !ok {
-		if _, e := s.queue(tx, p, c, Command{Kind: "mute", Target: owner, Seconds: c.GraceSeconds, Text: "admission"}, "admission"); e != nil {
-			return out, e
+		if m.State != "removal_pending" && !s.now().Before(m.Deadline) {
+			out, e = s.queue(tx, p, c, Command{Kind: "kick", Target: owner, Text: "eligibility_expired"}, "admission")
+			if e != nil {
+				return out, e
+			}
+			m.State = "removal_pending"
+		}
+		if m.State != "removal_pending" && (m.Reminder.IsZero() || c.ReminderSeconds > 0 && !s.now().Before(m.Reminder.Add(time.Duration(c.ReminderSeconds)*time.Second))) {
+			if _, e := s.queue(tx, p, c, Command{Kind: "remind", Target: owner, Text: "verification_required"}, "admission"); e != nil {
+				return out, e
+			}
+			m.Reminder = s.now()
+		}
+		if joinedNow && c.Mode == "muted" {
+			if _, e := s.queue(tx, p, c, Command{Kind: "mute", Target: owner, Seconds: c.GraceSeconds, Text: "admission"}, "admission"); e != nil {
+				return out, e
+			}
+			history.Muted = true
 		}
 	}
-	if ok && (fresh || previous == "awaiting_verification") && c.Mode == "before" {
-		if _, e := s.queue(tx, p, c, Command{Kind: "approve", Target: owner}, "admission"); e != nil {
-			return out, e
-		}
-	}
-	if ok && previous != "restored" && c.Mode == "muted" {
-		if _, e := s.queue(tx, p, c, Command{Kind: "unmute", Target: owner, Text: "admission_restored"}, "admission"); e != nil {
-			return out, e
-		}
-	}
-	if ok && fresh && c.Welcome != "" {
-		if _, e := s.queue(tx, p, c, Command{Kind: "welcome", Target: owner, Text: c.Welcome + "\n" + c.RulesTemplate}, "admission"); e != nil {
-			return out, e
+	if m.Joined {
+		if err := tx.Put(bucket(c.ID, "admissions"), owner, history); err != nil {
+			return out, err
 		}
 	}
 	out.State = m.State
