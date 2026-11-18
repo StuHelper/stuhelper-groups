@@ -61,6 +61,7 @@ scenario_tests:
     - facts_test.go#TestGroupFactsFiltersFieldsAtServiceBoundary
     - integration_test.go#TestRulesCardsReportAndBatchPreview
   QQ-08:
+    - relay_shutdown_test.go#TestMaintenanceErrorKeepsPreviousPage
     - relay_shutdown_test.go#TestRelayShutdownAndFirstFailure
     - delivery_membership_test.go#TestPendingOutboxExclusionLimitOrderingAndConfirmation
     - delivery_membership_test.go#TestRelayStopsFailedSubjectWithinBatchAndDeliversOthers

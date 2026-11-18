@@ -37,3 +37,29 @@ func TestRelayShutdownAndFirstFailure(t *testing.T) {
 		t.Fatalf("unconfirmed event: %v %v", events, err)
 	}
 }
+
+func TestMaintenanceErrorKeepsPreviousPage(t *testing.T) {
+	f := setup(t)
+	if err := f.r.Transaction(ctx, func(tx g.Tx) error {
+		if err := tx.Put("g/messages", "a", g.Message{ID: "a", Expires: f.now}); err != nil {
+			return err
+		}
+		for _, bucket := range []string{"members", "actions", "messages"} {
+			if err := tx.Put("g/"+bucket, "b", "invalid existing record"); err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	for _, job := range []func(context.Context, string, string) (string, error){f.s.Sweep, f.s.Recover, f.s.Cleanup} {
+		cursor, err := job(ctx, "g", "")
+		if err == nil || cursor != "" {
+			t.Fatal("advanced failed page", cursor, err)
+		}
+	}
+	if count(t, f, "g/messages") != 2 {
+		t.Fatal("deletion survived rollback")
+	}
+}
