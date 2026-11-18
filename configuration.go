@@ -60,7 +60,7 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 	if !valid(key, 128) {
 		return out, ErrInvalid
 	}
-	if in.ExpectedRevision < 0 || in.Password != nil && len(*in.Password) > 256 || in.Number != nil && !groupNumber.MatchString(*in.Number) {
+	if !valid(in.ID, 128) || !valid(in.School, 128) || in.ExpectedRevision < 0 || in.Password != nil && !validText(*in.Password, 256) || in.Number != nil && !groupNumber.MatchString(*in.Number) {
 		return out, ErrUnprocessable
 	}
 	if in.Keywords == nil {
@@ -131,6 +131,9 @@ func (s *Service) Configuration(ctx context.Context, p account.Principal, g stri
 	var c GroupConfig
 	if !p.Valid() {
 		return c, ErrUnauthenticated
+	}
+	if !valid(g, 128) {
+		return c, ErrInvalid
 	}
 	e := s.run(ctx, func(tx Tx) error {
 		if e := tx.Get("config", g, &c); e != nil {

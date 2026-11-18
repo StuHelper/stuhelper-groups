@@ -25,8 +25,14 @@ func (s *Service) now() time.Time {
 	}
 	return time.Now().UTC()
 }
+func validText(v string, n int) bool {
+	return utf8.ValidString(v) && !strings.ContainsRune(v, 0) && utf8.RuneCountInString(v) <= n
+}
+func validCursor(v string, n int) bool {
+	return validText(v, n) && !strings.ContainsFunc(v, unicode.IsControl)
+}
 func valid(v string, n int) bool {
-	return strings.TrimSpace(v) != "" && len(v) <= n && !strings.ContainsFunc(v, unicode.IsControl) && !strings.Contains(v, "/")
+	return strings.TrimSpace(v) != "" && validCursor(v, n) && !strings.Contains(v, "/")
 }
 func hash(v any) string {
 	b, _ := json.Marshal(v)
@@ -103,7 +109,7 @@ func save(tx Tx, owner, key string, input, out any) error {
 	return tx.Put("receipts", hash([]string{owner, key}), receipt{hash(input), b})
 }
 func validateConfig(c GroupConfig) error {
-	if strings.TrimSpace(c.Name) == "" || utf8.RuneCountInString(c.Name) > 128 || strings.ContainsFunc(c.Name, unicode.IsControl) || c.ID == "me" || c.ID == "*" || c.School == "*" || !valid(c.ID, 128) || !valid(c.School, 128) || !slices.Contains([]string{"before", "muted", "password"}, c.Mode) {
+	if strings.TrimSpace(c.Name) == "" || !validText(c.Name, 128) || strings.ContainsFunc(c.Name, unicode.IsControl) || c.ID == "me" || c.ID == "*" || c.School == "*" || !valid(c.ID, 128) || !valid(c.School, 128) || !slices.Contains([]string{"before", "muted", "password"}, c.Mode) {
 		return ErrInvalid
 	}
 	for _, n := range []int64{c.GraceSeconds, c.ReminderSeconds, c.RetentionSeconds, c.CooldownSeconds} {
@@ -111,10 +117,10 @@ func validateConfig(c GroupConfig) error {
 			return ErrInvalid
 		}
 	}
-	if c.DiceSides < 0 || c.DiceSides == 1 || c.DiceSides > 1000000 || c.MuteProbability < 0 || c.MuteProbability > 100 || c.MuteSeconds < 0 || c.MuteSeconds > 2592000 || c.Pity < 0 || c.Pity > 10000 || c.RepeatThreshold < 0 || c.RepeatThreshold > 1000 || len(c.Keywords) > 100 || len(c.CardTemplate) > 1024 {
+	if c.DiceSides < 0 || c.DiceSides == 1 || c.DiceSides > 1000000 || c.MuteProbability < 0 || c.MuteProbability > 100 || c.MuteSeconds < 0 || c.MuteSeconds > 2592000 || c.Pity < 0 || c.Pity > 10000 || c.RepeatThreshold < 0 || c.RepeatThreshold > 1000 || len(c.Keywords) > 100 || !validText(c.CardTemplate, 1024) {
 		return ErrInvalid
 	}
-	if len(c.Welcome) > 2048 || len(c.RulesTemplate) > 8192 || c.FrequencySeconds < 0 || c.FrequencySeconds > 86400 || c.FrequencyLimit < 0 || c.FrequencyLimit > 10000 || c.WarningLimit < 0 || c.WarningLimit > 10000 {
+	if !validText(c.Welcome, 2048) || !validText(c.RulesTemplate, 8192) || c.FrequencySeconds < 0 || c.FrequencySeconds > 86400 || c.FrequencyLimit < 0 || c.FrequencyLimit > 10000 || c.WarningLimit < 0 || c.WarningLimit > 10000 {
 		return ErrInvalid
 	}
 	if c.GraceSeconds == 0 {
@@ -127,7 +133,7 @@ func validateConfig(c GroupConfig) error {
 		return ErrInvalid
 	}
 	for _, k := range c.Keywords {
-		if strings.TrimSpace(k) == "" || len(k) > 256 {
+		if strings.TrimSpace(k) == "" || !validText(k, 256) {
 			return ErrInvalid
 		}
 	}
@@ -186,7 +192,7 @@ func (s *Service) Command(ctx context.Context, p account.Principal, g, key strin
 	if !p.Valid() {
 		return out, ErrUnauthenticated
 	}
-	if !valid(key, 128) || !valid(g, 128) || len(cmd.Text) > 8192 || cmd.Seconds < 0 || cmd.Seconds > 31536000 {
+	if !valid(key, 128) || !valid(g, 128) || !validText(cmd.Text, 8192) || !validText(cmd.Message, 128) || !validText(cmd.Receiver, 128) || !validText(cmd.Target, 2048) || cmd.Seconds < 0 || cmd.Seconds > 31536000 {
 		return out, ErrInvalid
 	}
 	e := s.run(ctx, func(tx Tx) error {

@@ -24,7 +24,7 @@ type Message struct {
 // Ingest is a trusted backend boundary, never mounted as a public route.
 // Only authenticated bot adapters may provide the actual group and sender.
 func (s *Service) Ingest(ctx context.Context, g string, event Event, m Message) error {
-	if event.Source != "qq-bot" || event.Subject != g || event.Type != "groups.message" || !valid(m.ID, 128) || !valid(m.Owner, 2048) || len(m.Body) > 8192 {
+	if event.Source != "qq-bot" || event.Subject != g || event.Type != "groups.message" || !valid(m.ID, 128) || !valid(m.Owner, 2048) || !validText(m.Body, 8192) || !valid(g, 128) {
 		return ErrInvalid
 	}
 	if len(m.Attachments) > 20 {

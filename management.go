@@ -24,7 +24,7 @@ type BulkResult struct {
 
 func (s *Service) Batch(ctx context.Context, p account.Principal, g, key string, in Bulk) (BulkResult, error) {
 	out := BulkResult{Items: []BulkItem{}}
-	if len(in.Targets) < 1 || len(in.Targets) > 100 || !valid(key, 100) || !slices.Contains([]string{"warn", "mute", "unmute", "kick", "recheck", "extend", "exempt", "card"}, in.Command.Kind) {
+	if len(in.Targets) < 1 || len(in.Targets) > 100 || !valid(g, 128) || !valid(key, 100) || !slices.Contains([]string{"warn", "mute", "unmute", "kick", "recheck", "extend", "exempt", "card"}, in.Command.Kind) {
 		return out, ErrInvalid
 	}
 	seen := map[string]bool{}
@@ -104,13 +104,13 @@ type BlacklistInput struct {
 
 func (s *Service) Blacklists(ctx context.Context, p account.Principal, key string, in BlacklistInput) (Result, error) {
 	out := Result{State: "completed"}
-	if len(in.Groups) < 1 || len(in.Groups) > 100 || !valid(in.Target, 2048) || !valid(key, 128) || strings.TrimSpace(in.Reason) == "" || len(in.Reason) > 2048 || in.Seconds < 0 || in.Seconds > 31536000 {
+	if len(in.Groups) < 1 || len(in.Groups) > 100 || !valid(in.Target, 2048) || !valid(key, 128) || strings.TrimSpace(in.Reason) == "" || !validText(in.Reason, 2048) || in.Seconds < 0 || in.Seconds > 31536000 {
 		return out, ErrInvalid
 	}
 	e := s.run(ctx, func(tx Tx) error {
 		seen := map[string]bool{}
 		for _, id := range in.Groups {
-			if seen[id] {
+			if !valid(id, 128) || seen[id] {
 				return ErrInvalid
 			}
 			seen[id] = true
@@ -161,6 +161,9 @@ func (s *Service) Progress(ctx context.Context, p account.Principal, g string) (
 	var out Member
 	if !p.Valid() {
 		return out, ErrUnauthenticated
+	}
+	if !valid(g, 128) {
+		return out, ErrInvalid
 	}
 	e := s.run(ctx, func(tx Tx) error { return tx.Get(bucket(g, "members"), p.Key(), &out) })
 	out.ID = out.Owner

@@ -1,10 +1,12 @@
 ---
 type: development
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-18
 ---
 
 # Groups 实施状态
+
+路径、分页和写入文本在进入数据库前校验编码。文本长度按 Unicode 码点计数，配置请求体容量覆盖多字节文本。
 
 ## 当前实现
 
