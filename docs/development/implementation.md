@@ -1,10 +1,12 @@
 ---
 type: development
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-18
 ---
 
 # Groups 实施状态
+
+自动拉黑使用永久期限，禁言单独采用配置秒数。举报处置检查留存、状态和已启用的建议，重复建议只执行一次。
 
 ## 当前实现
 

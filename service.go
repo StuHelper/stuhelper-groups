@@ -134,7 +134,10 @@ func validateConfig(c GroupConfig) error {
 	if slices.Contains(c.AutoActions, "mute") && c.MuteSeconds == 0 {
 		return ErrInvalid
 	}
-	for _, a := range c.AutoActions {
+	for i, a := range c.AutoActions {
+		if slices.Contains(c.AutoActions[:i], a) {
+			return ErrInvalid
+		}
 		if !slices.Contains([]string{"warn", "recall", "mute", "kick", "blacklist"}, a) {
 			return ErrInvalid
 		}
@@ -304,6 +307,9 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		var r map[string]any
 		if e := tx.Get(bucket(c.ID, "reports"), cmd.Target, &r); e != nil {
 			return out, e
+		}
+		if r["state"] == "pending_execution" || r["state"] == "resolved" {
+			return out, ErrConflict
 		}
 		messageID, _ := r["message"].(string)
 		var message Message

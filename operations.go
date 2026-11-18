@@ -128,12 +128,18 @@ func (s *Service) rule(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	if e = tx.Put(bucket(c.ID, "hits"), out.ID, map[string]any{"owner": cmd.Target, "message": cmd.Message, "rules": hits, "state": "matched"}); e != nil {
 		return out, e
 	}
-	for _, a := range c.AutoActions {
+	for i, a := range c.AutoActions {
+		if slices.Contains(c.AutoActions[:i], a) {
+			continue
+		}
 		cap := capability(a)
 		if e = s.auth(ctx, p, cap, c); e != nil {
 			return out, e
 		}
-		command := Command{Kind: a, Target: cmd.Target, Message: cmd.Message, Text: "rule:" + out.Detail, Seconds: c.MuteSeconds}
+		command := Command{Kind: a, Target: cmd.Target, Message: cmd.Message, Text: "rule:" + out.Detail}
+		if a == "mute" {
+			command.Seconds = c.MuteSeconds
+		}
 		if a == "blacklist" {
 			if _, e = s.command(ctx, tx, p, c, command, cap); e != nil {
 				return out, e
