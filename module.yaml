@@ -76,6 +76,8 @@ scenario_tests:
     - collection_contract_test.go#TestConfigurationContractRejectsInvalidSettings
     - collection_contract_test.go#TestDeliverySDKCompatibility
     - collection_contract_test.go#TestCollectionUnknownQuery
+    - relay_shutdown_test.go#TestMaintenanceErrorKeepsPreviousPage
+    - relay_shutdown_test.go#TestRelayShutdownAndFirstFailure
     - delivery_membership_test.go#TestPendingOutboxExclusionLimitOrderingAndConfirmation
     - delivery_membership_test.go#TestRelayStopsFailedSubjectWithinBatchAndDeliversOthers
     - api_v03_test.go#TestEveryCollectionTypedPaginationAndAuthorization
