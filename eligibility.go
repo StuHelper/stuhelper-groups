@@ -25,18 +25,15 @@ func (a *eligibilityAssessment) action(value string) {
 // execution-time checks and the user's read-only progress view. No write occurs.
 func (s *Service) assessEligibility(ctx context.Context, tx Tx, c GroupConfig, m Member, cache map[factKey]Facts) (eligibilityAssessment, error) {
 	out := assessment()
-	for _, group := range []string{c.ID, "*"} {
-		var block Blacklist
-		e := tx.Get(bucket(group, "blacklist"), m.Owner, &block)
-		if e == nil && (block.Permanent || s.now().Before(block.Until)) {
-			out.state = "ineligible"
-			out.missing = append(out.missing, "restricted")
-			out.action("contact_group_admin")
-			return out, nil
-		}
-		if e != nil && !errors.Is(e, ErrNotFound) {
-			return out, e
-		}
+	restricted, err := s.restricted(tx, c.ID, m.Owner)
+	if err != nil {
+		return out, err
+	}
+	if restricted {
+		out.state = "ineligible"
+		out.missing = append(out.missing, "restricted")
+		out.action("contact_group_admin")
+		return out, nil
 	}
 	key := factKey{m.Owner, c.School}
 	facts, found := cache[key]
@@ -90,4 +87,18 @@ func (s *Service) assessEligibility(ctx context.Context, tx Tx, c GroupConfig, m
 		out.state = "ineligible"
 	}
 	return out, nil
+}
+
+func (s *Service) restricted(tx Tx, id, owner string) (bool, error) {
+	for _, group := range []string{id, "*"} {
+		var block Blacklist
+		e := tx.Get(bucket(group, "blacklist"), owner, &block)
+		if e == nil && (block.Permanent || s.now().Before(block.Until)) {
+			return true, nil
+		}
+		if e != nil && !errors.Is(e, ErrNotFound) {
+			return false, e
+		}
+	}
+	return false, nil
 }

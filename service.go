@@ -401,6 +401,9 @@ func (s *Service) eligible(ctx context.Context, tx Tx, c GroupConfig, m Member) 
 	return e == nil && result.state == "eligible", e
 }
 func (s *Service) admission(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, owner string, apply bool) (Result, error) {
+	return s.admissionWithFacts(ctx, tx, p, c, owner, apply, nil)
+}
+func (s *Service) admissionWithFacts(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, owner string, apply bool, cache map[factKey]Facts) (Result, error) {
 	out := Result{}
 	if !valid(owner, 2048) {
 		return out, ErrInvalid
@@ -424,7 +427,8 @@ func (s *Service) admission(ctx context.Context, tx Tx, p account.Principal, c G
 		m = Member{Owner: owner, State: "requested"}
 	}
 	previous := m.State
-	ok, e := s.eligible(ctx, tx, c, m)
+	assessment, e := s.assessEligibility(ctx, tx, c, m, cache)
+	ok := assessment.state == "eligible"
 	if e != nil {
 		return out, e
 	}

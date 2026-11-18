@@ -7,6 +7,7 @@ import (
 	"errors"
 	"github.com/StuHelper/stuhelper-platform/account"
 	"github.com/StuHelper/stuhelper-platform/admin"
+	"golang.org/x/sync/singleflight"
 	"time"
 )
 
@@ -175,6 +176,7 @@ type Repository interface {
 	Transaction(context.Context, func(Tx) error) error
 }
 type Service struct {
+	consuming        singleflight.Group
 	PlatformIdentity admin.Identity
 	Repo             Repository
 	Auth             Authorizer

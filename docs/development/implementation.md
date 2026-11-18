@@ -1,10 +1,12 @@
 ---
 type: development
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-18
 ---
 
 # Groups 实施状态
+
+一次资格变更按本人和学校读取当前事实，在短事务中重验关联群并原子更新成员、inbox 与 outbox。已消费的事件和旧修订直接确认。
 
 ## 当前实现
 
