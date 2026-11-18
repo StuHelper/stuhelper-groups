@@ -247,7 +247,7 @@ func TestConsumeFanoutDeduplicationOldRevisionsAndConcurrency(t *testing.T) {
 			t.Fatal(e)
 		}
 	}
-	if calls.Load() != 105 || inboxCount(t, f, ev.ID) != 1 {
+	if calls.Load() != 2 || inboxCount(t, f, ev.ID) != 1 {
 		t.Fatal("duplicate recomputation", calls.Load())
 	}
 	for i := 0; i < 105; i++ {
@@ -261,11 +261,11 @@ func TestConsumeFanoutDeduplicationOldRevisionsAndConcurrency(t *testing.T) {
 	if e := f.s.Consume(ctx, old); e != nil {
 		t.Fatal(e)
 	}
-	if calls.Load() != 105 || inboxCount(t, f, old.ID) != 1 {
+	if calls.Load() != 2 || inboxCount(t, f, old.ID) != 1 {
 		t.Fatal("old revision executed")
 	}
 	equal := upstream("same-revision", "verification", "credential/1", user, 2)
-	if e := f.s.Consume(ctx, equal); e != nil || calls.Load() != 105 {
+	if e := f.s.Consume(ctx, equal); e != nil || calls.Load() != 2 {
 		t.Fatal("equal revision executed", e)
 	}
 	conflict := ev
@@ -275,7 +275,7 @@ func TestConsumeFanoutDeduplicationOldRevisionsAndConcurrency(t *testing.T) {
 	}
 	// Revisions are per upstream subject, not per owner. Another credential must run.
 	other := upstream("other-object", "verification", "credential/2", user, 1)
-	if e := f.s.Consume(ctx, other); e != nil || calls.Load() != 210 {
+	if e := f.s.Consume(ctx, other); e != nil || calls.Load() != 4 {
 		t.Fatal("object revision collapsed into owner", e, calls.Load())
 	}
 	f.s.Facts = groupFactsFunc(func(context.Context, account.Principal, string, string) (g.Facts, error) {
@@ -443,5 +443,24 @@ func TestRelayStopsFailedSubjectWithinBatchAndDeliversOthers(t *testing.T) {
 	pending, e := f.r.PendingOutbox(ctx, 100, nil)
 	if e != nil || len(pending) != 20 {
 		t.Fatal("failed subject confirmed", len(pending), e)
+	}
+}
+
+func TestConsumeFetchesFactsOutsideTransaction(t *testing.T) {
+	f := setup(t)
+	seedMembership(t, f, user, 3)
+	calls := 0
+	f.s.Facts = groupFactsFunc(func(call context.Context, _ account.Principal, owner, school string) (g.Facts, error) {
+		calls++
+		probe, cancel := context.WithTimeout(call, time.Second)
+		defer cancel()
+		if err := f.r.Transaction(probe, func(g.Tx) error { return nil }); err != nil {
+			return g.Facts{}, err
+		}
+		return g.Facts{Bound: true, StudentKnown: true, Student: true, StageKnown: true}, nil
+	})
+	ev := upstream("prefetch", "verification", "credential/1", user, 1)
+	if err := f.s.Consume(ctx, ev); err != nil || calls != 2 || inboxCount(t, f, ev.ID) != 1 {
+		t.Fatal(err, calls)
 	}
 }

@@ -3,6 +3,7 @@ package groups
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"regexp"
 	"strconv"
 	"strings"
@@ -102,46 +103,96 @@ func (s *Service) Consume(ctx context.Context, event UpstreamEvent) error {
 		return ErrInvalid
 	}
 	envelope := Event{SpecVersion: event.SpecVersion, ID: event.ID, Source: event.Source, Type: event.Type, Subject: event.Subject, Time: event.Time, Revision: event.Data.Revision, Data: payload}
+	pending := s.consuming.DoChan(hash(envelope), func() (any, error) {
+		return nil, s.consumeEvent(ctx, envelope, event.Data.Owner)
+	})
+	select {
+	case result := <-pending:
+		return result.Err
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+func (s *Service) consumeEvent(ctx context.Context, envelope Event, owner string) error {
 	call, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	return s.run(call, func(tx Tx) error {
-		accepted, e := tx.Accept(envelope)
-		if e != nil || !accepted {
-			return e
-		}
-		// Include active applications as well as joined members. Fetch the complete
-		// bounded set before touching state so overflow cannot leave partial changes.
-		groups := []ManagedGroup{}
-		cursor := ""
-		for {
-			page, e := tx.OwnerGroups(event.Data.Owner, cursor, 100, true)
-			if e != nil {
-				return e
+	cache := map[factKey]Facts{}
+	needFacts := errors.New("fetch group facts")
+	for {
+		schools := map[string]bool{}
+		err := s.run(call, func(tx Tx) error {
+			accepted, err := tx.Accept(envelope)
+			if err != nil || !accepted {
+				return err
 			}
-			groups = append(groups, page.Items...)
-			if len(groups) > MaxEventGroups {
+			groups, err := affectedGroups(tx, owner)
+			if err != nil {
+				return err
+			}
+			for _, group := range groups {
+				if _, found := cache[factKey{owner, group.School}]; found || schools[group.School] {
+					continue
+				}
+				blocked, err := s.restricted(tx, group.ID, owner)
+				if err != nil {
+					return err
+				}
+				if !blocked {
+					schools[group.School] = true
+				}
+			}
+			// Roll back the tentative inbox insert. The write pass checks the stream and memberships again.
+			if len(schools) > 0 {
+				return needFacts
+			}
+			for _, group := range groups {
+				if err := call.Err(); err != nil {
+					return err
+				}
+				var c GroupConfig
+				if err := tx.Get("config", group.ID, &c); err != nil {
+					return err
+				}
+				if _, err := s.admissionWithFacts(call, tx, account.Principal{}, c, owner, checkAdmission, cache); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if !errors.Is(err, needFacts) {
+			return err
+		}
+		for school := range schools {
+			facts, err := s.currentFacts(call, owner, school)
+			if err != nil {
 				return ErrUnavailable
 			}
-			if page.NextCursor == "" {
-				break
-			}
-			if len(groups) == MaxEventGroups {
-				return ErrUnavailable
-			}
-			cursor = page.NextCursor
+			cache[factKey{owner, school}] = facts
 		}
-		for _, group := range groups {
-			if e = call.Err(); e != nil {
-				return e
-			}
-			var c GroupConfig
-			if e = tx.Get("config", group.ID, &c); e != nil {
-				return e
-			}
-			if _, e = s.admission(call, tx, account.Principal{}, c, event.Data.Owner, false); e != nil {
-				return e
-			}
+	}
+}
+func affectedGroups(tx Tx, owner string) ([]ManagedGroup, error) {
+	// Include active applications as well as joined members. Fetch the complete
+	// bounded set before touching state so overflow cannot leave partial changes.
+	groups := []ManagedGroup{}
+	cursor := ""
+	for {
+		page, e := tx.OwnerGroups(owner, cursor, 100, true)
+		if e != nil {
+			return nil, e
 		}
-		return nil
-	})
+		groups = append(groups, page.Items...)
+		if len(groups) > MaxEventGroups {
+			return nil, ErrUnavailable
+		}
+		if page.NextCursor == "" {
+			break
+		}
+		if len(groups) == MaxEventGroups {
+			return nil, ErrUnavailable
+		}
+		cursor = page.NextCursor
+	}
+	return groups, nil
 }

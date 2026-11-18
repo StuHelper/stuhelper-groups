@@ -97,11 +97,16 @@ func listRecords[T any](s *Service, ctx context.Context, p account.Principal, g,
 				if e = json.Unmarshal(r.Data, &d); e != nil {
 					return e
 				}
-				var action Action
-				if e = tx.Get(bucket(d.Receiver, "actions"), d.Action, &action); e != nil {
-					return e
+				state := d.State
+				if d.Action != "" {
+					var action Action
+					if e = tx.Get(bucket(d.Receiver, "actions"), d.Action, &action); e == nil {
+						state = action.State
+					} else if !errors.Is(e, ErrNotFound) || state == "" {
+						return e
+					}
 				}
-				record["state"], e = json.Marshal(action.State)
+				record["state"], e = json.Marshal(state)
 				if e != nil {
 					return e
 				}
