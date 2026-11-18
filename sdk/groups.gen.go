@@ -57,6 +57,7 @@ const (
 	ActionCommandKindBlacklist    ActionCommandKind = "blacklist"
 	ActionCommandKindCancelAction ActionCommandKind = "cancel_action"
 	ActionCommandKindCard         ActionCommandKind = "card"
+	ActionCommandKindCardPreview  ActionCommandKind = "card_preview"
 	ActionCommandKindDice         ActionCommandKind = "dice"
 	ActionCommandKindExempt       ActionCommandKind = "exempt"
 	ActionCommandKindExtend       ActionCommandKind = "extend"
@@ -98,6 +99,8 @@ func (e ActionCommandKind) Valid() bool {
 	case ActionCommandKindCancelAction:
 		return true
 	case ActionCommandKindCard:
+		return true
+	case ActionCommandKindCardPreview:
 		return true
 	case ActionCommandKindDice:
 		return true
@@ -249,6 +252,21 @@ const (
 func (e CardCommandKind) Valid() bool {
 	switch e {
 	case CardCommandKindCard:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CardPreviewCommandKind.
+const (
+	CardPreviewCommandKindCardPreview CardPreviewCommandKind = "card_preview"
+)
+
+// Valid indicates whether the value is a known member of the CardPreviewCommandKind enum.
+func (e CardPreviewCommandKind) Valid() bool {
+	switch e {
+	case CardPreviewCommandKindCardPreview:
 		return true
 	default:
 		return false
@@ -537,6 +555,39 @@ func (e MyGroupEligibility) Valid() bool {
 	}
 }
 
+// Defines values for MyGroupMissingCardFields.
+const (
+	MyGroupMissingCardFieldsDepartment MyGroupMissingCardFields = "department"
+	MyGroupMissingCardFieldsGender     MyGroupMissingCardFields = "gender"
+	MyGroupMissingCardFieldsGrade      MyGroupMissingCardFields = "grade"
+	MyGroupMissingCardFieldsName       MyGroupMissingCardFields = "name"
+	MyGroupMissingCardFieldsNickname   MyGroupMissingCardFields = "nickname"
+	MyGroupMissingCardFieldsSchool     MyGroupMissingCardFields = "school"
+	MyGroupMissingCardFieldsStudentId  MyGroupMissingCardFields = "student_id"
+)
+
+// Valid indicates whether the value is a known member of the MyGroupMissingCardFields enum.
+func (e MyGroupMissingCardFields) Valid() bool {
+	switch e {
+	case MyGroupMissingCardFieldsDepartment:
+		return true
+	case MyGroupMissingCardFieldsGender:
+		return true
+	case MyGroupMissingCardFieldsGrade:
+		return true
+	case MyGroupMissingCardFieldsName:
+		return true
+	case MyGroupMissingCardFieldsNickname:
+		return true
+	case MyGroupMissingCardFieldsSchool:
+		return true
+	case MyGroupMissingCardFieldsStudentId:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MyGroupMissingConditions.
 const (
 	MyGroupMissingConditionsAlumniNotAccepted    MyGroupMissingConditions = "alumni_not_accepted"
@@ -714,6 +765,66 @@ func (e ProblemCode) Valid() bool {
 	}
 }
 
+// Defines values for ProblemReason.
+const (
+	ActionExecuting        ProblemReason = "action_executing"
+	ActionQueueFull        ProblemReason = "action_queue_full"
+	BotDisabled            ProblemReason = "bot_disabled"
+	CardCheckDisabled      ProblemReason = "card_check_disabled"
+	DiceDisabled           ProblemReason = "dice_disabled"
+	IdempotencyMismatch    ProblemReason = "idempotency_mismatch"
+	InvalidField           ProblemReason = "invalid_field"
+	MemberCooldown         ProblemReason = "member_cooldown"
+	MissingCooldownSeconds ProblemReason = "missing_cooldown_seconds"
+	MissingMuteSeconds     ProblemReason = "missing_mute_seconds"
+	MissingPassword        ProblemReason = "missing_password"
+	PasswordModeDisabled   ProblemReason = "password_mode_disabled"
+	RevisionMismatch       ProblemReason = "revision_mismatch"
+	SchemaValidationFailed ProblemReason = "schema_validation_failed"
+	SchoolImmutable        ProblemReason = "school_immutable"
+	SelfMuteDisabled       ProblemReason = "self_mute_disabled"
+)
+
+// Valid indicates whether the value is a known member of the ProblemReason enum.
+func (e ProblemReason) Valid() bool {
+	switch e {
+	case ActionExecuting:
+		return true
+	case ActionQueueFull:
+		return true
+	case BotDisabled:
+		return true
+	case CardCheckDisabled:
+		return true
+	case DiceDisabled:
+		return true
+	case IdempotencyMismatch:
+		return true
+	case InvalidField:
+		return true
+	case MemberCooldown:
+		return true
+	case MissingCooldownSeconds:
+		return true
+	case MissingMuteSeconds:
+		return true
+	case MissingPassword:
+		return true
+	case PasswordModeDisabled:
+		return true
+	case RevisionMismatch:
+		return true
+	case SchemaValidationFailed:
+		return true
+	case SchoolImmutable:
+		return true
+	case SelfMuteDisabled:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RecallCommandKind.
 const (
 	RecallCommandKindRecall RecallCommandKind = "recall"
@@ -768,6 +879,39 @@ const (
 func (e ReportCommandKind) Valid() bool {
 	switch e {
 	case ReportCommandKindReport:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ResultMissingFields.
+const (
+	ResultMissingFieldsDepartment ResultMissingFields = "department"
+	ResultMissingFieldsGender     ResultMissingFields = "gender"
+	ResultMissingFieldsGrade      ResultMissingFields = "grade"
+	ResultMissingFieldsName       ResultMissingFields = "name"
+	ResultMissingFieldsNickname   ResultMissingFields = "nickname"
+	ResultMissingFieldsSchool     ResultMissingFields = "school"
+	ResultMissingFieldsStudentId  ResultMissingFields = "student_id"
+)
+
+// Valid indicates whether the value is a known member of the ResultMissingFields enum.
+func (e ResultMissingFields) Valid() bool {
+	switch e {
+	case ResultMissingFieldsDepartment:
+		return true
+	case ResultMissingFieldsGender:
+		return true
+	case ResultMissingFieldsGrade:
+		return true
+	case ResultMissingFieldsName:
+		return true
+	case ResultMissingFieldsNickname:
+		return true
+	case ResultMissingFieldsSchool:
+		return true
+	case ResultMissingFieldsStudentId:
 		return true
 	default:
 		return false
@@ -1114,6 +1258,18 @@ type CardCommand struct {
 // CardCommandKind defines model for CardCommand.Kind.
 type CardCommandKind string
 
+// CardPreviewCommand Read-only management command; previews expected card rendering and missing profile fields without queuing bot actions.
+type CardPreviewCommand struct {
+	Kind   CardPreviewCommandKind `json:"kind"`
+	Target string                 `json:"target"`
+
+	// Text Optional candidate card_template override; uses the group's stored card_template when omitted or empty.
+	Text *string `json:"text,omitempty"`
+}
+
+// CardPreviewCommandKind defines model for CardPreviewCommand.Kind.
+type CardPreviewCommandKind string
+
 // Command defines model for Command.
 type Command struct {
 	union json.RawMessage
@@ -1225,7 +1381,10 @@ type GroupConfig struct {
 	Name             string                   `json:"name"`
 
 	// Number Masked QQ group number; only its final four digits are shown.
-	Number           string `json:"number"`
+	Number string `json:"number"`
+
+	// PasswordEpoch Monotonic generation counter incremented whenever the dynamic password is set, rotated or cleared.
+	PasswordEpoch    *int64 `json:"password_epoch,omitempty"`
 	PasswordSet      bool   `json:"password_set"`
 	Pity             int64  `json:"pity"`
 	RemindCard       bool   `json:"remind_card"`
@@ -1375,6 +1534,9 @@ type Member struct {
 	Owner      string    `json:"owner"`
 	Password   bool      `json:"password"`
 
+	// PasswordEpoch Dynamic password generation matched by this member.
+	PasswordEpoch *int64 `json:"password_epoch,omitempty"`
+
 	// Reminder UTC timestamp. 0001-01-01T00:00:00Z means no deadline/event is currently set.
 	Reminder time.Time `json:"reminder"`
 	State    string    `json:"state"`
@@ -1442,6 +1604,9 @@ type MyGroup struct {
 	// Joined True only after the bot confirms group membership; an application does not imply joining.
 	Joined bool `json:"joined"`
 
+	// MissingCardFields Optional card template field keys not yet disclosed or available for this group's card check; never contains field values.
+	MissingCardFields *[]MyGroupMissingCardFields `json:"missing_card_fields,omitempty"`
+
 	// MissingConditions Confirmed unmet conditions only. restricted discloses no blacklist reasons or management data.
 	MissingConditions []MyGroupMissingConditions `json:"missing_conditions"`
 	Name              string                     `json:"name"`
@@ -1465,6 +1630,9 @@ type MyGroup struct {
 
 // MyGroupEligibility Current prerequisite assessment, separate from recorded membership/approval or exemption. Any required unknown fact prevents eligible.
 type MyGroupEligibility string
+
+// MyGroupMissingCardFields defines model for MyGroup.MissingCardFields.
+type MyGroupMissingCardFields string
 
 // MyGroupMissingConditions defines model for MyGroup.MissingConditions.
 type MyGroupMissingConditions string
@@ -1510,10 +1678,22 @@ type PreviewCommandKind string
 type Problem struct {
 	// Code groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. groups_unauthenticated: Missing or invalid authenticated identity. groups_forbidden: Current identity cannot perform this operation. groups_not_found: Requested group, member, message or related object does not exist. groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled. groups_cooldown: Cooldown or pending action capacity prevents this operation. groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.
 	Code ProblemCode `json:"code"`
+
+	// Field Optional request field name associated with validation or conflict errors.
+	Field *string `json:"field,omitempty"`
+
+	// Reason Optional sanitized subcode for localized UI and bot prompts.
+	Reason *ProblemReason `json:"reason,omitempty"`
+
+	// RetryAfterSeconds Optional remaining cooldown seconds; paired with the HTTP Retry-After header.
+	RetryAfterSeconds *int64 `json:"retry_after_seconds,omitempty"`
 }
 
 // ProblemCode groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. groups_unauthenticated: Missing or invalid authenticated identity. groups_forbidden: Current identity cannot perform this operation. groups_not_found: Requested group, member, message or related object does not exist. groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled. groups_cooldown: Cooldown or pending action capacity prevents this operation. groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.
 type ProblemCode string
+
+// ProblemReason Optional sanitized subcode for localized UI and bot prompts.
+type ProblemReason string
 
 // RecallCommand Management command; requires current group-scoped capability.
 type RecallCommand struct {
@@ -1576,9 +1756,24 @@ type Result struct {
 	Action string `json:"action"`
 	Detail string `json:"detail"`
 	Id     string `json:"id"`
-	State  string `json:"state"`
-	Value  int64  `json:"value"`
+
+	// MaxValue Configured upper bound for randomized commands such as dice_sides.
+	MaxValue *int64 `json:"max_value,omitempty"`
+
+	// MissingFields Optional list of card template field keys not yet disclosed or available.
+	MissingFields *[]ResultMissingFields `json:"missing_fields,omitempty"`
+
+	// PityRemaining Remaining attempts before guaranteed pity trigger when pity > 0.
+	PityRemaining *int64 `json:"pity_remaining,omitempty"`
+
+	// Seconds Effective duration in seconds for timed dispositions or voluntary self_mute.
+	Seconds *int64 `json:"seconds,omitempty"`
+	State   string `json:"state"`
+	Value   int64  `json:"value"`
 }
+
+// ResultMissingFields defines model for Result.MissingFields.
+type ResultMissingFields string
 
 // RetryActionCommand Management command; queues a controlled retry for a confirmed failed bot action.
 type RetryActionCommand struct {
@@ -2768,6 +2963,40 @@ func (t *Command) MergeCardCommand(v CardCommand) error {
 	return err
 }
 
+// AsCardPreviewCommand returns the union data inside the Command as a CardPreviewCommand
+func (t Command) AsCardPreviewCommand() (CardPreviewCommand, error) {
+	var body CardPreviewCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCardPreviewCommand overwrites any union data inside the Command as the provided CardPreviewCommand
+func (t *Command) FromCardPreviewCommand(v CardPreviewCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"card_preview"}`))
+	t.union = b
+	return err
+}
+
+// MergeCardPreviewCommand performs a merge with any union data inside the Command, using the provided CardPreviewCommand
+func (t *Command) MergeCardPreviewCommand(v CardPreviewCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"card_preview"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 // AsAnalyzeCommand returns the union data inside the Command as a AnalyzeCommand
 func (t Command) AsAnalyzeCommand() (AnalyzeCommand, error) {
 	var body AnalyzeCommand
@@ -3100,6 +3329,8 @@ func (t Command) ValueByDiscriminator() (interface{}, error) {
 		return t.AsCancelActionCommand()
 	case "card":
 		return t.AsCardCommand()
+	case "card_preview":
+		return t.AsCardPreviewCommand()
 	case "dice":
 		return t.AsDiceCommand()
 	case "exempt":
@@ -3293,7 +3524,7 @@ type ClientInterface interface {
 
 	// ListDeliverys performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
 	//
-	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	// Lists delivery results. The SDK also accepts the legacy listDeliverys spelling.
 	ListDeliverys(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListHits performs a GET /api/v1/groups/{group}/hits (the `ListHits` operationId) request.
@@ -3537,7 +3768,7 @@ func (c *Client) Command(ctx context.Context, group string, params *CommandParam
 
 // ListDeliverys performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
 //
-// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+// Lists delivery results. The SDK also accepts the legacy listDeliverys spelling.
 func (c *Client) ListDeliverys(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListDeliverysRequest(c.Server, group, params)
 	if err != nil {
@@ -5030,7 +5261,7 @@ type ClientWithResponsesInterface interface {
 
 	// ListDeliverysWithResponse performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
 	//
-	// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+	// Lists delivery results. The SDK also accepts the legacy listDeliverys spelling.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	ListDeliverysWithResponse(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*ListDeliverysResponse, error)
@@ -6735,7 +6966,7 @@ func (c *ClientWithResponses) CommandWithResponse(ctx context.Context, group str
 
 // ListDeliverysWithResponse performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
 //
-// Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering.
+// Lists delivery results. The SDK also accepts the legacy listDeliverys spelling.
 //
 // Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ListDeliverysWithResponse(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*ListDeliverysResponse, error) {

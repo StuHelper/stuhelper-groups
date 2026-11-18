@@ -30,19 +30,46 @@ type transaction struct {
 	tx  pgx.Tx
 }
 
-func (r *Repository) Transaction(ctx context.Context, fn func(g.Tx) error) error {
+func (r *Repository) ReadOnly(ctx context.Context, fn func(g.ReadTx) error) error {
+	tx, e := r.Pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
+	if e != nil {
+		return e
+	}
+	defer func() { _ = tx.Rollback(context.WithoutCancel(ctx)) }()
+	if e = fn(&transaction{ctx, tx}); e != nil {
+		return e
+	}
+	return tx.Commit(ctx)
+}
+
+func (r *Repository) ScopedTransaction(ctx context.Context, scopes []string, fn func(g.Tx) error) error {
 	tx, e := r.Pool.Begin(ctx)
 	if e != nil {
 		return e
 	}
-	defer func() { _ = tx.Rollback(context.WithoutCancel(ctx)) }() // Module-local serialization prevents lost updates across workflows.
-	if _, e = tx.Exec(ctx, "SELECT pg_advisory_xact_lock(7420719)"); e != nil {
-		return e
+	defer func() { _ = tx.Rollback(context.WithoutCancel(ctx)) }()
+	if len(scopes) == 0 {
+		if _, e = tx.Exec(ctx, "SELECT pg_advisory_xact_lock(7420719)"); e != nil {
+			return e
+		}
+	} else {
+		// Legacy transactions take the exclusive module lock. Scoped writers may coexist.
+		if _, e = tx.Exec(ctx, "SELECT pg_advisory_xact_lock_shared(7420719)"); e != nil {
+			return e
+		}
+		// Acquire hash locks in strict ascending int32 order so multi-group operations never deadlock.
+		if _, e = tx.Exec(ctx, "SELECT pg_advisory_xact_lock(7420719, h) FROM (SELECT DISTINCT hashtext(k) AS h FROM unnest($1::text[]) AS k ORDER BY h) q", scopes); e != nil {
+			return e
+		}
 	}
 	if e = fn(&transaction{ctx, tx}); e != nil {
 		return e
 	}
 	return tx.Commit(ctx)
+}
+
+func (r *Repository) Transaction(ctx context.Context, fn func(g.Tx) error) error {
+	return r.ScopedTransaction(ctx, nil, fn)
 }
 func (t *transaction) Get(bucket, id string, v any) error {
 	var b []byte
@@ -105,7 +132,7 @@ func (t *transaction) Emit(event g.Event) error {
 	return e
 }
 func (t *transaction) Accept(event g.Event) (bool, error) {
-	if event.SpecVersion != "1.0" || event.ID == "" || event.Source == "" || event.Subject == "" || event.Revision < 1 || event.Time.IsZero() {
+	if event.SpecVersion != "1.0" || event.ID == "" || event.Source == "" || event.Subject == "" || event.Revision < 1 || event.Time.IsZero() || len(event.TraceParent) > 256 {
 		return false, g.ErrInvalid
 	}
 	b, e := json.Marshal(event)
@@ -129,18 +156,18 @@ func (t *transaction) Accept(event g.Event) (bool, error) {
 	if e != nil {
 		return false, e
 	}
-	tag, e := t.tx.Exec(t.ctx, "INSERT INTO groups.revisions(source,subject,revision) VALUES($1,$2,$3) ON CONFLICT(source,subject) DO UPDATE SET revision=EXCLUDED.revision WHERE groups.revisions.revision<EXCLUDED.revision", event.Source, event.Subject, event.Revision)
+	tag, e := t.tx.Exec(t.ctx, "INSERT INTO groups.revisions(source,subject,revision) VALUES($1,$2,$3) ON CONFLICT(source,subject) DO UPDATE SET revision=EXCLUDED.revision WHERE groups.revisions.revision<EXCLUDED.revision", event.Source, event.RevisionSubject(), event.Revision)
 	return tag.RowsAffected() == 1, e
 }
 
 func (r *Repository) Failed(ctx context.Context, id string, now time.Time) error {
-	_, e := r.Pool.Exec(ctx, `UPDATE groups.outbox SET attempts=attempts+1,next_attempt=$2::timestamptz+make_interval(secs=>LEAST(3600,5*power(2,LEAST(attempts,10)))::double precision),held=($2::timestamptz-created_at>=interval '24 hours') WHERE id=$1 AND sent_at IS NULL`, id, now)
+	_, e := r.Pool.Exec(ctx, `UPDATE groups.outbox SET attempts=attempts+1,next_attempt=$2::timestamptz+make_interval(secs=>LEAST(3600,5*power(2,LEAST(attempts,10)))::double precision),first_failed_at=COALESCE(first_failed_at,$2),held=($2::timestamptz-COALESCE(first_failed_at,$2)>=interval '24 hours') WHERE id=$1 AND sent_at IS NULL`, id, now)
 	return e
 }
 
 // Retry is a host-only administrative boundary; host must authorize and audit.
 func (r *Repository) Retry(ctx context.Context, id string, now time.Time) error {
-	_, e := r.Pool.Exec(ctx, "UPDATE groups.outbox SET held=false,attempts=0,created_at=$2,next_attempt=$2 WHERE id=$1 AND sent_at IS NULL", id, now)
+	_, e := r.Pool.Exec(ctx, "UPDATE groups.outbox SET held=false,attempts=0,first_failed_at=NULL,next_attempt=$2 WHERE id=$1 AND sent_at IS NULL", id, now)
 	return e
 }
 
@@ -154,7 +181,7 @@ func (t *transaction) DeleteSentOutboxBefore(cutoff time.Time, limit int) (int, 
 	if limit < 1 || limit > 100 {
 		return 0, g.ErrInvalid
 	}
-	tag, e := t.tx.Exec(t.ctx, `DELETE FROM groups.outbox WHERE sequence IN (SELECT sequence FROM groups.outbox WHERE sent_at IS NOT NULL AND sent_at<=$1 ORDER BY sent_at,sequence LIMIT $2)`, cutoff, limit)
+	tag, e := t.tx.Exec(t.ctx, `DELETE FROM groups.outbox WHERE sequence IN (SELECT sequence FROM groups.outbox WHERE NOT held AND sent_at IS NOT NULL AND sent_at<=$1 ORDER BY sent_at,sequence LIMIT $2 FOR UPDATE SKIP LOCKED)`, cutoff, limit)
 	return int(tag.RowsAffected()), e
 }
 
@@ -185,4 +212,14 @@ func (t *transaction) GroupCounts(ids []string) (map[string]g.GroupCounts, error
 		out[id] = n
 	}
 	return out, rows.Err()
+}
+
+// PendingAdmissionKick includes legacy actions that predate admission history.
+func (t *transaction) PendingAdmissionKick(group, owner string) (bool, error) {
+	var pending bool
+	err := t.tx.QueryRow(t.ctx, `SELECT EXISTS (
+ SELECT 1 FROM groups.records WHERE bucket=$1 AND data->>'state' IN ('pending','executing','unknown')
+ AND data->>'capability'='admission' AND data->'command'->>'kind'='kick' AND data->'command'->>'target'=$2
+ )`, group+"/actions", owner).Scan(&pending)
+	return pending, err
 }

@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS groups.outbox (
  sent_at timestamptz, attempts integer NOT NULL DEFAULT 0,
  next_attempt timestamptz NOT NULL DEFAULT now(), held boolean NOT NULL DEFAULT false
 );
+ALTER TABLE groups.outbox ADD COLUMN IF NOT EXISTS first_failed_at timestamptz;
 CREATE INDEX IF NOT EXISTS groups_outbox_pending ON groups.outbox(sequence) WHERE sent_at IS NULL;
 CREATE INDEX IF NOT EXISTS groups_outbox_sent_at ON groups.outbox(sent_at,sequence) WHERE sent_at IS NOT NULL;
 
@@ -35,3 +36,18 @@ CREATE INDEX IF NOT EXISTS groups_members_by_owner ON groups.records(id,bucket)
  WHERE right(bucket,8)='/members';
 
 CREATE UNIQUE INDEX IF NOT EXISTS groups_account_query_id ON groups.records(query_id);
+
+CREATE INDEX IF NOT EXISTS groups_account_subject ON groups.records(id)
+ WHERE split_part(bucket,'/',2) IN ('members','blacklist','warnings','watch');
+
+CREATE INDEX IF NOT EXISTS groups_action_target ON groups.records((data->'command'->>'target'))
+ WHERE split_part(bucket,'/',2) ='actions';
+
+CREATE INDEX IF NOT EXISTS groups_audit_target ON groups.records((data->>'target'))
+ WHERE split_part(bucket,'/',2) ='audit';
+
+CREATE INDEX IF NOT EXISTS groups_audit_actor ON groups.records((data->>'actor'))
+ WHERE split_part(bucket,'/',2) ='audit';
+
+CREATE INDEX IF NOT EXISTS groups_actor_identity ON groups.records((data->'actor'->>'issuer'),(data->'actor'->>'subject'))
+ WHERE split_part(bucket,'/',2) IN ('actions','audit');

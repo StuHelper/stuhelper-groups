@@ -1,9 +1,11 @@
 package groups_test
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/StuHelper/stuhelper-platform/admin"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -214,5 +216,96 @@ func TestPeriodicMaintenanceCleansExpiredReceiptsSentOutboxAndFrequencyWindows(t
 	}
 	if count(t, f, "g/frequency") != 1 {
 		t.Fatalf("expected 1 active frequency window remaining, got %d", count(t, f, "g/frequency"))
+	}
+}
+
+type denyMessageRead struct{ g.Authorizer }
+
+func (a denyMessageRead) Evaluate(ctx context.Context, p account.Principal, cap string, scope admin.Scope) error {
+	if cap == "groups.messages.read" {
+		return admin.ErrForbidden
+	}
+	return a.Authorizer.Evaluate(ctx, p, cap, scope)
+}
+func TestForwardRetryRechecksCurrentReadPermission(t *testing.T) {
+	f := setup(t)
+	if err := f.s.Ingest(ctx, "g", event("forward-event", "qq-bot", "g", "groups.message", 1), g.Message{ID: "forwarded", Owner: user.Key(), Body: "fixture"}); err != nil {
+		t.Fatal(err)
+	}
+	original := command(t, f, manager, "send-first", g.Command{Kind: "forward", Message: "forwarded"})
+	f.bot.failure = true
+	if action, err := f.s.Execute(ctx, "g", original.ID); err != nil || action.State != "failed" {
+		t.Fatal(action, err)
+	}
+	auth := f.s.Auth
+	f.s.Auth = denyMessageRead{auth}
+	countBefore := count(t, f, "g/actions")
+	retry := g.Command{Kind: "retry_action", Target: original.ID}
+	if _, err := f.s.Command(ctx, manager, "g", "retry-denied", retry); !errors.Is(err, g.ErrForbidden) || count(t, f, "g/actions") != countBefore {
+		t.Fatal(err)
+	}
+	f.s.Auth = auth
+	newAction := command(t, f, manager, "retry-approved", retry)
+	f.s.Auth = denyMessageRead{auth}
+	calls := f.bot.calls
+	act, err := f.s.Execute(ctx, "g", newAction.ID)
+	if err != nil || act.State != "cancelled" || f.bot.calls != calls {
+		t.Fatal(act, err)
+	}
+}
+func TestSelfMuteRetryPreservesMemberConsent(t *testing.T) {
+	f := setup(t)
+	if err := f.s.MemberEvent(ctx, "g", event("join-play", "qq-bot", "g", "groups.member_joined", 1), user.Key()); err != nil {
+		t.Fatal(err)
+	}
+	first := command(t, f, user, "member-consent", g.Command{Kind: "self_mute"})
+	f.bot.failure = true
+	if a, err := f.s.Execute(ctx, "g", first.ID); err != nil || a.State != "failed" {
+		t.Fatal(a, err)
+	}
+	retry := command(t, f, manager, "retry-play", g.Command{Kind: "retry_action", Target: first.ID})
+	f.bot.failure = false
+	a, err := f.s.Execute(ctx, "g", retry.ID)
+	if err != nil || a.State != "succeeded" || a.Actor.Principal() != user || a.Command.Target != user.Key() {
+		t.Fatal(a, err)
+	}
+	page, err := f.s.Audits(ctx, manager, "g", "", 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, audit := range page.Items {
+		if audit.Action == "retry_action" && audit.Actor == manager.Key() && audit.Target == first.ID {
+			return
+		}
+	}
+	t.Fatal("missing administrator retry audit")
+}
+func TestCleanupRetainsConfirmedHeldOutbox(t *testing.T) {
+	f := setup(t)
+	events, err := f.r.PendingOutbox(ctx, 100, nil)
+	if err != nil || len(events) == 0 {
+		t.Fatal(events, err)
+	}
+	id := events[0].ID
+	if err = f.r.Failed(ctx, id, f.now); err != nil {
+		t.Fatal(err)
+	}
+	if err = f.r.Failed(ctx, id, f.now.Add(25*time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	if err = f.r.ConfirmOutbox(ctx, id); err != nil {
+		t.Fatal(err)
+	}
+	var sent time.Time
+	if err = f.pool.QueryRow(ctx, "SELECT sent_at FROM groups.outbox WHERE id=$1 AND held", id).Scan(&sent); err != nil {
+		t.Fatal(err)
+	}
+	f.now = sent.Add(48 * time.Hour)
+	if _, err = f.s.CleanupOutbox(ctx, 24*time.Hour); err != nil {
+		t.Fatal(err)
+	}
+	var retained bool
+	if err = f.pool.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM groups.outbox WHERE id=$1 AND held)", id).Scan(&retained); err != nil || !retained {
+		t.Fatal(retained, err)
 	}
 }
