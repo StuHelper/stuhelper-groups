@@ -25,8 +25,14 @@ func (s *Service) now() time.Time {
 	}
 	return time.Now().UTC()
 }
+func validText(v string, n int) bool {
+	return utf8.ValidString(v) && !strings.ContainsRune(v, 0) && utf8.RuneCountInString(v) <= n
+}
+func validCursor(v string, n int) bool {
+	return validText(v, n) && !strings.ContainsFunc(v, unicode.IsControl)
+}
 func valid(v string, n int) bool {
-	return strings.TrimSpace(v) != "" && len(v) <= n && !strings.ContainsFunc(v, unicode.IsControl) && !strings.Contains(v, "/")
+	return strings.TrimSpace(v) != "" && validCursor(v, n) && !strings.Contains(v, "/")
 }
 func hash(v any) string {
 	b, _ := json.Marshal(v)
@@ -72,12 +78,12 @@ func (s *Service) auth(ctx context.Context, p account.Principal, c string, g Gro
 	}
 	return nil
 }
-func (s *Service) event(tx Tx, g, kind string, data any) error {
+func (s *Service) event(ctx context.Context, tx Tx, g, kind string, data any) error {
 	b, e := json.Marshal(data)
 	if e != nil {
 		return e
 	}
-	return tx.Emit(Event{SpecVersion: "1.0", ID: uuid.NewString(), Source: "groups", Type: "groups." + kind, Subject: g, Time: s.now(), Data: b})
+	return tx.Emit(Event{SpecVersion: "1.0", ID: uuid.NewString(), Source: "groups", Type: "groups." + kind, Subject: g, TraceParent: TraceParentFromContext(ctx), Time: s.now(), Data: b})
 }
 func (s *Service) audit(tx Tx, p account.Principal, g, kind, target, result string) error {
 	actor := p.Key()
@@ -92,9 +98,25 @@ type receipt struct {
 	Result json.RawMessage
 }
 
-func replay(tx ReadTx, owner, key string, input, out any) (bool, error) {
+func validKey(v string) bool {
+	if len(v) < 1 || len(v) > 128 {
+		return false
+	}
+	for i := 0; i < len(v); i++ {
+		if v[i] < ' ' || v[i] > '~' {
+			return false
+		}
+	}
+	return true
+}
+
+func replay(tx ReadTx, owner, operation, object, key string, input, out any) (bool, error) {
 	var r receipt
-	e := tx.Get("receipts", hash([]string{owner, key}), &r)
+	e := tx.Get("receipts", hash([]string{owner, operation, object, key}), &r)
+	if errors.Is(e, ErrNotFound) {
+		// Legacy receipts have only the digest to identify the original operation.
+		e = tx.Get("receipts", hash([]string{owner, key}), &r)
+	}
 	if errors.Is(e, ErrNotFound) {
 		return false, nil
 	}
@@ -106,15 +128,15 @@ func replay(tx ReadTx, owner, key string, input, out any) (bool, error) {
 	}
 	return true, json.Unmarshal(r.Result, out)
 }
-func save(tx Tx, owner, key string, input, out any) error {
+func save(tx Tx, owner, operation, object, key string, input, out any) error {
 	b, e := json.Marshal(out)
 	if e != nil {
 		return e
 	}
-	return tx.Put("receipts", hash([]string{owner, key}), receipt{hash(input), b})
+	return tx.Put("receipts", hash([]string{owner, operation, object, key}), receipt{hash(input), b})
 }
 func validateConfig(c GroupConfig) error {
-	if strings.TrimSpace(c.Name) == "" || utf8.RuneCountInString(c.Name) > 128 || strings.ContainsFunc(c.Name, unicode.IsControl) || c.ID == "me" || c.ID == "*" || c.School == "*" || !valid(c.ID, 128) || !valid(c.School, 128) || !slices.Contains([]string{"before", "muted", "password"}, c.Mode) {
+	if strings.TrimSpace(c.Name) == "" || !validText(c.Name, 128) || strings.ContainsFunc(c.Name, unicode.IsControl) || c.ID == "me" || c.ID == "*" || c.School == "*" || !valid(c.ID, 128) || !valid(c.School, 128) || !slices.Contains([]string{"before", "muted", "password"}, c.Mode) {
 		return ErrInvalid
 	}
 	for _, n := range []int64{c.GraceSeconds, c.ReminderSeconds, c.RetentionSeconds, c.CooldownSeconds} {
@@ -122,10 +144,13 @@ func validateConfig(c GroupConfig) error {
 			return ErrInvalid
 		}
 	}
-	if c.DiceSides < 0 || c.DiceSides == 1 || c.DiceSides > 1000000 || c.MuteProbability < 0 || c.MuteProbability > 100 || c.MuteSeconds < 0 || c.MuteSeconds > 2592000 || c.Pity < 0 || c.Pity > 10000 || c.RepeatThreshold < 0 || c.RepeatThreshold > 1000 || len(c.Keywords) > 100 || len(c.CardTemplate) > 1024 {
+	if c.DiceSides < 0 || c.DiceSides == 1 || c.DiceSides > 1000000 || c.MuteProbability < 0 || c.MuteProbability > 100 || c.MuteSeconds < 0 || c.MuteSeconds > 2592000 || c.Pity < 0 || c.Pity > 10000 || c.RepeatThreshold < 0 || c.RepeatThreshold > 1000 || len(c.Keywords) > 100 || !validText(c.CardTemplate, 1024) {
 		return ErrInvalid
 	}
-	if len(c.Welcome) > 2048 || len(c.RulesTemplate) > 8192 || c.FrequencySeconds < 0 || c.FrequencySeconds > 86400 || c.FrequencyLimit < 0 || c.FrequencyLimit > 10000 || c.WarningLimit < 0 || c.WarningLimit > 10000 {
+	if _, _, err := renderCard(c.CardTemplate, nil); err != nil {
+		return ErrInvalid
+	}
+	if !validText(c.Welcome, 2048) || !validText(c.RulesTemplate, 8192) || c.FrequencySeconds < 0 || c.FrequencySeconds > 86400 || c.FrequencyLimit < 0 || c.FrequencyLimit > 10000 || c.WarningLimit < 0 || c.WarningLimit > 10000 {
 		return ErrInvalid
 	}
 	if c.GraceSeconds == 0 {
@@ -138,14 +163,17 @@ func validateConfig(c GroupConfig) error {
 		return ErrInvalid
 	}
 	for _, k := range c.Keywords {
-		if strings.TrimSpace(k) == "" || len(k) > 256 {
+		if strings.TrimSpace(k) == "" || !validText(k, 256) {
 			return ErrInvalid
 		}
 	}
 	if slices.Contains(c.AutoActions, "mute") && c.MuteSeconds == 0 {
 		return ErrInvalid
 	}
-	for _, a := range c.AutoActions {
+	for i, a := range c.AutoActions {
+		if slices.Contains(c.AutoActions[:i], a) {
+			return ErrInvalid
+		}
 		if !slices.Contains([]string{"warn", "recall", "mute", "kick", "blacklist"}, a) {
 			return ErrInvalid
 		}
@@ -169,7 +197,7 @@ func capability(kind string) string {
 	}
 	return ""
 }
-func (s *Service) queue(tx Tx, p account.Principal, c GroupConfig, cmd Command, cap string) (Result, error) {
+func (s *Service) queue(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, cmd Command, cap string) (Result, error) {
 	if !c.BotEnabled {
 		return Result{}, ErrDisabled
 	}
@@ -184,10 +212,15 @@ func (s *Service) queue(tx Tx, p account.Principal, c GroupConfig, cmd Command, 
 	if e := tx.Put(bucket(c.ID, "actions"), a.ID, a); e != nil {
 		return Result{}, e
 	}
+	if tp := TraceParentFromContext(ctx); tp != "" {
+		if e := tx.Put(bucket(c.ID, "action_traces"), a.ID, tp); e != nil {
+			return Result{}, e
+		}
+	}
 	if e := s.audit(tx, p, c.ID, cmd.Kind, cmd.Target, "pending"); e != nil {
 		return Result{}, e
 	}
-	if e := s.event(tx, c.ID, "action.requested", map[string]string{"id": a.ID}); e != nil {
+	if e := s.event(ctx, tx, c.ID, "action.requested", map[string]string{"id": a.ID}); e != nil {
 		return Result{}, e
 	}
 	return Result{ID: a.ID, State: "pending", Action: cmd.Kind}, nil
@@ -197,142 +230,74 @@ func (s *Service) Command(ctx context.Context, p account.Principal, g, key strin
 	if !p.Valid() {
 		return out, ErrUnauthenticated
 	}
-	if !valid(key, 128) || !valid(g, 128) || len(cmd.Text) > 8192 || cmd.Seconds < 0 || cmd.Seconds > 31536000 {
+	if !validKey(key) || !valid(g, 128) || !validText(cmd.Text, 8192) || !validText(cmd.Message, 128) || !validText(cmd.Receiver, 128) || !validText(cmd.Target, 2048) || cmd.Seconds < 0 || cmd.Seconds > 31536000 {
 		return out, ErrInvalid
-	}
-	cap := capability(cmd.Kind)
-	normalized := cmd
-	if cap == "" {
-		if !slices.Contains([]string{"apply", "password", "dice", "self_mute", "report"}, cmd.Kind) {
-			return out, ErrInvalid
-		}
-		if cmd.Target != "" && cmd.Target != p.Key() {
-			return out, ErrForbidden
-		}
-		normalized.Target = p.Key()
 	}
 	input := struct {
 		Group   string
 		Command Command
-	}{g, normalized}
-
-	if normalized.Kind == "analyze" {
-		return s.executeAnalyze(ctx, p, g, key, normalized, input)
+	}{g, cmd}
+	if cmd.Kind == "analyze" {
+		return s.executeAnalyze(ctx, p, g, key, cmd, input)
 	}
-
-	// Pre-check replay, authorization and whether external facts are needed without taking any write lock.
-	var replayed bool
-	var school, factOwner string
-	var needFacts bool
-	preErr := s.runRead(ctx, func(tx ReadTx) error {
-		var c GroupConfig
-		if e := tx.Get("config", g, &c); e != nil {
-			return e
-		}
-		if cap != "" {
-			if e := s.auth(ctx, p, cap, c); e != nil {
-				return e
-			}
-		}
-		ok, e := replay(tx, p.Key(), key, input, &out)
-		if e != nil || ok {
-			replayed = ok
-			return e
-		}
-		school = c.School
-		switch normalized.Kind {
-		case "card":
-			if valid(normalized.Target, 2048) {
-				factOwner = normalized.Target
-				needFacts = true
-			}
-		case "apply", "recheck":
-			if valid(normalized.Target, 2048) {
-				if normalized.Kind == "recheck" {
-					var m Member
-					if e := tx.Get(bucket(c.ID, "members"), normalized.Target, &m); e != nil || m.State == "removed" {
-						return nil
-					}
-				}
-				restricted, e := isRestrictedByBlacklist(tx, c.ID, normalized.Target, s.now())
-				if e != nil {
-					return e
-				}
-				if !restricted {
-					factOwner = normalized.Target
-					needFacts = true
-				}
-			}
-		case "password":
-			if c.Mode == "password" {
-				var stored configRecord
-				var m Member
-				if tx.Get("config", c.ID, &stored) == nil && checkPassword(normalized.Text, stored.PasswordDigest) && tx.Get(bucket(c.ID, "members"), normalized.Target, &m) == nil {
-					restricted, e := isRestrictedByBlacklist(tx, c.ID, normalized.Target, s.now())
-					if e != nil {
-						return e
-					}
-					if !restricted {
-						factOwner = normalized.Target
-						needFacts = true
-					}
-				}
-			}
-		case "dice", "self_mute":
-			if c.BotEnabled {
-				var m Member
-				if tx.Get(bucket(c.ID, "members"), p.Key(), &m) == nil {
-					restricted, e := isRestrictedByBlacklist(tx, c.ID, p.Key(), s.now())
-					if e != nil {
-						return e
-					}
-					if !restricted {
-						factOwner = p.Key()
-						needFacts = true
-					}
-				}
-			}
-		}
-		return nil
-	})
-	if preErr != nil || replayed {
-		return out, preErr
-	}
-	if needFacts {
-		facts, e := s.currentFacts(ctx, factOwner, school)
-		if e != nil {
-			return out, ErrUnavailable
-		}
-		ctx = withFactCache(ctx, map[factKey]Facts{{factOwner, school}: facts})
-	}
-
 	scopes := []string{"group:" + g, "receipt:" + p.Key() + ":" + key}
-	if normalized.Kind == "subscribe" && normalized.Receiver != "" {
-		scopes = append(scopes, "group:"+normalized.Receiver)
+	if cmd.Kind == "apply" {
+		scopes = append(scopes, "owner:"+p.Key())
 	}
-	e := s.runScoped(ctx, scopes, func(tx Tx) error {
+	if cmd.Kind == "subscribe" && cmd.Receiver != "" {
+		scopes = append(scopes, "group:"+cmd.Receiver)
+	}
+	e := s.runPrepared(ctx, scopes, func(tx *preparedTx) error {
+		if cmd.Kind == "report" {
+			if !valid(cmd.Message, 128) {
+				return ErrInvalid
+			}
+			var m Member
+			err := tx.Get(bucket(g, "members"), p.Key(), &m)
+			if errors.Is(err, ErrNotFound) {
+				return ErrForbidden
+			}
+			if err != nil {
+				return err
+			}
+			if !m.Joined || m.State == "removed" {
+				return ErrForbidden
+			}
+		}
 		var c GroupConfig
 		if e := tx.Get("config", g, &c); e != nil {
 			return e
 		}
+		cap := capability(cmd.Kind)
 		if cap != "" {
 			if e := s.auth(ctx, p, cap, c); e != nil {
 				return e
 			}
+		} else {
+			if !slices.Contains([]string{"apply", "password", "dice", "self_mute", "report"}, cmd.Kind) {
+				return ErrInvalid
+			}
+			if cmd.Target != "" && cmd.Target != p.Key() {
+				return ErrForbidden
+			}
+			cmd.Target = p.Key()
 		}
-		ok, e := replay(tx, p.Key(), key, input, &out)
+		input := struct {
+			Group   string
+			Command Command
+		}{g, cmd}
+		ok, e := replay(tx, p.Key(), "command", g, key, input, &out)
 		if e != nil || ok {
 			return e
 		}
-		out, e = s.command(ctx, tx, p, c, normalized, cap)
+		out, e = s.command(ctx, tx, p, c, cmd, cap)
 		if e != nil {
 			return e
 		}
-		return save(tx, p.Key(), key, input, out)
+		return save(tx, p.Key(), "command", g, key, input, out)
 	})
 	return out, e
 }
-
 func (s *Service) executeAnalyze(ctx context.Context, p account.Principal, g, key string, cmd Command, input any) (Result, error) {
 	out := Result{State: "completed"}
 	var replayed bool
@@ -345,7 +310,7 @@ func (s *Service) executeAnalyze(ctx context.Context, p account.Principal, g, ke
 		if e := s.auth(ctx, p, "groups.read", c); e != nil {
 			return e
 		}
-		ok, e := replay(tx, p.Key(), key, input, &out)
+		ok, e := replay(tx, p.Key(), "command", g, key, input, &out)
 		if e != nil || ok {
 			replayed = ok
 			return e
@@ -368,11 +333,15 @@ func (s *Service) executeAnalyze(ctx context.Context, p account.Principal, g, ke
 		if e := s.auth(ctx, p, "groups.messages.read", c); e != nil {
 			return e
 		}
+		if r["state"] == "pending_execution" || r["state"] == "resolved" {
+			return ErrConflict
+		}
+		reason, _ := r["reason"].(string)
 		var marshalErr error
 		payload, marshalErr = json.Marshal(struct {
-			Report  map[string]any
-			Message Message
-		}{r, message})
+			Reason string `json:"reason"`
+			Body   string `json:"body"`
+		}{reason, message.Body})
 		return marshalErr
 	})
 	if preErr != nil || replayed {
@@ -395,7 +364,7 @@ func (s *Service) executeAnalyze(ctx context.Context, p account.Principal, g, ke
 		if e := s.auth(ctx, p, "groups.read", c); e != nil {
 			return e
 		}
-		ok, e := replay(tx, p.Key(), key, input, &out)
+		ok, e := replay(tx, p.Key(), "command", g, key, input, &out)
 		if e != nil || ok {
 			return e
 		}
@@ -424,7 +393,7 @@ func (s *Service) executeAnalyze(ctx context.Context, p account.Principal, g, ke
 		if e := tx.Put(bucket(c.ID, "reports"), cmd.Target, r); e != nil {
 			return e
 		}
-		return save(tx, p.Key(), key, input, out)
+		return save(tx, p.Key(), "command", g, key, input, out)
 	})
 	return out, e
 }
@@ -432,7 +401,11 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 	out := Result{State: "completed"}
 	switch cmd.Kind {
 	case "apply", "recheck":
-		return s.admission(ctx, tx, p, c, cmd.Target, cmd.Kind == "apply")
+		trigger := checkAdmission
+		if cmd.Kind == "apply" {
+			trigger = applyAdmission
+		}
+		return s.admission(ctx, tx, p, c, cmd.Target, trigger)
 	case "extend", "exempt":
 		var m Member
 		if e := tx.Get(bucket(c.ID, "members"), cmd.Target, &m); e != nil {
@@ -449,6 +422,8 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 			m.Extended = true
 			m.State = "extended"
 		} else {
+			m.Deadline = time.Time{}
+			m.Extended = false
 			m.Exempt = true
 			m.State = "exempt"
 		}
@@ -476,7 +451,7 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		if e := tx.Put(bucket(c.ID, "members"), cmd.Target, m); e != nil {
 			return out, e
 		}
-		return s.admission(ctx, tx, p, c, cmd.Target, false)
+		return s.admission(ctx, tx, p, c, cmd.Target, checkAdmission)
 	case "dice", "self_mute":
 		return s.play(ctx, tx, p, c, cmd)
 	case "blacklist":
@@ -501,41 +476,6 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		}
 		out.ID = uuid.NewString()
 		return out, tx.Put(bucket(c.ID, "reports"), out.ID, map[string]any{"reporter": p.Key(), "message": cmd.Message, "reason": cmd.Text, "state": "open"})
-	case "analyze":
-		if s.AI == nil {
-			return out, ErrUnavailable
-		}
-		var r map[string]any
-		if e := tx.Get(bucket(c.ID, "reports"), cmd.Target, &r); e != nil {
-			return out, e
-		}
-		messageID, _ := r["message"].(string)
-		var message Message
-		if e := tx.Get(bucket(c.ID, "messages"), messageID, &message); e != nil {
-			return out, e
-		}
-		if !s.now().Before(message.Expires) || c.RetentionSeconds == 0 {
-			return out, ErrNotFound
-		}
-		if e := s.auth(ctx, p, "groups.messages.read", c); e != nil {
-			return out, e
-		}
-		b, marshalErr := json.Marshal(struct {
-			Report  map[string]any
-			Message Message
-		}{r, message})
-		if marshalErr != nil {
-			return out, marshalErr
-		}
-		text, actions, e := s.AI.Analyze(ctx, string(b))
-		if e != nil {
-			return out, ErrUnavailable
-		}
-		r["analysis"] = text
-		r["suggestions"] = actions
-		r["state"] = "suggested"
-		out.Detail = text
-		return out, tx.Put(bucket(c.ID, "reports"), cmd.Target, r)
 	case "feedback", "watch", "ai_execute":
 		return s.manageRecord(ctx, tx, p, c, cmd)
 	case "preview", "rule":
@@ -543,23 +483,42 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 	case "card":
 		return s.card(ctx, tx, p, c, cmd)
 	case "subscribe":
-		rows, err := tx.List(bucket(c.ID, "subscriptions"), "", 100)
-		if err != nil {
-			return out, err
-		}
-		var exists map[string]any
-		if len(rows) >= 100 && errors.Is(tx.Get(bucket(c.ID, "subscriptions"), cmd.Receiver, &exists), ErrNotFound) {
+		if !valid(cmd.Receiver, 128) {
 			return out, ErrInvalid
 		}
-		var receiver GroupConfig
-		if e := tx.Get("config", cmd.Receiver, &receiver); e != nil {
-			return out, e
+		var prior Subscription
+		err := tx.Get(bucket(c.ID, "subscriptions"), cmd.Receiver, &prior)
+		exists := err == nil
+		if err != nil && !errors.Is(err, ErrNotFound) {
+			return out, err
 		}
-		if e := s.auth(ctx, p, "groups.messages.send", receiver); e != nil {
-			return out, e
+		state := "disabled"
+		if cmd.Enabled {
+			var receiver GroupConfig
+			if err := tx.Get("config", cmd.Receiver, &receiver); err != nil {
+				return out, err
+			}
+			if err := s.auth(ctx, p, "groups.messages.send", receiver); err != nil {
+				return out, err
+			}
+			if !exists {
+				rows, err := tx.List(bucket(c.ID, "subscriptions"), "", 100)
+				if err != nil {
+					return out, err
+				}
+				if len(rows) >= 100 {
+					return out, ErrInvalid
+				}
+			}
+			state = "enabled"
+		} else if !exists {
+			return out, ErrNotFound
 		}
 		out.ID = cmd.Receiver
-		return out, tx.Put(bucket(c.ID, "subscriptions"), cmd.Receiver, map[string]any{"receiver": cmd.Receiver, "enabled": cmd.Enabled, "actor": Actor(p)})
+		if err := tx.Put(bucket(c.ID, "subscriptions"), cmd.Receiver, map[string]any{"receiver": cmd.Receiver, "enabled": cmd.Enabled, "actor": Actor(p)}); err != nil {
+			return out, err
+		}
+		return out, s.audit(tx, p, c.ID, "subscribe", cmd.Receiver, state)
 	case "warn", "mute", "unmute", "kick", "send", "forward", "recall":
 		if cmd.Kind == "forward" {
 			if e := s.auth(ctx, p, "groups.messages.read", c); e != nil {
@@ -588,7 +547,7 @@ func (s *Service) command(ctx context.Context, tx Tx, p account.Principal, c Gro
 		if (cmd.Kind == "forward" || cmd.Kind == "recall") && !valid(cmd.Message, 128) {
 			return out, ErrInvalid
 		}
-		return s.queue(tx, p, c, cmd, cap)
+		return s.queue(ctx, tx, p, c, cmd, cap)
 	}
 	return out, ErrInvalid
 }
@@ -604,7 +563,22 @@ func (s *Service) eligible(ctx context.Context, tx Tx, c GroupConfig, m Member) 
 	result, e := s.assessEligibility(ctx, tx, c, m, nil)
 	return e == nil && result.state == "eligible", e
 }
-func (s *Service) admission(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, owner string, apply bool) (Result, error) {
+
+type admissionTrigger int
+
+const (
+	checkAdmission admissionTrigger = iota
+	applyAdmission
+	joinAdmission
+)
+
+// Stored separately from the public Member response, for this membership only.
+type admissionHistory struct{ Admitted, Muted bool }
+
+func (s *Service) admission(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, owner string, trigger admissionTrigger) (Result, error) {
+	return s.admissionWithFacts(ctx, tx, p, c, owner, trigger, nil)
+}
+func (s *Service) admissionWithFacts(ctx context.Context, tx Tx, p account.Principal, c GroupConfig, owner string, trigger admissionTrigger, cache map[factKey]Facts) (Result, error) {
 	out := Result{}
 	if !valid(owner, 2048) {
 		return out, ErrInvalid
@@ -616,19 +590,41 @@ func (s *Service) admission(ctx context.Context, tx Tx, p account.Principal, c G
 		return out, e
 	}
 	if m.State == "removed" {
-		if !apply {
+		if trigger == checkAdmission {
 			return Result{State: "removed"}, nil
 		}
 		fresh = true
 	}
 	if fresh {
-		if !apply {
+		if trigger == checkAdmission {
 			return out, ErrNotFound
 		}
 		m = Member{Owner: owner, State: "requested"}
 	}
+	joinedNow := trigger == joinAdmission && !m.Joined
+	var history admissionHistory
+	if m.Joined {
+		err := tx.Get(bucket(c.ID, "admissions"), owner, &history)
+		if err != nil && !errors.Is(err, ErrNotFound) {
+			return out, err
+		}
+		// Existing restored members were already admitted before this marker existed.
+		if errors.Is(err, ErrNotFound) && m.State == "restored" {
+			history.Admitted = true
+		}
+	}
+	if joinedNow {
+		m.Joined = true
+		m.State = "requested"
+		m.Deadline = time.Time{}
+		m.Reminder = time.Time{}
+		if err := tx.Delete(bucket(c.ID, "admissions"), owner); err != nil {
+			return out, err
+		}
+	}
 	previous := m.State
-	ok, e := s.eligible(ctx, tx, c, m)
+	assessment, e := s.assessEligibility(ctx, tx, c, m, cache)
+	ok := assessment.state == "eligible"
 	if e != nil {
 		return out, e
 	}
@@ -639,48 +635,64 @@ func (s *Service) admission(ctx context.Context, tx Tx, p account.Principal, c G
 		m.State = "restored"
 		m.Deadline = time.Time{}
 		m.Extended = false
-	case fresh:
-		m.State = "grace"
-		m.Deadline = s.now().Add(time.Duration(c.GraceSeconds) * time.Second)
-	case m.Deadline.IsZero():
-		m.State = "grace"
-		m.Deadline = s.now().Add(time.Duration(c.GraceSeconds) * time.Second)
-	}
-	if c.Mode == "before" && !ok && (fresh || m.State == "awaiting_verification") {
+		if !m.Joined && previous != "restored" && c.Mode == "before" {
+			if _, e := s.queue(ctx, tx, p, c, Command{Kind: "approve", Target: owner}, "admission"); e != nil {
+				return out, e
+			}
+		}
+		if m.Joined && history.Muted {
+			if _, e := s.queue(ctx, tx, p, c, Command{Kind: "unmute", Target: owner, Text: "admission_restored"}, "admission"); e != nil {
+				return out, e
+			}
+			history.Muted = false
+		}
+		if m.Joined && !history.Admitted && c.Welcome != "" {
+			if _, e := s.queue(ctx, tx, p, c, Command{Kind: "welcome", Target: owner, Text: c.Welcome + "\n" + c.RulesTemplate}, "admission"); e != nil {
+				return out, e
+			}
+		}
+		history.Admitted = m.Joined
+	case !m.Joined:
 		m.State = "awaiting_verification"
-	}
-	if !ok && !m.Exempt && m.State != "awaiting_verification" && m.State != "removed" && m.State != "removal_pending" && !s.now().Before(m.Deadline) {
-		r, e := s.queue(tx, p, c, Command{Kind: "kick", Target: owner, Text: "eligibility_expired"}, "admission")
-		if e != nil {
-			return out, e
+		m.Deadline = time.Time{}
+		m.Reminder = time.Time{}
+	default:
+		if m.Deadline.IsZero() {
+			m.State = "grace"
+			m.Deadline = s.now().Add(time.Duration(c.GraceSeconds) * time.Second)
 		}
-		m.State = "removal_pending"
-		out = r
-	}
-	if !ok && !m.Exempt && (m.Reminder.IsZero() || (c.ReminderSeconds > 0 && !s.now().Before(m.Reminder.Add(time.Duration(c.ReminderSeconds)*time.Second)))) {
-		if _, e := s.queue(tx, p, c, Command{Kind: "remind", Target: owner, Text: "verification_required"}, "admission"); e != nil {
-			return out, e
+		if m.State == "removal_pending" {
+			pending, err := tx.PendingAdmissionKick(c.ID, owner)
+			if err != nil {
+				return out, err
+			}
+			if !pending {
+				m.State = "grace"
+			}
 		}
-		m.Reminder = s.now()
-	}
-	if fresh && c.Mode == "muted" && !ok {
-		if _, e := s.queue(tx, p, c, Command{Kind: "mute", Target: owner, Seconds: c.GraceSeconds, Text: "admission"}, "admission"); e != nil {
-			return out, e
+		if m.State != "removal_pending" && !s.now().Before(m.Deadline) {
+			out, e = s.queue(ctx, tx, p, c, Command{Kind: "kick", Target: owner, Text: "eligibility_expired"}, "admission")
+			if e != nil {
+				return out, e
+			}
+			m.State = "removal_pending"
+		}
+		if m.State != "removal_pending" && (m.Reminder.IsZero() || c.ReminderSeconds > 0 && !s.now().Before(m.Reminder.Add(time.Duration(c.ReminderSeconds)*time.Second))) {
+			if _, e := s.queue(ctx, tx, p, c, Command{Kind: "remind", Target: owner, Text: "verification_required"}, "admission"); e != nil {
+				return out, e
+			}
+			m.Reminder = s.now()
+		}
+		if joinedNow && c.Mode == "muted" {
+			if _, e := s.queue(ctx, tx, p, c, Command{Kind: "mute", Target: owner, Seconds: c.GraceSeconds, Text: "admission"}, "admission"); e != nil {
+				return out, e
+			}
+			history.Muted = true
 		}
 	}
-	if ok && (fresh || previous == "awaiting_verification") && c.Mode == "before" {
-		if _, e := s.queue(tx, p, c, Command{Kind: "approve", Target: owner}, "admission"); e != nil {
-			return out, e
-		}
-	}
-	if ok && previous != "restored" && c.Mode == "muted" {
-		if _, e := s.queue(tx, p, c, Command{Kind: "unmute", Target: owner, Text: "admission_restored"}, "admission"); e != nil {
-			return out, e
-		}
-	}
-	if ok && fresh && c.Welcome != "" {
-		if _, e := s.queue(tx, p, c, Command{Kind: "welcome", Target: owner, Text: c.Welcome + "\n" + c.RulesTemplate}, "admission"); e != nil {
-			return out, e
+	if m.Joined {
+		if err := tx.Put(bucket(c.ID, "admissions"), owner, history); err != nil {
+			return out, err
 		}
 	}
 	out.State = m.State
@@ -705,11 +717,11 @@ func (s *Service) play(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	if e := tx.Get(bucket(c.ID, "members"), p.Key(), &m); e != nil {
 		return out, e
 	}
-	ok, e := s.eligible(ctx, tx, c, m)
+	ok, e := s.canPlay(ctx, tx, c, m)
 	if e != nil {
 		return out, e
 	}
-	if !m.Joined || !ok || m.State == "removed" {
+	if !ok {
 		return out, ErrForbidden
 	}
 	if cmd.Kind == "dice" {
@@ -727,6 +739,12 @@ func (s *Service) play(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	if c.MuteProbability == 0 {
 		return out, ErrDisabled
 	}
+	var pending string
+	if err := tx.Get(bucket(c.ID, "self_mutes"), m.Owner, &pending); err == nil {
+		return out, ErrCooldown
+	} else if !errors.Is(err, ErrNotFound) {
+		return out, err
+	}
 	if s.now().Before(m.LastPlay.Add(time.Duration(c.CooldownSeconds)*time.Second)) || s.now().Before(m.MutedUntil) {
 		return out, ErrCooldown
 	}
@@ -738,9 +756,12 @@ func (s *Service) play(ctx context.Context, tx Tx, p account.Principal, c GroupC
 	m.Failures++
 	if n < c.MuteProbability || (c.Pity > 0 && m.Failures >= c.Pity) {
 		m.Failures = 0
-		out, e = s.queue(tx, p, c, Command{Kind: "mute", Target: p.Key(), Seconds: c.MuteSeconds, Text: "entertainment"}, "entertainment")
+		out, e = s.queue(ctx, tx, p, c, Command{Kind: "mute", Target: p.Key(), Seconds: c.MuteSeconds, Text: "entertainment"}, "entertainment")
 		if e != nil {
 			return out, e
+		}
+		if err := tx.Put(bucket(c.ID, "self_mutes"), m.Owner, out.ID); err != nil {
+			return out, err
 		}
 		m.MutedUntil = s.now().Add(time.Duration(c.MuteSeconds) * time.Second)
 	}

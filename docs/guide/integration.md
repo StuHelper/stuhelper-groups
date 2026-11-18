@@ -1,7 +1,7 @@
 ---
 type: guide
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-18
 ---
 
 # Groups 装配指南
@@ -179,7 +179,7 @@ ConfirmOutbox 在首次确认时保存时间，重复确认成功且保持原时
 
 公开读取端口与 verification 796b76f 一致，不按提供方时钟或本地 Failed/Retry 状态隐式过滤。backend 必须把自己的退避与人工主题传入 excludeSubjects，不能先取 100 条再在内存中排除。
 
-groups 自有 outbox 仍使用 Event：revision 在封套顶层，data 是该事件的业务 JSON。backend 的 Source 继续把 Event.Revision 映射到 relay 修订字段，其他字段按原值传递。
+groups 自有 outbox 仍使用 Event：revision 在封套顶层，traceparent 可选，data 是该事件的业务 JSON。HTTP Traceparent 请求头经校验后透传到 outbox、Execute 与 Fanout。
 
 ### owner 反向查询
 
@@ -214,6 +214,7 @@ type UpstreamEvent struct {
     Source          string            `json:"source"`
     Type            string            `json:"type"`
     Subject         string            `json:"subject"`
+    TraceParent     string            `json:"traceparent,omitempty"`
     Time            time.Time         `json:"time"`
     DataContentType string            `json:"datacontenttype"`
     SchoolID        string            `json:"schoolid,omitempty"`
@@ -286,6 +287,8 @@ Consume 自行反查 owner 的受管群，并包括仍有效的入群申请，�
 
 修订始终按 (source, subject) 比较。verification 的不同资格对象互不合并，qq-binding 的统一绑定变化按各自 owner 主题比较，不能把不同 owner 或不同来源合并成同一修订流。事件内容只用于定位对象；准入结论始终由当前 FactsProvider 返回。没有关联群时也成功记录 inbox，避免反复投递无关事件。
 
+事实读取按本次事件的 owner 和学校复用，外部请求在数据库事务外完成。写入前重新检查事件修订、关联群及当前限制。
+
 单事件最多重算 1000 个关联群，事务期限 10 秒。超过上限返回 ErrUnavailable，任何群的依赖失败或事务失败均整体回滚，不留下 inbox、修订、部分状态或待执行动作。宿主保留原事件重试，超限应告警并处理该 owner 的异常规模。
 
 事件路径负责变更后的及时重算。Sweep 继续按群分页、每页最多 100 条，负责时间自然到期、提醒、事件源暂不可用时的周期性核对，并保留已有延期与豁免。Sweep 不读取 outbox，也不代替事件确认。
@@ -300,6 +303,7 @@ Consume 自行反查 owner 的受管群，并包括仍有效的入群申请，�
 
 - 从受信任 session 提取 platform、selfId、guildId、userId、messageId，再由 backend 解析 owner。拒绝伪造的操作者字段和未登记的机器人、群。
 - 上报成员申请、加入、消息和撤回事件。后端通过 MemberEvent 确认实际成员状态，通过 Ingest 保存获准留存的消息。未配置留存时不保存正文。
+- 机器人入站事件按具体业务对象维护单调修订：消息与撤回使用 `{group}/messages/{id}`（初始消息报 1、撤回报 2），成员进退使用 `{group}/members/{owner}`。撤回通知在留存期内保留原发送者、正文与附件引用。
 - 消费后端 Action，执行批准、提醒、欢迎、警告、禁言、解禁、踢出、发送、转发、撤回和名片修改。平台不支持的动作返回明确失败。
 - 以 Action.ID 保存执行回执。实现 Lookup，区分已成功、已失败、确定未执行和结果未知。超时不得直接重发处罚或消息。
 - 掷骰子与自助禁言使用当前请求人身份调用 Command，客户端不能指定其他人。禁言时长交给平台执行，到期由平台自动结束，管理员可提前解禁。
@@ -341,7 +345,7 @@ joined 表示已由机器人确认加入，state 是本人当前处理阶段。�
 
 此接口复用 GroupsForOwner 的 owner 反向索引、查询和分页逻辑，额外包含有效申请。每页在同一事务读取群公开信息和本人记录；当前事实按 owner、school 在单次请求内复用，不跨请求缓存。
 
-limit 默认 50，范围 1–100；cursor 最长 128 字节。按群 ID 字节顺序升序，next_cursor 是最后返回的群 ID，空字符串表示结束。无关联记录时返回空 items；未知查询参数或无效分页返回 400 groups_invalid_request。
+limit 默认 50，范围 1–100；cursor 最长 128 个 Unicode 码点。按群 ID 字节顺序升序，next_cursor 是最后返回的群 ID，空字符串表示结束。无关联记录时返回空 items；未知查询参数或无效分页返回 400 groups_invalid_request。
 
 eligibility 为 eligible、ineligible 或 unknown，只说明当前准入条件是否满足，不表示已经批准入群，也不会撤销既有豁免。所需事实明确未知时返回 unknown，不能视为具备资格；不需要的学生资格条件不参与判断。
 
@@ -407,3 +411,5 @@ HTTP 422 表示请求不符合分支字段要求或功能未启用，分别使�
 管理端契约使用独立集合类型，0.4.0 另外增加 Web 本人查询。消费端需重新生成类型，改用独立集合客户端、GroupSummary、GroupConfigInput.expected_revision、分支命令及 groups_ 错误码。没有通用 Record、动态 collection 路由或旧字段别名。
 
 先合入本模块契约及最终表结构，再由 backend 固定候选提交并装配，最后管理端按同一契约生成类型与联调。本次只验证 groups，管理端和 backend 的实际提交组合由各自任务记录。
+
+升级前写入的机器人 inbox 摘要继续使用原始封套和业务载荷校验。同一事件重放时沿用旧收据，修订号按消息或成员独立推进。

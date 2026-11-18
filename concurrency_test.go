@@ -2,9 +2,13 @@ package groups_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
+	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -49,6 +53,9 @@ func TestReadOnlyLockFreePreFetchAndCrossGroupIsolation(t *testing.T) {
 	// Prepare retained message and two open reports in group g.
 	if e := f.s.Ingest(ctx, "g", event("m-conc", "qq-bot", "g", "groups.message", 1), g.Message{ID: "m-conc", Owner: user.Key(), Body: "test"}); e != nil {
 		t.Fatal(e)
+	}
+	if err := f.s.MemberEvent(ctx, "g", event("reporter-joined", "qq-bot", "g", "groups.member_joined", 1), user.Key()); err != nil {
+		t.Fatal(err)
 	}
 	rep1 := command(t, f, user, "rep-c1", g.Command{Kind: "report", Message: "m-conc", Text: "spam"})
 	rep2 := command(t, f, user, "rep-c2", g.Command{Kind: "report", Message: "m-conc", Text: "ad"})
@@ -205,5 +212,143 @@ func TestSweepPreFetchesFactsOutsideLockAndMultiGroupLocksNeverDeadlock(t *testi
 		if err != nil {
 			t.Fatalf("multi-group concurrent transaction failed or deadlocked: %v", err)
 		}
+	}
+}
+
+func TestSweepDiscardsFactsFetchedBeforeRevocation(t *testing.T) {
+	f := setup(t)
+	seedMembership(t, f, user, 1)
+	started := make(chan struct{})
+	release := make(chan struct{})
+	var once sync.Once
+	unblock := func() { once.Do(func() { close(release) }) }
+	defer unblock()
+	var calls atomic.Int32
+	f.s.Facts = groupFactsFunc(func(call context.Context, _ account.Principal, owner, school string) (g.Facts, error) {
+		if calls.Add(1) == 1 {
+			close(started)
+			select {
+			case <-release:
+			case <-call.Done():
+				return g.Facts{}, call.Err()
+			}
+			return g.Facts{Bound: true, StudentKnown: true, Student: true, StageKnown: true}, nil
+		}
+		return g.Facts{StudentKnown: true, StageKnown: true}, nil
+	})
+	done := make(chan error, 1)
+	go func() { _, err := f.s.Sweep(ctx, "owned-0000", ""); done <- err }()
+	select {
+	case <-started:
+	case <-time.After(3 * time.Second):
+		t.Fatal("sweep did not fetch facts")
+	}
+	if err := f.s.Consume(ctx, upstream("revoked", "verification", "credential/1", user, 1)); err != nil {
+		t.Fatal(err)
+	}
+	before := member(t, f, "owned-0000", user)
+	unblock()
+	if err := <-done; err != nil {
+		t.Fatal(err)
+	}
+	after := member(t, f, "owned-0000", user)
+	if calls.Load() < 3 || before.Deadline.IsZero() || after.State != "grace" || !before.Deadline.Equal(after.Deadline) {
+		t.Fatal(before, after, calls.Load())
+	}
+}
+
+type checkWriteScopes struct {
+	g.Repository
+	before func([]string) error
+}
+type requireWriteScope struct {
+	g.Tx
+	scopes []string
+}
+
+func (r checkWriteScopes) ScopedTransaction(ctx context.Context, scopes []string, work func(g.Tx) error) error {
+	if r.before != nil {
+		if err := r.before(scopes); err != nil {
+			return err
+		}
+	}
+	return r.Repository.ScopedTransaction(ctx, scopes, func(tx g.Tx) error { return work(requireWriteScope{tx, scopes}) })
+}
+func (tx requireWriteScope) Put(bucket, id string, value any) error {
+	group, collection, ok := strings.Cut(bucket, "/")
+	if ok && (collection == "actions" || collection == "members") && !slices.Contains(tx.scopes, "group:"+group) {
+		return fmt.Errorf("group write outside lock set: %s", group)
+	}
+	return tx.Tx.Put(bucket, id, value)
+}
+func TestRevalidateGroupsDiscoveredDuringFanoutAndConsume(t *testing.T) {
+	t.Run("consume", func(t *testing.T) {
+		f := setup(t)
+		seedMembership(t, f, user, 1)
+		expanded := false
+		f.s.Repo = checkWriteScopes{f.r, func(scopes []string) error {
+			if !expanded && slices.Contains(scopes, "group:owned-0000") {
+				expanded = true
+				seedMembership(t, f, user, 2)
+			}
+			return nil
+		}}
+		if err := f.s.Consume(ctx, upstream("expand", "verification", "credential/1", user, 1)); err != nil {
+			t.Fatal(err)
+		}
+		if !expanded || inboxCount(t, f, "expand") != 1 || count(t, f, "owned-0001/admissions") != 1 {
+			t.Fatal("new membership not processed")
+		}
+	})
+	t.Run("fanout", func(t *testing.T) {
+		f := setup(t)
+		root := account.Principal{Issuer: "test", Subject: "root"}
+		for _, id := range []string{"recv-a", "recv-b"} {
+			cfg := config()
+			cfg.ID = id
+			if _, err := f.s.Configure(ctx, root, "cfg-"+id, cfg); err != nil {
+				t.Fatal(err)
+			}
+		}
+		command(t, f, root, "subscribe-a", g.Command{Kind: "subscribe", Receiver: "recv-a", Enabled: true})
+		a := command(t, f, manager, "warn-expand", g.Command{Kind: "warn", Target: user.Key(), Text: "reason"})
+		if _, err := f.s.Execute(ctx, "g", a.ID); err != nil {
+			t.Fatal(err)
+		}
+		f.s.Repo = checkWriteScopes{f.r, func(scopes []string) error {
+			if slices.Contains(scopes, "group:recv-a") && !slices.Contains(scopes, "group:recv-b") {
+				return f.r.Transaction(ctx, func(tx g.Tx) error {
+					return tx.Put("g/subscriptions", "recv-b", map[string]any{"receiver": "recv-b", "enabled": true, "actor": g.Actor(root)})
+				})
+			}
+			return nil
+		}}
+		ev := event("result-expand", "groups", "g", "groups.action.result", 1)
+		ev.Data, _ = json.Marshal(map[string]string{"id": a.ID})
+		if err := f.s.Fanout(ctx, ev); err != nil {
+			t.Fatal(err)
+		}
+		if count(t, f, "recv-b/actions") != 1 || count(t, f, "g/deliveries") != 2 {
+			t.Fatal("new subscription not processed")
+		}
+	})
+}
+func TestDuplicateAndOldMemberEventsIgnoreFactsOutage(t *testing.T) {
+	f := setup(t)
+	ev := event("join", "qq-bot", "g", "groups.member_joined", 2)
+	if err := f.s.MemberEvent(ctx, "g", ev, user.Key()); err != nil {
+		t.Fatal(err)
+	}
+	f.s.Facts = groupFactsFunc(func(context.Context, account.Principal, string, string) (g.Facts, error) {
+		t.Error("deduplicated event read external facts")
+		return g.Facts{}, g.ErrUnavailable
+	})
+	for _, e := range []g.Event{ev, event("older-join", "qq-bot", "g", "groups.member_joined", 1)} {
+		if err := f.s.MemberEvent(ctx, "g", e, user.Key()); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if !member(t, f, "g", user).Joined {
+		t.Fatal("membership changed on replay")
 	}
 }

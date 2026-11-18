@@ -190,6 +190,9 @@ func TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval(t *testing.T) {
 	if r.State != "restored" {
 		t.Fatal(r)
 	}
+	if err := f.s.MemberEvent(ctx, "g", event("join-user", "qq-bot", "g", "groups.member_joined", 1), user.Key()); err != nil {
+		t.Fatal(err)
+	}
 	f.facts.set(false)
 	command(t, f, manager, "lost", g.Command{Kind: "recheck", Target: user.Key()})
 	m, e := f.s.Progress(ctx, user, "g")
@@ -230,6 +233,9 @@ func TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval(t *testing.T) {
 	other := account.Principal{Issuer: "test", Subject: "other"}
 	f.facts.set(true)
 	command(t, f, other, "otherApply", g.Command{Kind: "apply"})
+	if err := f.s.MemberEvent(ctx, "g", event("join-other", "qq-bot", "g", "groups.member_joined", 2), other.Key()); err != nil {
+		t.Fatal(err)
+	}
 	f.facts.set(false)
 	command(t, f, manager, "otherLost", g.Command{Kind: "recheck", Target: other.Key()})
 	f.now = f.now.Add(time.Hour)
@@ -305,9 +311,9 @@ func TestScopedAuthorizationRevocationAndSensitiveReads(t *testing.T) {
 	}
 	r := command(t, f, manager, "pending", g.Command{Kind: "kick", Target: user.Key()})
 	f.revoked.Store(true)
-	_, e = f.s.Execute(ctx, "g", r.ID)
-	if !errors.Is(e, g.ErrForbidden) || f.bot.calls != 0 {
-		t.Fatal(e)
+	cancelled, e := f.s.Execute(ctx, "g", r.ID)
+	if e != nil || cancelled.State != "cancelled" || cancelled.Result != "groups_forbidden" || f.bot.calls != 0 {
+		t.Fatalf("%+v %v calls=%d", cancelled, e, f.bot.calls)
 	}
 	_, e = f.s.Messages(ctx, manager, "g", "", 100)
 	if !errors.Is(e, g.ErrForbidden) {
@@ -369,8 +375,8 @@ func TestRetentionInboxRollbackAndNoRecallViewAudit(t *testing.T) {
 		t.Fatal(err)
 	}
 	old := event("old", "qq-bot", "g", "groups.message", 1)
-	m.ID = "old"
-	if err := f.s.Ingest(ctx, "g", old, m); err != nil {
+	stale := g.Message{ID: "m1", Owner: user.Key(), Body: "stale body", Recalled: false}
+	if err := f.s.Ingest(ctx, "g", old, stale); err != nil {
 		t.Fatal(err)
 	}
 	if count(t, f, "g/messages") != 1 {
@@ -378,7 +384,7 @@ func TestRetentionInboxRollbackAndNoRecallViewAudit(t *testing.T) {
 	}
 	before := count(t, f, "g/audit")
 	page, err := f.s.Messages(ctx, manager, "g", "", 10)
-	if err != nil || len(page.Items) != 1 {
+	if err != nil || len(page.Items) != 1 || page.Items[0].Body != "private recalled body" || !page.Items[0].Recalled {
 		t.Fatalf("%+v %v", page, err)
 	}
 	if count(t, f, "g/audit") != before {
@@ -430,6 +436,11 @@ func TestRulesCardsReportAndBatchPreview(t *testing.T) {
 	r = command(t, f, manager, "rule", g.Command{Kind: "rule", Target: user.Key(), Text: "spam", Message: "m"})
 	if count(t, f, "g/hits") != 1 || count(t, f, "g/actions") != 0 {
 		t.Fatal(r)
+	}
+	if err := f.r.Transaction(ctx, func(tx g.Tx) error {
+		return tx.Put("g/members", user.Key(), g.Member{Owner: user.Key(), Joined: true, State: "restored"})
+	}); err != nil {
+		t.Fatal(err)
 	}
 	r = command(t, f, user, "report", g.Command{Kind: "report", Text: "reason", Message: "m"})
 	if count(t, f, "g/reports") != 1 {
@@ -567,6 +578,11 @@ func TestAISuggestionsRequireEnabledActionsAndCurrentAuthorization(t *testing.T)
 	f.s.AI = ai{}
 	e := event("message", "qq-bot", "g", "groups.message", 1)
 	if err := f.s.Ingest(ctx, "g", e, g.Message{ID: "m", Owner: user.Key(), Body: "message"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.r.Transaction(ctx, func(tx g.Tx) error {
+		return tx.Put("g/members", user.Key(), g.Member{Owner: user.Key(), Joined: true, State: "restored"})
+	}); err != nil {
 		t.Fatal(err)
 	}
 	r := command(t, f, user, "report", g.Command{Kind: "report", Message: "m", Text: "reason"})

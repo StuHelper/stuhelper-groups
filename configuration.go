@@ -57,10 +57,10 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 	if !p.Valid() {
 		return out, ErrUnauthenticated
 	}
-	if !valid(key, 128) {
+	if !validKey(key) {
 		return out, ErrInvalid
 	}
-	if in.ExpectedRevision < 0 || in.Password != nil && len(*in.Password) > 256 || in.Number != nil && !groupNumber.MatchString(*in.Number) {
+	if !valid(in.ID, 128) || !valid(in.School, 128) || in.ExpectedRevision < 0 || in.Password != nil && !validText(*in.Password, 256) || in.Number != nil && !groupNumber.MatchString(*in.Number) {
 		return out, ErrUnprocessable
 	}
 	if in.Keywords == nil {
@@ -83,7 +83,7 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 			return ErrConflict
 		}
 		// Authorize against current scope before replay, but replay before revision checks.
-		ok, e := replay(tx, p.Key(), key, in, &out)
+		ok, e := replay(tx, p.Key(), "configure", c.ID, key, in, &out)
 		if e != nil || ok {
 			return e
 		}
@@ -116,11 +116,11 @@ func (s *Service) Configure(ctx context.Context, p account.Principal, key string
 		if e = s.audit(tx, p, c.ID, "configure", c.ID, "saved"); e != nil {
 			return e
 		}
-		if e = s.event(tx, c.ID, "configured", map[string]string{"group": c.ID}); e != nil {
+		if e = s.event(ctx, tx, c.ID, "configured", map[string]string{"group": c.ID}); e != nil {
 			return e
 		}
 		out = record.GroupConfig
-		return save(tx, p.Key(), key, in, out)
+		return save(tx, p.Key(), "configure", c.ID, key, in, out)
 	})
 	if e != nil {
 		return GroupConfig{}, e
@@ -131,6 +131,9 @@ func (s *Service) Configuration(ctx context.Context, p account.Principal, g stri
 	var c GroupConfig
 	if !p.Valid() {
 		return c, ErrUnauthenticated
+	}
+	if !valid(g, 128) {
+		return c, ErrInvalid
 	}
 	e := s.runRead(ctx, func(tx ReadTx) error {
 		if e := tx.Get("config", g, &c); e != nil {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"slices"
-	"time"
 )
 
 type factKey struct{ owner, school string }
@@ -22,38 +21,13 @@ func (a *eligibilityAssessment) action(value string) {
 	}
 }
 
-type factCacheContextKey struct{}
-
-func withFactCache(ctx context.Context, cache map[factKey]Facts) context.Context {
-	return context.WithValue(ctx, factCacheContextKey{}, cache)
-}
-
-func factCacheFromContext(ctx context.Context) map[factKey]Facts {
-	cache, _ := ctx.Value(factCacheContextKey{}).(map[factKey]Facts)
-	return cache
-}
-
-func isRestrictedByBlacklist(tx ReadTx, groupID, owner string, now time.Time) (bool, error) {
-	for _, group := range []string{groupID, "*"} {
-		var block Blacklist
-		e := tx.Get(bucket(group, "blacklist"), owner, &block)
-		if e == nil && (block.Permanent || now.Before(block.Until)) {
-			return true, nil
-		}
-		if e != nil && !errors.Is(e, ErrNotFound) {
-			return false, e
-		}
-	}
-	return false, nil
-}
-
 // assessEligibility is the single prerequisite decision used by admission,
 // execution-time checks and the user's read-only progress view. No write occurs.
 func (s *Service) assessEligibility(ctx context.Context, tx ReadTx, c GroupConfig, m Member, cache map[factKey]Facts) (eligibilityAssessment, error) {
 	out := assessment()
-	restricted, e := isRestrictedByBlacklist(tx, c.ID, m.Owner, s.now())
-	if e != nil {
-		return out, e
+	restricted, err := s.restricted(tx, c.ID, m.Owner)
+	if err != nil {
+		return out, err
 	}
 	if restricted {
 		out.state = "ineligible"
@@ -61,15 +35,13 @@ func (s *Service) assessEligibility(ctx context.Context, tx ReadTx, c GroupConfi
 		out.action("contact_group_admin")
 		return out, nil
 	}
-	if cache == nil {
-		cache = factCacheFromContext(ctx)
-	}
 	key := factKey{m.Owner, c.School}
 	facts, found := cache[key]
 	if !found {
-		facts, e = s.currentFacts(ctx, m.Owner, c.School)
+		var e error
+		facts, e = s.transactionFacts(ctx, tx, key)
 		if e != nil {
-			return assessment(), ErrUnavailable
+			return assessment(), e
 		}
 		if cache != nil {
 			cache[key] = facts
@@ -101,7 +73,16 @@ func (s *Service) assessEligibility(ctx context.Context, tx ReadTx, c GroupConfi
 			}
 		}
 	}
-	if c.Mode == "password" && !m.Password {
+	needsPassword := c.Mode == "password" && !m.Password
+	if needsPassword && m.Joined {
+		var history admissionHistory
+		err := tx.Get(bucket(c.ID, "admissions"), m.Owner, &history)
+		if err != nil && !errors.Is(err, ErrNotFound) {
+			return out, err
+		}
+		needsPassword = !history.Admitted && m.State != "restored"
+	}
+	if needsPassword {
 		out.missing = append(out.missing, "password")
 		if c.PasswordSet {
 			out.action("submit_password")
@@ -115,4 +96,29 @@ func (s *Service) assessEligibility(ctx context.Context, tx ReadTx, c GroupConfi
 		out.state = "ineligible"
 	}
 	return out, nil
+}
+
+func (s *Service) restricted(tx ReadTx, id, owner string) (bool, error) {
+	for _, group := range []string{id, "*"} {
+		var block Blacklist
+		e := tx.Get(bucket(group, "blacklist"), owner, &block)
+		if e == nil && (block.Permanent || s.now().Before(block.Until)) {
+			return true, nil
+		}
+		if e != nil && !errors.Is(e, ErrNotFound) {
+			return false, e
+		}
+	}
+	return false, nil
+}
+
+func (s *Service) canPlay(ctx context.Context, tx Tx, c GroupConfig, m Member) (bool, error) {
+	if !m.Joined || m.State == "removed" {
+		return false, nil
+	}
+	if m.Exempt {
+		blocked, err := s.restricted(tx, c.ID, m.Owner)
+		return !blocked, err
+	}
+	return s.eligible(ctx, tx, c, m)
 }

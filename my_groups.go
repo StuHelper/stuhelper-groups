@@ -51,15 +51,20 @@ func (s *Service) MyGroups(ctx context.Context, p account.Principal, cursor stri
 	if !p.Valid() {
 		return out, ErrUnauthenticated
 	}
-	if limit < 1 || limit > 100 || len(cursor) > 128 {
+	if limit < 1 || limit > 100 || !validCursor(cursor, 128) {
 		return out, ErrInvalid
 	}
 	call, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
+	var generation string
 	var page Page[OwnerGroupRecord]
 	blocked := map[string]bool{}
 	e := s.runRead(call, func(tx ReadTx) error {
 		var err error
+		generation, err = eligibilityGeneration(tx, p.Key())
+		if err != nil {
+			return err
+		}
 		page, err = tx.OwnerGroupRecords(p.Key(), cursor, limit, true)
 		if err != nil {
 			return err
@@ -69,7 +74,7 @@ func (s *Service) MyGroups(ctx context.Context, p account.Principal, cursor stri
 			if m.Owner != p.Key() || !slices.Contains([]string{"requested", "awaiting_verification", "grace", "extended", "exempt", "restored", "removal_pending"}, m.State) {
 				return ErrUnavailable
 			}
-			isBlocked, err := isRestrictedByBlacklist(tx, c.ID, m.Owner, s.now())
+			isBlocked, err := s.restricted(tx, c.ID, m.Owner)
 			if err != nil {
 				return err
 			}
@@ -96,6 +101,20 @@ func (s *Service) MyGroups(ctx context.Context, p account.Principal, cursor stri
 		}
 	}
 	e = s.runRead(call, func(tx ReadTx) error {
+		latest, err := eligibilityGeneration(tx, p.Key())
+		if err != nil {
+			return err
+		}
+		if generation != latest {
+			return ErrUnavailable
+		}
+		current, err := tx.OwnerGroupRecords(p.Key(), cursor, limit, true)
+		if err != nil {
+			return err
+		}
+		if hash(current) != hash(page) {
+			return ErrUnavailable
+		}
 		for _, record := range page.Items {
 			c, m := record.Config, record.Member
 			assessment, e := s.assessEligibility(call, tx, c, m, cache)
