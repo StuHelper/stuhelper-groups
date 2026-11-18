@@ -1586,7 +1586,7 @@
     },
     "/api/v1/groups/{group}/deliveries": {
       "get": {
-        "operationId": "listDeliverys",
+        "operationId": "listDeliveries",
         "parameters": [
           {
             "in": "path",
@@ -1678,7 +1678,7 @@
             }
           }
         },
-        "description": "Lists delivery results. The operationId retains the spelling used by the published 0.4 SDK."
+        "description": "Lists delivery results. The SDK also accepts the legacy listDeliverys spelling."
       }
     },
     "/api/v1/groups/me": {

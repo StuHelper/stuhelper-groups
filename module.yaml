@@ -61,6 +61,8 @@ scenario_tests:
     - facts_test.go#TestGroupFactsFiltersFieldsAtServiceBoundary
     - integration_test.go#TestRulesCardsReportAndBatchPreview
   QQ-08:
+    - collection_contract_test.go#TestConfigurationContractRejectsInvalidSettings
+    - collection_contract_test.go#TestDeliverySDKCompatibility
     - collection_contract_test.go#TestCollectionUnknownQuery
     - delivery_membership_test.go#TestPendingOutboxExclusionLimitOrderingAndConfirmation
     - delivery_membership_test.go#TestRelayStopsFailedSubjectWithinBatchAndDeliversOthers

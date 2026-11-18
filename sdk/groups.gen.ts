@@ -261,8 +261,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Lists delivery results. The operationId retains the spelling used by the published 0.4 SDK. */
-        get: operations["listDeliverys"];
+        /** @description Lists delivery results. The SDK also accepts the legacy listDeliverys spelling. */
+        get: operations["listDeliveries"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2175,7 +2175,7 @@ export interface operations {
             };
         };
     };
-    listDeliverys: {
+    listDeliveries: {
         parameters: {
             query?: {
                 cursor?: string;
@@ -2295,4 +2295,9 @@ export interface operations {
             };
         };
     };
+}
+
+export interface operations {
+    /** @deprecated Use listDeliveries. */
+    listDeliverys: operations["listDeliveries"];
 }

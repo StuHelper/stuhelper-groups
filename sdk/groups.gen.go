@@ -3136,7 +3136,7 @@ type ClientInterface interface {
 
 	// ListDeliverys performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
 	//
-	// Lists delivery results. The operationId retains the spelling used by the published 0.4 SDK.
+	// Lists delivery results. The SDK also accepts the legacy listDeliverys spelling.
 	ListDeliverys(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListHits performs a GET /api/v1/groups/{group}/hits (the `ListHits` operationId) request.
@@ -3365,7 +3365,7 @@ func (c *Client) Command(ctx context.Context, group string, params *CommandParam
 
 // ListDeliverys performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
 //
-// Lists delivery results. The operationId retains the spelling used by the published 0.4 SDK.
+// Lists delivery results. The SDK also accepts the legacy listDeliverys spelling.
 func (c *Client) ListDeliverys(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListDeliverysRequest(c.Server, group, params)
 	if err != nil {
@@ -4778,7 +4778,7 @@ type ClientWithResponsesInterface interface {
 
 	// ListDeliverysWithResponse performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
 	//
-	// Lists delivery results. The operationId retains the spelling used by the published 0.4 SDK.
+	// Lists delivery results. The SDK also accepts the legacy listDeliverys spelling.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	ListDeliverysWithResponse(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*ListDeliverysResponse, error)
@@ -6394,7 +6394,7 @@ func (c *ClientWithResponses) CommandWithResponse(ctx context.Context, group str
 
 // ListDeliverysWithResponse performs a GET /api/v1/groups/{group}/deliveries (the `ListDeliverys` operationId) request.
 //
-// Lists delivery results. The operationId retains the spelling used by the published 0.4 SDK.
+// Lists delivery results. The SDK also accepts the legacy listDeliverys spelling.
 //
 // Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ListDeliverysWithResponse(ctx context.Context, group string, params *ListDeliverysParams, reqEditors ...RequestEditorFn) (*ListDeliverysResponse, error) {
