@@ -1,10 +1,12 @@
 ---
 type: development
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-18
 ---
 
 # Groups 实施状态
+
+源群管理员可以停用已有订阅。启用时仍检查目标群发送权限，变更与审计在同一事务提交。
 
 ## 当前实现
 
