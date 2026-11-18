@@ -232,7 +232,7 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 			if e != nil {
 				return e
 			}
-			cancel := (a.Command.Kind == "kick" && (ok || m.Exempt || s.now().Before(m.Deadline))) || (a.Command.Kind == "remind" && (ok || m.Exempt)) || (a.Command.Kind == "approve" && !ok) || (a.Command.Kind == "welcome" && !ok) || (a.Command.Kind == "mute" && (ok || m.Exempt)) || (a.Command.Kind == "unmute" && !ok)
+			cancel := (a.Command.Kind != "approve" && !m.Joined) || (a.Command.Kind == "approve" && m.Joined) || (a.Command.Kind == "kick" && (ok || m.Exempt || s.now().Before(m.Deadline))) || (a.Command.Kind == "remind" && (ok || m.Exempt)) || (a.Command.Kind == "approve" && !ok) || (a.Command.Kind == "welcome" && !ok) || (a.Command.Kind == "mute" && (ok || m.Exempt)) || (a.Command.Kind == "unmute" && !ok)
 			if cancel {
 				a.State = "cancelled"
 				return tx.Put(bucket(g, "actions"), id, a)
@@ -314,15 +314,18 @@ func (s *Service) Execute(ctx context.Context, g, id string) (Action, error) {
 		if err := tx.Put(bucket(g, "actions"), id, a); err != nil {
 			return err
 		}
-		if a.State == "succeeded" && a.Command.Kind == "kick" && a.Capability == "admission" {
+		if a.Command.Kind == "kick" && a.State == "succeeded" {
 			var m Member
-			if err := tx.Get(bucket(g, "members"), a.Command.Target, &m); err != nil {
+			err := tx.Get(bucket(g, "members"), a.Command.Target, &m)
+			if err != nil && !errors.Is(err, ErrNotFound) {
 				return err
 			}
-			m.State = "removed"
-			m.Joined = false
-			if err := tx.Put(bucket(g, "members"), m.Owner, m); err != nil {
-				return err
+			if err == nil {
+				m.State = "removed"
+				m.Joined = false
+				if err := tx.Put(bucket(g, "members"), m.Owner, m); err != nil {
+					return err
+				}
 			}
 		}
 		if a.State == "succeeded" && a.Command.Kind == "warn" {

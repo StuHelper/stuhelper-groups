@@ -165,6 +165,7 @@ type Tx interface {
 	Delete(string, string) error
 	List(string, string, int) ([]Row, error)
 	PendingActions(string) (int, error)
+	PendingAdmissionKick(group, owner string) (bool, error)
 	GroupCounts([]string) (map[string]GroupCounts, error)
 	OwnerGroups(owner, cursor string, limit int, includeApplicants bool) (Page[ManagedGroup], error)
 	OwnerGroupRecords(owner, cursor string, limit int, includeApplicants bool) (Page[OwnerGroupRecord], error)

@@ -76,7 +76,16 @@ func (s *Service) assessEligibility(ctx context.Context, tx Tx, c GroupConfig, m
 			}
 		}
 	}
-	if c.Mode == "password" && !m.Password {
+	needsPassword := c.Mode == "password" && !m.Password
+	if needsPassword && m.Joined {
+		var history admissionHistory
+		err := tx.Get(bucket(c.ID, "admissions"), m.Owner, &history)
+		if err != nil && !errors.Is(err, ErrNotFound) {
+			return out, err
+		}
+		needsPassword = !history.Admitted && m.State != "restored"
+	}
+	if needsPassword {
 		out.missing = append(out.missing, "password")
 		if c.PasswordSet {
 			out.action("submit_password")

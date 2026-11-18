@@ -31,7 +31,7 @@ func (s *Service) Sweep(ctx context.Context, g, cursor string) (string, error) {
 			if m.State == "removed" {
 				continue
 			}
-			if _, e = s.admission(ctx, tx, account.Principal{}, c, m.Owner, false); e != nil {
+			if _, e = s.admission(ctx, tx, account.Principal{}, c, m.Owner, checkAdmission); e != nil {
 				return e
 			}
 		}
@@ -149,17 +149,17 @@ func (s *Service) MemberEvent(ctx context.Context, g string, event Event, owner 
 			return e
 		}
 		if event.Type == "groups.member_joined" {
-			if _, e = s.admission(ctx, tx, account.Principal{}, c, owner, true); e != nil {
-				return e
-			}
+			_, e = s.admission(ctx, tx, account.Principal{}, c, owner, joinAdmission)
+			return e
 		}
 		var m Member
 		if e = tx.Get(bucket(g, "members"), owner, &m); e != nil {
 			return e
 		}
 		m.Joined = event.Type == "groups.member_joined"
-		if !m.Joined {
-			m.State = "removed"
+		m.State = "removed"
+		if err := tx.Delete(bucket(g, "admissions"), owner); err != nil {
+			return err
 		}
 		return tx.Put(bucket(g, "members"), owner, m)
 	})
