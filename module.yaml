@@ -31,6 +31,7 @@ scenario_tests:
     - accountquery/query_test.go#TestAccountQueryAuthorizationAndFailures
     - postgres/account_query_test.go#TestAccountQueryScopePaginationAndRuntime
   QQ-01:
+    - admission_transition_test.go#TestJoinedAdmissionTransitions
     - my_groups_test.go#TestMyGroupsOwnIsolationPaginationAndReadOnly
     - my_groups_test.go#TestMyGroupsGeneratedClientAndRouteReservation
     - delivery_membership_test.go#TestGroupsForOwnerPaginationAndBounds
@@ -45,6 +46,7 @@ scenario_tests:
     - facts_test.go#TestGroupFactsRejectsUnknownContradictoryAndFailedFacts
     - integration_test.go#TestPasswordDoesNotGrantStudentEligibilityAndBlacklistScope
   QQ-03:
+    - delivery_membership_test.go#TestConsumeFetchesFactsOutsideTransaction
     - qq_binding_event_test.go#TestQQBindingActualEnvelopeRecomputeReplayAndOldRevision
     - qq_binding_event_test.go#TestQQBindingEnvelopeValidationRejectsUnknownAndInconsistentFields
     - delivery_membership_test.go#TestConsumeFanoutDeduplicationOldRevisionsAndConcurrency
@@ -54,6 +56,7 @@ scenario_tests:
     - delivery_membership_test.go#TestConsumeApplicantsNoMembershipInvalidAndBoundedFanout
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-05:
+    - admission_transition_test.go#TestPasswordJoinWelcomeAndManualRemoval
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
   QQ-06:
     - integration_test.go#TestQQAdmissionGraceRestorationExtensionExemptionAndRemoval
@@ -61,6 +64,10 @@ scenario_tests:
     - facts_test.go#TestGroupFactsFiltersFieldsAtServiceBoundary
     - integration_test.go#TestRulesCardsReportAndBatchPreview
   QQ-08:
+    - outbox_resilience_test.go#TestUnknownWarningAfterRevocationUsesActualResult
+    - outbox_resilience_test.go#TestExecuteRevocationCancelsActionAndFinishPreservesExecutedWarn
+    - outbox_resilience_test.go#TestFanoutReceiverFailuresDoNotBlockHealthyTargetsOrSourceOutbox
+    - batch_retry_test.go#TestBatchPreflightAndRetry
     - delivery_membership_test.go#TestPendingOutboxExclusionLimitOrderingAndConfirmation
     - delivery_membership_test.go#TestRelayStopsFailedSubjectWithinBatchAndDeliversOthers
     - api_v03_test.go#TestEveryCollectionTypedPaginationAndAuthorization
@@ -68,11 +75,15 @@ scenario_tests:
     - api_v03_test.go#TestExplicitErrorResponsesAndBulkDiscriminator
     - integration_test.go#TestRulesCardsReportAndBatchPreview
   QQ-09:
+    - auto_actions_test.go#TestAutomaticActionDurationAndReportLifecycle
+    - analysis_input_test.go#TestAnalysisInputFields
     - report_membership_test.go#TestReportChecksCurrentMembership
     - integration_test.go#TestAISuggestionsRequireEnabledActionsAndCurrentAuthorization
   QQ-10:
+    - bot_ingress_test.go#TestBotIngressReplaysLegacyInbox
     - contract_test.go#TestAPIPrefixMatchesContractRoutesAndGeneratedClient
     - integration_test.go#TestRetentionInboxRollbackAndNoRecallViewAudit
+    - bot_ingress_test.go#TestBotIngressObjectStreamsAndRecalledAttachments
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
   BE-01:
     - integration_test.go#TestBEEntertainmentDisabledSelfOnlyCooldownAndNoViolation
