@@ -35,6 +35,7 @@ scenario_tests:
     - directory_test.go#TestGroupDirectoryDiscoveryFilteringVisibilityAndPasswordHint
     - directory_test.go#TestGroupDirectoryValidationSDKAndFailureBoundaries
     - delivery_membership_test.go#TestGroupsForOwnerPaginationAndBounds
+    - relationship_cursor_test.go#TestGroupRelationshipCursorCountsUnicodeCodePoints
     - api_v03_test.go#TestGroupSummaryCountsMaskingAndScope
     - api_v03_test.go#TestConfigurationRevisionPasswordAndReplay
     - api_v03_test.go#TestFinalSchemaInitializationAndLeaseRecovery
@@ -120,6 +121,7 @@ scenario_tests:
     - my_groups_test.go#TestMyGroupsOwnIsolationPaginationAndReadOnly
     - my_groups_test.go#TestMyGroupsPasswordRestrictionAndPublicProjection
     - my_groups_test.go#TestMyGroupsGeneratedClientAndRouteReservation
+    - relationship_cursor_test.go#TestGroupRelationshipCursorCountsUnicodeCodePoints
   QQ-12:
     - my_groups_test.go#TestMyGroupsMissingConditionsAndUnknownFacts
     - my_groups_test.go#TestMyGroupsDependencyFailureReturnsNoPartialPage

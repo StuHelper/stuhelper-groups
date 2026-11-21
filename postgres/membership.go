@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"encoding/json"
+	"unicode/utf8"
+
 	g "github.com/StuHelper/stuhelper-groups"
 )
 
@@ -26,7 +28,7 @@ func (t *transaction) OwnerGroups(owner, cursor string, limit int, includeApplic
 }
 func (t *transaction) OwnerGroupRecords(owner, cursor string, limit int, includeApplicants bool) (g.Page[g.OwnerGroupRecord], error) {
 	out := g.Page[g.OwnerGroupRecord]{Items: []g.OwnerGroupRecord{}}
-	if limit < 1 || limit > 100 || len(cursor) > 128 {
+	if limit < 1 || limit > 100 || utf8.RuneCountInString(cursor) > 128 {
 		return out, g.ErrInvalid
 	}
 	rows, e := t.tx.Query(t.ctx, ownerGroupsQuery, owner, cursor, limit+1, includeApplicants)
@@ -69,7 +71,7 @@ const directoryGroupsQuery = `SELECT c.id,c.data,m.data FROM groups.records c
  ORDER BY c.id COLLATE "C" LIMIT $5`
 
 func (t *transaction) DirectoryGroups(owner, school, category, cursor string, limit int) ([]g.DirectoryRecord, error) {
-	if limit < 1 || limit > 100 || len(cursor) > 128 {
+	if limit < 1 || limit > 100 || utf8.RuneCountInString(cursor) > 128 {
 		return nil, g.ErrInvalid
 	}
 	rows, e := t.tx.Query(t.ctx, directoryGroupsQuery, owner, school, category, cursor, limit)
