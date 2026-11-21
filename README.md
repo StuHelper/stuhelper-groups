@@ -1,17 +1,24 @@
+---
+type: index
+status: Accepted
+updated: 2026-11-21
+---
+
 # StuHelper Groups
 
-QQ 群服务候选模块，采用 AGPL-3.0-only。模块提供群配置、入群资格、成员处置、消息留存、举报建议、群事件订阅与娱乐命令。所有管理操作由服务端按学校、群和能力调用 platform `admin.Service.Evaluate`。
+groups 管理群配置、申请和成员资格、群规则、消息留存、举报、订阅及机器人动作。管理操作通过 platform 校验学校、群和操作能力。QQ 绑定、资格和名片字段由各来源模块提供当前事实。
 
-[OpenAPI](contracts/groups.openapi.json) 版本为 0.4.0，HTTP 接口统一使用 `/api/v1/groups` 前缀，生成客户端位于 [sdk](sdk)。[装配指南](docs/guide/integration.md) 描述 backend、数据库与 Koishi 接入；[实施状态](docs/development/implementation.md) 记录验证与剩余接口。
+[OpenAPI](contracts/groups.openapi.json) 版本为 0.4.0，HTTP 接口使用 `/api/v1/groups` 前缀。Go 和 TypeScript SDK 位于 [sdk](sdk)。群内事实的后台账号查询使用独立 Go 服务。
+
+- [装配指南](docs/guide/integration.md)涵盖依赖、数据库、事件、Koishi 和 HTTP 接口。
+- [账号查询规格](docs/spec/account-query.md)列出可查字段、权限范围和分页规则。
+- [实施状态](docs/development/implementation.md)记录当前实现、测试范围和待验证事项。
 
 ```bash
-pnpm install --frozen-lockfile
-pnpm exec lefthook install
+make setup
 bash scripts/check-with-postgres.sh
 ```
 
-Go 使用 1.27.3，Node 使用 24.22.1，pnpm 使用 10.33.4。platform 依赖固定为 `stuhelper-platform v0.2.0`，`GOWORK=off` 独立构建。
+`make setup` 安装锁定的依赖和 Lefthook。工具链版本见 [.go-version](.go-version)、[.node-version](.node-version) 和 [package.json](package.json)，正式 Go 构建设置 `GOWORK=off`。
 
-测试脚本创建仅监听独立 Unix socket 的 PostgreSQL，结束时删除本次数据库目录。可通过 `STUHELPER_TEST_PG_BIN` 指定 PostgreSQL 程序目录。测试不访问真实 QQ 账号、真实群或生产系统。
-
-按账号信息查询的 Go 接口、能力、字段与范围限制见[账号查询规格](docs/spec/account-query.md)。
+检查脚本启动仅监听独立 Unix socket 的 PostgreSQL 18，完成后清理本次数据库目录。使用 `STUHELPER_TEST_PG_BIN` 指定 PostgreSQL 程序目录。测试使用合成数据和模拟机器人。
