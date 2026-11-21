@@ -1,7 +1,7 @@
 ---
 type: guide
 status: Accepted
-updated: 2026-11-21
+updated: 2026-11-22
 ---
 
 # Groups 装配指南
@@ -202,7 +202,9 @@ func (s *Service) GroupsForOwner(
 
 owner 的 Issuer、Subject 必须构成有效平台账号键。按完整 owner 键查询，返回 joined=true 且 state 非 removed、同时存在 groups 配置的群。其他用户、已离群、待入群及未由 groups 配置管理的群不返回。
 
-单页 limit 为 1–100，没有省略参数的默认值。结果按群 ID 字节顺序升序，next_cursor 为最后返回的群 ID，空字符串表示结束。数据库最多读取 limit+1 条以判断后续页；游标最长 128 字节。
+单页 `limit` 为 1 至 100，必须显式传入。结果按群 ID 字节顺序升序。数据库最多读取 `limit+1` 条以判断后续页。有后续页时，`next_cursor` 为最后返回的群 ID。空字符串表示结束。
+
+游标最多包含 128 个 Unicode 码点。超限返回 `groups.ErrInvalid`。
 
 此接口是 backend 专用 Go 端口，没有新增 HTTP 路由。owner 参数标识查询对象，不代表调用者授权。backend 若把结果提供给管理端或信息查询调用者，仍须检查调用者对各群的当前读取范围。
 
@@ -351,7 +353,7 @@ joined 表示已由机器人确认加入，state 是本人当前处理阶段。�
 
 此接口复用 GroupsForOwner 的关联索引，额外包含有效申请。先读取本人记录和公开群信息，再在事务外按账号和学校读取事实。返回前在新的只读事务中复核记录和资格变化代数。
 
-limit 默认 50，范围 1 至 100。使用服务端返回的 next_cursor 继续按群 ID 字节顺序升序读取，空字符串表示结束。未知查询参数或无效分页返回 400 groups_invalid_request。
+`limit` 默认 50，范围 1 至 100。使用服务端返回的 `next_cursor` 继续按群 ID 字节顺序升序读取，空字符串表示结束。「我的群」与群目录的游标均最多包含 128 个 Unicode 码点。未知查询参数或无效分页返回 400 `groups_invalid_request`。
 
 eligibility 为 eligible、ineligible 或 unknown，只说明当前准入条件是否满足，不表示已经批准入群，也不会撤销既有豁免。所需事实明确未知时返回 unknown，不能视为具备资格；不需要的学生资格条件不参与判断。
 
