@@ -7,22 +7,15 @@ import (
 	"testing"
 
 	g "github.com/StuHelper/stuhelper-groups"
-	"github.com/StuHelper/stuhelper-platform/account"
 )
 
 func TestGroupRelationshipCursorCountsUnicodeCodePoints(t *testing.T) {
 	f := setup(t)
-	root := account.Principal{Issuer: "test", Subject: "root"}
 	firstID := "a" + strings.Repeat("🧪", 127)
 	secondID := "b-next"
 	for _, id := range []string{firstID, secondID} {
-		in := config()
-		in.ID = id
-		in.Discoverable = true
-		c, err := f.s.Configure(ctx, root, "cursor-"+id[:1], in)
-		if err != nil {
-			t.Fatal(err)
-		}
+		c := myConfig(id, "school")
+		c.Discoverable = true
 		putOwned(t, f, c, user, g.Member{Joined: true, State: "restored"})
 	}
 	tooLong := firstID + "界"
