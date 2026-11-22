@@ -24,10 +24,14 @@ type ManagedGroup struct {
 // It returns joined, non-removed memberships whose group configuration exists.
 func (s *Service) GroupsForOwner(ctx context.Context, owner account.Principal, cursor string, limit int) (Page[ManagedGroup], error) {
 	out := Page[ManagedGroup]{Items: []ManagedGroup{}}
-	if !owner.Valid() || len(cursor) > 128 || limit < 1 || limit > 100 {
+	if !owner.Valid() || !validCursor(cursor, 128) || limit < 1 || limit > 100 {
 		return out, ErrInvalid
 	}
-	e := s.run(ctx, func(tx Tx) error { var e error; out, e = tx.OwnerGroups(owner.Key(), cursor, limit, false); return e })
+	e := s.runRead(ctx, func(tx ReadTx) error {
+		var e error
+		out, e = tx.OwnerGroups(owner.Key(), cursor, limit, false)
+		return e
+	})
 	if e != nil {
 		return Page[ManagedGroup]{Items: []ManagedGroup{}}, e
 	}
@@ -42,6 +46,7 @@ type UpstreamEvent struct {
 	Source          string            `json:"source"`
 	Type            string            `json:"type"`
 	Subject         string            `json:"subject"`
+	TraceParent     string            `json:"traceparent,omitempty"`
 	Time            time.Time         `json:"time"`
 	DataContentType string            `json:"datacontenttype"`
 	SchoolID        string            `json:"schoolid,omitempty"`
@@ -59,7 +64,7 @@ const MaxEventGroups = 1000
 var upstreamType = regexp.MustCompile(`^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+\.v1$`)
 
 func validUpstream(e UpstreamEvent) bool {
-	if e.SpecVersion != "1.0" || e.DataContentType != "application/json" || e.Time.IsZero() || e.Data.Revision < 1 || !eventText(e.ID, 256) || !eventText(e.Subject, 2048) || !eventText(e.Type, 128) || (e.SchoolID != "" && !eventText(e.SchoolID, 128)) {
+	if e.SpecVersion != "1.0" || e.DataContentType != "application/json" || e.Time.IsZero() || e.Data.Revision < 1 || !eventText(e.ID, 256) || !eventText(e.Subject, 2048) || !eventText(e.Type, 128) || (e.SchoolID != "" && !eventText(e.SchoolID, 128)) || (e.TraceParent != "" && !validTraceParent(e.TraceParent)) {
 		return false
 	}
 	if _, err := account.Parse(e.Data.Owner); err != nil {
@@ -101,47 +106,83 @@ func (s *Service) Consume(ctx context.Context, event UpstreamEvent) error {
 	if e != nil {
 		return ErrInvalid
 	}
-	envelope := Event{SpecVersion: event.SpecVersion, ID: event.ID, Source: event.Source, Type: event.Type, Subject: event.Subject, Time: event.Time, Revision: event.Data.Revision, Data: payload}
-	call, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	return s.run(call, func(tx Tx) error {
-		accepted, e := tx.Accept(envelope)
-		if e != nil || !accepted {
-			return e
+	envelope := Event{SpecVersion: event.SpecVersion, ID: event.ID, Source: event.Source, Type: event.Type, Subject: event.Subject, TraceParent: event.TraceParent, Time: event.Time, Revision: event.Data.Revision, Data: payload}
+	if event.TraceParent != "" {
+		ctx = WithTraceParent(ctx, event.TraceParent)
+	}
+	pending := s.consuming.DoChan(hash(envelope), func() (any, error) {
+		return nil, s.consumeEvent(ctx, envelope, event.Data.Owner)
+	})
+	select {
+	case result := <-pending:
+		return result.Err
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+func (s *Service) consumeEvent(ctx context.Context, envelope Event, owner string) error {
+	return s.runPrepared(ctx, []string{"owner:" + owner, "upstream:" + envelope.Source + ":" + envelope.Subject}, func(tx *preparedTx) error {
+		accepted, err := tx.Accept(envelope)
+		if err != nil || !accepted {
+			return err
 		}
-		// Include active applications as well as joined members. Fetch the complete
-		// bounded set before touching state so overflow cannot leave partial changes.
-		groups := []ManagedGroup{}
-		cursor := ""
-		for {
-			page, e := tx.OwnerGroups(event.Data.Owner, cursor, 100, true)
-			if e != nil {
-				return e
+		groups, err := affectedGroups(tx, owner)
+		if err != nil {
+			return err
+		}
+		keys := []factKey{}
+		schools := map[string]bool{}
+		for _, group := range groups {
+			tx.requireScope("group:" + group.ID)
+			if schools[group.School] {
+				continue
 			}
-			groups = append(groups, page.Items...)
-			if len(groups) > MaxEventGroups {
-				return ErrUnavailable
+			blocked, err := s.restricted(tx, group.ID, owner)
+			if err != nil {
+				return err
 			}
-			if page.NextCursor == "" {
-				break
+			if !blocked {
+				keys = append(keys, factKey{owner, group.School})
+				schools[group.School] = true
 			}
-			if len(groups) == MaxEventGroups {
-				return ErrUnavailable
-			}
-			cursor = page.NextCursor
+		}
+		if err := tx.prepareFacts(keys); err != nil {
+			return err
 		}
 		for _, group := range groups {
-			if e = call.Err(); e != nil {
-				return e
-			}
 			var c GroupConfig
-			if e = tx.Get("config", group.ID, &c); e != nil {
-				return e
+			if err := tx.Get("config", group.ID, &c); err != nil {
+				return err
 			}
-			if _, e = s.admission(call, tx, account.Principal{}, c, event.Data.Owner, false); e != nil {
-				return e
+			if _, err := s.admission(ctx, tx, account.Principal{}, c, owner, checkAdmission); err != nil {
+				return err
 			}
 		}
-		return nil
+		return tx.Put("eligibility_generations", owner, hash(envelope))
 	})
+}
+func affectedGroups(tx Tx, owner string) ([]ManagedGroup, error) {
+	// Include active applications as well as joined members. Fetch the complete
+	// bounded set before touching state so overflow cannot leave partial changes.
+	groups := []ManagedGroup{}
+	cursor := ""
+	for {
+		page, e := tx.OwnerGroups(owner, cursor, 100, true)
+		if e != nil {
+			return nil, e
+		}
+		groups = append(groups, page.Items...)
+		if len(groups) > MaxEventGroups {
+			return nil, ErrUnavailable
+		}
+		if page.NextCursor == "" {
+			break
+		}
+		if len(groups) == MaxEventGroups {
+			return nil, ErrUnavailable
+		}
+		cursor = page.NextCursor
+	}
+	return groups, nil
 }

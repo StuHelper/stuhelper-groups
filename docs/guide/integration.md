@@ -1,23 +1,25 @@
 ---
 type: guide
 status: Accepted
-updated: 2026-11-09
+updated: 2026-11-22
 ---
 
 # Groups 装配指南
 
 ## backend
 
-1. 将 groups 作为独立 Go 模块引入，注册 module.yaml 中的依赖和能力。平台必需；QQ 绑定、认证、资料与 AI 能力按操作分别判断。
+1. 将 groups 作为独立 Go 模块引入，注册 [模块清单](../../module.yaml) 声明的依赖和能力。platform 为必需依赖，profiles、verification、moderation 和 qq-binding 为可选依赖。
 2. 使用迁移身份执行 postgres.Schema。给 groups 运行身份授予 groups schema 的 USAGE、表的 SELECT/INSERT/UPDATE/DELETE 和序列 USAGE/SELECT，不授予其他模块数据权限或 DDL 权限。
 3. 构造 postgres.Repository 与 groups.Service。Auth 注入 platform admin.Service，PlatformIdentity 注入相同的可信 admin.Identity。全平台黑名单额外检查平台管理员身份。
 4. backend 实现 groups.FactsProvider 并注入 Service.Facts，将可信服务身份配置到 Service.FactsPrincipal。groups 只接收自有 Facts 类型；调用 verification、profiles、qq-binding 的代码与凭据留在 backend。
 5. 用 HTTP 认证中间件提供 account.Principal，挂载 httpapi.Handler。请求体中的角色、学校或主体声明不能替代认证身份。群的学校创建后不能通过配置迁移。
-6. 注入 Bot 与可选 Analyzer。Bot 以 Action.ID 幂等执行并查询实际结果，使用绑定事实和配置把内部群、用户标识映射到平台标识。禁止从请求自行决定机器人身份。
+6. 为自动动作注入 Bot，为举报分析注入可选 Analyzer。Bot 以 Action.ID 幂等执行并查询实际结果，按当前绑定和配置解析群与用户。执行器使用已登记的机器人身份。
 7. backend 的共享 relay 监听 groups.OutboxChannel，在启动、重连与通知后调用 PendingOutbox；每 60 秒兜底补读。传入当前退避和人工处理主题，在数据库中排除后再取最多 100 条。
 8. 宿主维护投递退避：5 秒起，指数增加至 1 小时，累计 24 小时转人工。每个主题按返回顺序串行消费，失败后停止该批同主题后续事件，其他主题继续。所有消费者持久提交后调用 ConfirmOutbox。
 9. groups.action.requested 调用 Execute，groups.action.result 调用 Fanout。verification 与 qq-binding 的资格、绑定事件转为 groups.UpstreamEvent 后调用 Consume(ctx, event)，无需宿主逐群扇出。
-10. 对每群分页调用 Sweep、Recover、Cleanup。每页最多 100，宿主保留游标并安排下一轮。Sweep 用于资格期限和提醒，Recover 处理执行租约，Cleanup 删除到期消息。
+10. backend 的维护任务逐群分页调用 Sweep、Recover 和 Cleanup，保存检查点。每页最多 100 条。宿主如需清理频率窗口、幂等收据及历史 outbox，可另行调度 CleanupFrequency、CleanupIdempotency 和 CleanupOutbox。
+
+Cleanup 删除到期消息。CleanupIdempotency 与 CleanupOutbox 默认清理早于 24 小时截止时间的收据和批量摘要、已确认且未挂起的 outbox。
 
 宿主按原事件 ID 重试人工队列，并对重试入口执行管理授权和审计。Repository.Relay 是独立运行帮助器，使用本地 Failed/Retry 记录，不与共享 relay 同时启用。它最多处理 1000 个排除主题，超限返回 unavailable。
 
@@ -27,7 +29,11 @@ updated: 2026-11-09
 
 ## 外部依赖接口
 
-以下是 groups 消费端的精确 Go 接口，定义与 dependencies.go 一致。verification/profiles 和 qq-binding 保持各自的数据归属，backend 用桥接适配器转换提供方 DTO 和错误，避免提供方反向导入 groups 形成循环依赖。
+profiles 提供获准披露的名片字段与当前阶段，verification 提供目标学校的资格事实，qq-binding 提供当前三项绑定与指定机器人身份。backend 调用来源公开接口并将结果转换为 groups 的类型。名片和准入操作所需的事实端口不可用时，返回 `groups_unavailable`。
+
+清单登记 moderation 为可选依赖。举报分析通过宿主注入的 Analyzer 执行，groups 以自身数据校验建议与当前操作授权。群内记录、管理审计、动作和投递归 groups 所有，跨模块读取使用各自的公开端口。
+
+下面是 groups 的消费端接口。定义见 [dependencies.go](../../dependencies.go)。
 
 ```go
 package groups
@@ -89,7 +95,7 @@ type IdentityResolver interface {
 
 GroupFacts 的 principal 是 backend 注入的可信服务身份，owner 是 platform account.Key 编码，school 是群当前配置的学校。提供方每次检查服务身份是否有效、是否拥有该学校的资格细分读取权限，以及每个名片字段的披露权限。
 
-现有 verification.Service.Facts 使用 facts.read 检查学校范围。GroupFacts 的 backend 桥接应复用这项授权，并通过 profiles/verification 的字段许可检查取得名片字段。原始证件、邮箱、手机号和未许可字段不进入返回值。
+verification.Service.Facts 使用 facts.read 检查学校范围。backend 桥接复用这项授权，并按 profiles 和 verification 的披露许可取得字段。返回名片字段白名单内获准的数据。
 
 backend 将 verification 的资格摘要映射到 Facts.StudentKnown 和 Facts.Student，将阶段映射到 Facts.StageKnown、Alumni、Temporary。StageKnown=false 表示没有可用阶段事实，Alumni 和 Temporary 必须同时为 false，不能把未知阶段解释为普通在校生。
 
@@ -144,7 +150,7 @@ backend 实现上述接口，直接导入私有模块并调用它们的公开 Se
 | 当前机器人绑定的 owner | ResolveOwner 的字符串结果 | 唯一匹配指定机器人命名空间，编码为 account.Principal.Key() |
 | owner 在指定机器人的当前绑定 | ResolveBotIdentity 的 BotIdentity | Bot 等于请求值，UserID 来自该绑定，不使用其他机器人或 connect 身份替代 |
 
-资格和阶段只读取目标学校，字段来自授权后的公开方法。任一实际调用失败时，桥接立即返回零值 Facts 与映射后的错误，不保留已经取得的 QQ 或资格部分结果。尚未接入的可选事实用 Known=false 表示，不能把已经发生的依赖故障隐藏为未知事实。
+资格和阶段只读取目标学校，字段来自授权后的公开方法。任一实际调用失败时，桥接立即返回零值 Facts 与映射后的错误，不保留已经取得的 QQ 或资格部分结果。明确未知的资格或阶段使用对应的 Known=false 表示。
 
 提供方的 invalid_input、无效主体或标识错误映射 ErrInvalid；未登录或服务身份失效映射 ErrUnauthenticated；范围越权映射 ErrForbidden；授权后对象不存在或绑定已撤销映射 ErrNotFound；歧义绑定或事实冲突映射 ErrConflict。
 
@@ -154,7 +160,7 @@ groups 的 currentFacts 在资格判断和名片操作前校验自有 Facts，�
 
 backend 的机器人执行器还应校验解析返回值与请求实例一致，再调用实际机器人。解析接口是宿主装配约定，groups 不提供身份解析实现；调用方不得用空字符串或零值 BotIdentity 代表解析成功。
 
-事件生产方按 EVENT-DELIVERY.md 输出 CloudEvents 1.0，携带稳定 ID、source、subject 和单调 revision。groups 的 Consume 接受 qq-binding 与 verification 来源，再读取当前事实。
+事件生产方遵循模块通信规范，传入稳定的 ID、source、subject 和单调 revision。Consume 接受 qq-binding 与 verification 的 CloudEvents 1.0 事件。见[模块通信与一致性](https://github.com/StuHelper/stuhelper/blob/develop/docs/spec/module-protocol.md)。
 
 ## outbox 与上游事件
 
@@ -175,11 +181,11 @@ PendingOutbox 只读 sent_at IS NULL 的行，在 SQL 中先排除主题，然�
 
 读取不领取或确认事件；同一批可以包含同主题的多条记录。所有 outbox 事件来源均为 groups，因此上述排序保持每个 (source, subject) 内的顺序。宿主不得在较早事件失败后继续消费或确认同主题后续事件。
 
-ConfirmOutbox 在首次确认时保存时间，重复确认成功且保持原时间，未知 ID 返回 groups.ErrNotFound。它仅供可信 relay 调用，宿主应在全部消费者成功提交后确认。旧 Pending 和 Delivered 入口已删除。
+ConfirmOutbox 在首次确认时保存时间，重复确认成功且保持原时间，未知 ID 返回 groups.ErrNotFound。它仅供可信 relay 调用，宿主在全部消费者成功提交后确认。
 
-公开读取端口与 verification 796b76f 一致，不按提供方时钟或本地 Failed/Retry 状态隐式过滤。backend 必须把自己的退避与人工主题传入 excludeSubjects，不能先取 100 条再在内存中排除。
+共享 relay 将处于退避或人工处理阶段的主题传入 excludeSubjects。独立 Repository.Relay 从本模块的 Failed 和 Retry 记录取得排除主题。
 
-groups 自有 outbox 仍使用 Event：revision 在封套顶层，data 是该事件的业务 JSON。backend 的 Source 继续把 Event.Revision 映射到 relay 修订字段，其他字段按原值传递。
+groups 自有 outbox 仍使用 Event：revision 在封套顶层，traceparent 可选，data 是该事件的业务 JSON。HTTP Traceparent 请求头经校验后透传到 outbox、Execute 与 Fanout。
 
 ### owner 反向查询
 
@@ -196,7 +202,9 @@ func (s *Service) GroupsForOwner(
 
 owner 的 Issuer、Subject 必须构成有效平台账号键。按完整 owner 键查询，返回 joined=true 且 state 非 removed、同时存在 groups 配置的群。其他用户、已离群、待入群及未由 groups 配置管理的群不返回。
 
-单页 limit 为 1–100，没有省略参数的默认值。结果按群 ID 字节顺序升序，next_cursor 为最后返回的群 ID，空字符串表示结束。数据库最多读取 limit+1 条以判断后续页；游标最长 128 字节。
+单页 `limit` 为 1 至 100，必须显式传入。结果按群 ID 字节顺序升序。数据库最多读取 `limit+1` 条以判断后续页。有后续页时，`next_cursor` 为最后返回的群 ID。空字符串表示结束。
+
+游标最多包含 128 个 Unicode 码点。超限返回 `groups.ErrInvalid`。
 
 此接口是 backend 专用 Go 端口，没有新增 HTTP 路由。owner 参数标识查询对象，不代表调用者授权。backend 若把结果提供给管理端或信息查询调用者，仍须检查调用者对各群的当前读取范围。
 
@@ -214,6 +222,7 @@ type UpstreamEvent struct {
     Source          string            `json:"source"`
     Type            string            `json:"type"`
     Subject         string            `json:"subject"`
+    TraceParent     string            `json:"traceparent,omitempty"`
     Time            time.Time         `json:"time"`
     DataContentType string            `json:"datacontenttype"`
     SchoolID        string            `json:"schoolid,omitempty"`
@@ -259,7 +268,7 @@ ID 最多 256 字节，subject 最多 2048 字节，type 最多 128 字节，sch
 
 该类型额外校验 subject 等于 data.owner，id 等于 strconv.FormatInt(data.revision, 10)。因此带前导零、正号、非数字或与 revision 不一致的 id 都会被拒绝。schoolid 仍是可选扩展字段，当前提供方不填。
 
-以下脱敏样例由提供方生产赋值代码构造，固定夹具及来源记录位于 testdata/qq-binding-owner-bindings.changed.json 与 testdata/README.md。groups 构建和测试无需 qq-binding 私有源码。
+下面是群模块测试使用的合成样例，字段来源见[夹具说明](../../testdata/README.md)。
 
 ```json
 {
@@ -284,22 +293,23 @@ Consume 自行反查 owner 的受管群，并包括仍有效的入群申请，�
 
 同一事务完成 inbox、(source, subject) 修订更新、资格状态、审计和 outbox。重复 ID 且内容相同直接成功，内容变化返回 ErrConflict；新 ID 的旧修订或相同修订登记去重后忽略，不再次读取事实。
 
-修订始终按 (source, subject) 比较。verification 的不同资格对象互不合并，qq-binding 的统一绑定变化按各自 owner 主题比较，不能把不同 owner 或不同来源合并成同一修订流。事件内容只用于定位对象；准入结论始终由当前 FactsProvider 返回。没有关联群时也成功记录 inbox，避免反复投递无关事件。
+修订始终按 (source, subject) 比较。verification 的不同资格对象互不合并，qq-binding 的统一绑定变化按各自 owner 主题比较，不能把不同 owner 或不同来源合并成同一修订流。事件定位待重算的对象。groups 按当前 FactsProvider 返回的事实和目标群配置判断准入。没有关联群时也记录 inbox。
+
+事实读取按本次事件的 owner 和学校复用，外部请求在数据库事务外完成。写入前重新检查事件修订、关联群及当前限制。
 
 单事件最多重算 1000 个关联群，事务期限 10 秒。超过上限返回 ErrUnavailable，任何群的依赖失败或事务失败均整体回滚，不留下 inbox、修订、部分状态或待执行动作。宿主保留原事件重试，超限应告警并处理该 owner 的异常规模。
 
 事件路径负责变更后的及时重算。Sweep 继续按群分页、每页最多 100 条，负责时间自然到期、提醒、事件源暂不可用时的周期性核对，并保留已有延期与豁免。Sweep 不读取 outbox，也不代替事件确认。
 
-旧 Consume(ctx, group, event, owner) 已删除。backend 不再自己逐群分页后调用消费；直接转发上游封套并等待 Consume 返回，再推进来源事件的确认。原有 groups 出站动作消费者继续调用 Execute/Fanout。
-
-这些新增和修改均为 Go 装配端口，HTTP OpenAPI 仍为 0.4.0，路径与生成 SDK 无变化。
+backend 直接转发上游封套，等待 Consume 成功后确认来源事件。groups 出站动作消费者调用 Execute 或 Fanout。
 
 ## Koishi
 
-现有 qq-binding 插件处理私聊绑定码。群服务需要独立处理群事件和命令，并保持原有绑定入口行为。
+qq-binding 插件处理私聊绑定码。群服务适配器按以下规则处理群事件和命令。接入和验收状态见[实施状态](../development/implementation.md)。
 
 - 从受信任 session 提取 platform、selfId、guildId、userId、messageId，再由 backend 解析 owner。拒绝伪造的操作者字段和未登记的机器人、群。
 - 上报成员申请、加入、消息和撤回事件。后端通过 MemberEvent 确认实际成员状态，通过 Ingest 保存获准留存的消息。未配置留存时不保存正文。
+- 机器人入站事件按具体业务对象维护单调修订：消息与撤回使用 `{group}/messages/{id}`（初始消息报 1、撤回报 2），成员进退使用 `{group}/members/{owner}`。撤回通知在留存期内保留原发送者、正文与附件引用。
 - 消费后端 Action，执行批准、提醒、欢迎、警告、禁言、解禁、踢出、发送、转发、撤回和名片修改。平台不支持的动作返回明确失败。
 - 以 Action.ID 保存执行回执。实现 Lookup，区分已成功、已失败、确定未执行和结果未知。超时不得直接重发处罚或消息。
 - 掷骰子与自助禁言使用当前请求人身份调用 Command，客户端不能指定其他人。禁言时长交给平台执行，到期由平台自动结束，管理员可提前解禁。
@@ -308,11 +318,12 @@ Consume 自行反查 owner 的受管群，并包括仍有效的入群申请，�
 
 ## 接口使用
 
-OpenAPI 与模块版本为 0.4.0，HTTP 路由使用 /api/v1/groups 前缀。SDK 的 server 参数填写服务根地址。以下路径中的 {group} 是内部群 ID。
+[OpenAPI](../../contracts/groups.openapi.json) 定义 HTTP 路由和请求类型。SDK 的 server 参数填写服务根地址。以下路径中的 `{group}` 是内部群 ID。
 
 | 方法与路径 | 请求 / 响应 | 用途 |
 | --- | --- | --- |
 | GET /api/v1/groups | GroupSummaryPage | 群摘要与计数 |
+| GET /api/v1/groups/directory | DirectoryGroupPage | 学生端公开群目录发现 |
 | GET /api/v1/groups/me | MyGroupPage | 本人的群、申请与下一步动作 |
 | GET /api/v1/groups/{group} | GroupConfig | 当前配置与 revision |
 | PUT /api/v1/groups/{group} | GroupConfigInput / GroupConfig | 创建或更新配置 |
@@ -326,6 +337,7 @@ OpenAPI 与模块版本为 0.4.0，HTTP 路由使用 /api/v1/groups 前缀。SDK
 | GET /api/v1/groups/{group}/warnings | WarningsPage | 警告累计 |
 | GET /api/v1/groups/{group}/watch | WatchPage | 观察名单 |
 | GET /api/v1/groups/{group}/deliveries | DeliveryPage | 各接收目标的动作结果 |
+| GET /api/v1/groups/{group}/audit | AuditPage | 群级管理操作审计（不含消息正文） |
 | GET /api/v1/groups/{group}/progress | Member | 本人申请进度 |
 | POST /api/v1/groups/{group}/commands | Command / Result | 管理或用户命令 |
 | POST /api/v1/groups/{group}/batch | Bulk / BulkResult | 批量预览与逐项执行 |
@@ -339,9 +351,9 @@ GET /api/v1/groups/me 只使用认证中间件给出的 account.Principal，不�
 
 joined 表示已由机器人确认加入，state 是本人当前处理阶段。待入群申请也列出，removed 记录和没有 groups 配置的群不返回。deadline 为 UTC date-time；没有期限时返回 null，GET 不修改期限或处理状态。
 
-此接口复用 GroupsForOwner 的 owner 反向索引、查询和分页逻辑，额外包含有效申请。每页在同一事务读取群公开信息和本人记录；当前事实按 owner、school 在单次请求内复用，不跨请求缓存。
+此接口复用 GroupsForOwner 的关联索引，额外包含有效申请。先读取本人记录和公开群信息，再在事务外按账号和学校读取事实。返回前在新的只读事务中复核记录和资格变化代数。
 
-limit 默认 50，范围 1–100；cursor 最长 128 字节。按群 ID 字节顺序升序，next_cursor 是最后返回的群 ID，空字符串表示结束。无关联记录时返回空 items；未知查询参数或无效分页返回 400 groups_invalid_request。
+`limit` 默认 50，范围 1 至 100。使用服务端返回的 `next_cursor` 继续按群 ID 字节顺序升序读取，空字符串表示结束。「我的群」与群目录的游标均最多包含 128 个 Unicode 码点。未知查询参数或无效分页返回 400 `groups_invalid_request`。
 
 eligibility 为 eligible、ineligible 或 unknown，只说明当前准入条件是否满足，不表示已经批准入群，也不会撤销既有豁免。所需事实明确未知时返回 unknown，不能视为具备资格；不需要的学生资格条件不参与判断。
 
@@ -364,7 +376,11 @@ next_actions 是 Web 动作类别，不是权限令牌。前端将 bind_qq、ver
 
 此接口复用入群与执行前检查的资格判定，只读取数据，不执行入群批准、提醒、移出，不写业务查看审计、inbox 或 outbox。实际状态推进仍由 Consume、Sweep 和机器人回执负责。
 
-0.4.0 新增 listMyGroups SDK 方法，现有管理接口与 progress 路径继续保留。me 是该静态路径保留的群 ID，新配置不能使用这个 ID。
+SDK 使用 listMyGroups 和 listGroupDirectory 读取本人群列表及公开目录。me 与 directory 为保留路径，新配置不能使用这两个群 ID。
+
+GET /api/v1/groups/directory 支持按 school、category、cursor、limit 查询 discoverable=true 的群公开卡片，包含分类、简介、准入摘要、口令提示与本人状态，不暴露完整群号或管理计数。
+
+要求学生资格的群只向当前具备该校校园资格的请求人展示。单群黑名单过滤对应群，平台黑名单返回禁止访问。每页先取候选再筛选，可返回带续页游标的短页或空页。
 
 ### 群摘要与列表
 
@@ -372,11 +388,11 @@ GroupSummary 包含 id、school、name、number、member_count、bot_enabled、r
 
 member_count 统计 joined=true 的成员。pending_count 是待处理资格记录数与 pending/executing/unknown 动作数之和，同一成员可能同时贡献两项。revision 是配置修订号，成员与动作变化不递增配置修订号。
 
-所有列表返回明确类型的 items 与 next_cursor，limit 默认 50，范围 1–100。按记录 ID 的字节顺序升序排列，cursor 为上页最后扫描的 ID。读取每页时重新检查权限与留存期限。
+所有列表返回明确类型的 items 与 next_cursor，limit 默认 50，范围 1–100，未知查询参数返回 400。默认按记录 ID 的字节顺序升序排列；actions、reports、hits、messages 支持 order=desc 按 (created_at, id) 组合游标倒序分页。
 
-权限或到期过滤后可能出现 items 为空而 next_cursor 非空，客户端应继续翻页。next_cursor 为空表示扫描结束。单页最多扫描 limit 条记录，不读取全表后在内存分页。
+members 支持按 state、joined、exempt 筛选，actions 支持按 state、kind 筛选，reports 支持按 state 筛选，messages 支持按 recalled 筛选。读取每页时重新检查权限与留存期限。
 
-成员 ID 对应 owner，其他 ID 为记录键。Action.actor 和 Subscription.actor 使用 issuer、subject；Warnings 使用 count，Blacklist 使用 reason、until、permanent。所有时间字段为 UTC date-time。
+成员 ID 对应 owner，其他 ID 为记录键。Report 记录 created、updated、结案操作者 resolved_by，并在留存有效时记录被举报消息作者 target（不含消息正文）；Hit、Blacklist、Watch 与 Message 持久化 UTC 时间戳。
 
 Member 中尚未设置的 deadline、reminder、last_play、muted_until 使用 0001-01-01T00:00:00Z。Action.lease_until 只在 executing 时存在，result 保存实际结果码或 lookup_required，不承载租约时间。
 
@@ -386,7 +402,9 @@ PUT 使用 GroupConfigInput，expected_revision 必填。首次创建传 0，后
 
 同一 Idempotency-Key 与相同请求返回原结果，即使当前修订已推进。键相同但内容不同返回 groups_conflict。更新时重新校验操作者当前权限，学校不能通过配置修改迁移。
 
-password 仅在 PUT 请求中接收：省略表示保留，空字符串表示清除。password 模式下必须已有或新设非空口令。服务端保存随机盐与 PBKDF2-SHA256 摘要，配置响应只给出 password_set，不返回口令或摘要。
+PUT 省略 password 时保留口令和代数。传入非空口令或空字符串时递增 password_epoch。已确认入群且状态为 restored 的成员保有资格。未入群的申请者需按最新代数重新提交口令。
+
+card_preview 支持在不触发提醒或自动改名片动作的前提下只读预览目标成员预期名片（可通过 text 传入候选模板）并返回 missing_fields。MyGroup 在启用名片检查且缺少模板所需许可字段时返回 missing_card_fields 字段键提示，不携带任何字段值。
 
 number 在 PUT 中可选，传入 5–20 位数字时保存掩码后的显示值；省略保留当前掩码。机器人路由仍按 backend 的内部群 ID 映射，不能用显示群号决定目标。
 
@@ -396,14 +414,20 @@ Command 是以 kind 为判别字段的 oneOf，每个分支禁止无关字段并
 
 apply、password、dice、self_mute、report 属于用户命令，从认证身份取得操作者，不接受 target。其余命令用于管理端，按群和操作能力授权。前端应按 OpenAPI 的分支类型构造请求。
 
-批量命令使用独立 BatchCommand，支持 warn、mute、unmute、kick、recheck、extend、exempt、card。target 由 targets 数组逐项填入，命令中不接收 target。每批最多 100 个对象，preview 不写业务数据，执行逐项返回结果。
+批量命令使用 BatchCommand，支持 warn、mute、unmute、kick、recheck、extend、exempt、unexempt、card。targets 按顺序提供 1 至 100 个不同目标。预览在同一只读事务中检查权限并计算各目标结果，提交时按当前状态重新判断。
 
-Problem.code 是固定枚举，所有操作明确列出响应码。HTTP 400 表示 JSON、分页或幂等键格式错误；401 表示未认证，403 表示越权，404 表示对象不存在。HTTP 409 包括修订或幂等冲突以及冷却/容量限制。
+批量警告、禁言、解禁和踢出只对当前已入群的成员排队。缺少成员记录时返回 `not_found`，未入群或已移出时返回 `not_joined`。这些目标不创建动作、执行审计或投递事件，其他有效目标继续处理。
+
+响应保留全部目标的 `items`。`executed` 和 `skipped` 各自按输入顺序排列，空清单返回 `[]`。预览中 `executed` 列出预计会处理的项目。提交后 `pending` 表示已排队，调用方可用动作 ID 查询机器人结果。
+
+`skipped` 每项包含 `target`、稳定原因码 `reason_code` 和中文说明 `reason`。机器人关闭、队列已满、无需撤销豁免等情况也在此列出。相同幂等键和请求可在收据保留期内取回原结果，基础设施故障后重试会接续尚未完成的目标。
+
+extend 以当前时间与既有截止时间的较大值为基准顺延秒数，不会缩短剩余宽限期。unexempt 撤销成员豁免后立即按当前真实资格重算，转入 restored、awaiting_verification 或新的 grace 宽限期并记录审计。
+
+Problem.code 是固定枚举，可选携带脱敏子码 reason、关联字段名 field 与冷却秒数 retry_after_seconds（个人冷却时同步返回 HTTP Retry-After 头）。Result 可选返回 max_value、seconds、pity_remaining，供多语言客户端与机器人按翻译键参数化渲染骰子面数、禁言时长和保底剩余次数。
 
 HTTP 422 表示请求不符合分支字段要求或功能未启用，分别使用 groups_unprocessable、groups_disabled。HTTP 503 使用 groups_unavailable，表示依赖不可用或返回事实无法验证。错误响应不返回内部异常文本。
 
-### 接入与数据升级
+### 数据升级
 
-管理端契约使用独立集合类型，0.4.0 另外增加 Web 本人查询。消费端需重新生成类型，改用独立集合客户端、GroupSummary、GroupConfigInput.expected_revision、分支命令及 groups_ 错误码。没有通用 Record、动态 collection 路由或旧字段别名。
-
-先合入本模块契约及最终表结构，再由 backend 固定候选提交并装配，最后管理端按同一契约生成类型与联调。本次只验证 groups，管理端和 backend 的实际提交组合由各自任务记录。
+迁移使用独立迁移身份。升级前写入的机器人 inbox 摘要继续使用原始封套和业务载荷校验。同一事件重放时沿用旧收据，修订号按消息或成员独立推进。

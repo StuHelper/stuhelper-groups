@@ -13,7 +13,7 @@ import (
 // persists its cursor and periodically starts at the beginning for new deadlines.
 func (s *Service) Sweep(ctx context.Context, g, cursor string) (string, error) {
 	next := ""
-	e := s.run(ctx, func(tx Tx) error {
+	e := s.runPrepared(ctx, []string{"group:" + g}, func(tx *preparedTx) error {
 		var c GroupConfig
 		if e := tx.Get("config", g, &c); e != nil {
 			return e
@@ -21,6 +21,26 @@ func (s *Service) Sweep(ctx context.Context, g, cursor string) (string, error) {
 		rows, e := tx.List(bucket(g, "members"), cursor, 100)
 		if e != nil {
 			return e
+		}
+		keys := []factKey{}
+		for _, row := range rows {
+			var m Member
+			if err := json.Unmarshal(row.Data, &m); err != nil {
+				return err
+			}
+			if m.State == "removed" {
+				continue
+			}
+			blocked, err := s.restricted(tx, c.ID, m.Owner)
+			if err != nil {
+				return err
+			}
+			if !blocked {
+				keys = append(keys, factKey{m.Owner, c.School})
+			}
+		}
+		if err := tx.prepareFacts(keys); err != nil {
+			return err
 		}
 		for _, r := range rows {
 			next = r.ID
@@ -31,7 +51,7 @@ func (s *Service) Sweep(ctx context.Context, g, cursor string) (string, error) {
 			if m.State == "removed" {
 				continue
 			}
-			if _, e = s.admission(ctx, tx, account.Principal{}, c, m.Owner, false); e != nil {
+			if _, e = s.admission(ctx, tx, account.Principal{}, c, m.Owner, checkAdmission); e != nil {
 				return e
 			}
 		}
@@ -40,16 +60,22 @@ func (s *Service) Sweep(ctx context.Context, g, cursor string) (string, error) {
 		}
 		return nil
 	})
-	return next, e
+	if e != nil {
+		return "", e
+	}
+	return next, nil
 }
 
 // Fanout consumes committed disposition events, independently queuing each
 // enabled recipient. Delivery state is the recipient action's actual state.
 func (s *Service) Fanout(ctx context.Context, e Event) error {
-	if e.Source != "groups" || e.Type != "groups.action.result" {
+	if e.Source != "groups" || e.Type != "groups.action.result" || (e.TraceParent != "" && !validTraceParent(e.TraceParent)) {
 		return ErrInvalid
 	}
-	return s.run(ctx, func(tx Tx) error {
+	if e.TraceParent != "" {
+		ctx = WithTraceParent(ctx, e.TraceParent)
+	}
+	return s.runPrepared(ctx, []string{"group:" + e.Subject}, func(tx *preparedTx) error {
 		copy := e
 		copy.Source = "groups-subscriptions"
 		ok, err := tx.Accept(copy)
@@ -69,36 +95,69 @@ func (s *Service) Fanout(ctx context.Context, e Event) error {
 		if !slices.Contains([]string{"warn", "mute", "unmute", "kick", "recall"}, origin.Command.Kind) {
 			return nil
 		}
+		var sourceConfig GroupConfig
+		if err = tx.Get("config", e.Subject, &sourceConfig); err != nil {
+			if errors.Is(err, ErrNotFound) {
+				return nil
+			}
+			return err
+		}
 		rows, err := tx.List(bucket(e.Subject, "subscriptions"), "", 100)
 		if err != nil {
 			return err
 		}
 		for _, r := range rows {
-			var sub struct {
-				Receiver string `json:"receiver"`
-				Enabled  bool   `json:"enabled"`
-				Actor    Actor  `json:"actor"`
+			var sub Subscription
+			if err := json.Unmarshal(r.Data, &sub); err != nil {
+				return err
 			}
+			if sub.Enabled {
+				tx.requireScope("group:" + sub.Receiver)
+			}
+		}
+		if len(tx.extra) > 0 {
+			return errPrepareTransaction
+		}
+		for _, r := range rows {
+			var sub Subscription
 			if err = json.Unmarshal(r.Data, &sub); err != nil {
 				return err
 			}
 			if !sub.Enabled {
 				continue
 			}
-			var c GroupConfig
-			if err = tx.Get("config", sub.Receiver, &c); err != nil {
+			delivery := Delivery{Receiver: sub.Receiver}
+			result, err := s.queueDelivery(ctx, tx, sourceConfig, sub, origin)
+			switch {
+			case err == nil:
+				delivery.Action = result.ID
+			case errors.Is(err, ErrDisabled), errors.Is(err, ErrForbidden), errors.Is(err, ErrUnauthenticated):
+				delivery.State = "cancelled"
+			case errors.Is(err, ErrCooldown), errors.Is(err, ErrNotFound):
+				delivery.State = "failed"
+			default:
 				return err
 			}
-			result, err := s.queue(tx, sub.Actor.Principal(), c, Command{Kind: "send", Receiver: e.Subject, Text: "group_event:" + origin.ID + ":" + origin.State}, "groups.messages.send")
-			if err != nil {
-				return err
-			}
-			if err = tx.Put(bucket(e.Subject, "deliveries"), e.ID+"/"+r.ID, map[string]string{"receiver": sub.Receiver, "action": result.ID}); err != nil {
+			if err := tx.Put(bucket(e.Subject, "deliveries"), e.ID+"/"+r.ID, delivery); err != nil {
 				return err
 			}
 		}
 		return nil
 	})
+}
+func (s *Service) queueDelivery(ctx context.Context, tx Tx, source GroupConfig, sub Subscription, origin Action) (Result, error) {
+	var receiver GroupConfig
+	if err := tx.Get("config", sub.Receiver, &receiver); err != nil {
+		return Result{}, err
+	}
+	actor := sub.Actor.Principal()
+	if err := s.auth(ctx, actor, "groups.read", source); err != nil {
+		return Result{}, err
+	}
+	if err := s.auth(ctx, actor, "groups.messages.send", receiver); err != nil {
+		return Result{}, err
+	}
+	return s.queue(ctx, tx, actor, receiver, Command{Kind: "send", Receiver: source.ID, Text: "group_event:" + origin.ID + ":" + origin.State}, "groups.messages.send")
 }
 func (s *Service) frequency(tx Tx, c GroupConfig, cmd Command, preview bool) (bool, error) {
 	if c.FrequencyLimit == 0 || c.FrequencySeconds == 0 {
@@ -128,18 +187,23 @@ func (s *Service) frequency(tx Tx, c GroupConfig, cmd Command, preview bool) (bo
 // MemberEvent receives verified group membership from the host bot adapter.
 // A web application alone cannot claim that a QQ user has already joined.
 func (s *Service) MemberEvent(ctx context.Context, g string, event Event, owner string) error {
-	if event.Source != "qq-bot" || event.Subject != g || !valid(owner, 2048) || !slices.Contains([]string{"groups.member_joined", "groups.member_left"}, event.Type) {
+	stream := g + "/members/" + owner
+	if event.SpecVersion != "1.0" || event.ID == "" || event.Revision < 1 || event.Time.IsZero() || !valid(g, 128) || event.Source != "qq-bot" || (event.TraceParent != "" && !validTraceParent(event.TraceParent)) || (event.Subject != g && event.Subject != stream) || !valid(owner, 2048) || !slices.Contains([]string{"groups.member_joined", "groups.member_left"}, event.Type) {
 		return ErrInvalid
 	}
-	return s.run(ctx, func(tx Tx) error {
-		payload, e := json.Marshal(struct {
-			Owner string
-			Data  json.RawMessage
-		}{owner, event.Data})
-		if e != nil {
-			return e
-		}
-		event.Data = payload
+	if event.TraceParent != "" && TraceParentFromContext(ctx) == "" {
+		ctx = WithTraceParent(ctx, event.TraceParent)
+	}
+	payload, e := json.Marshal(struct {
+		Owner string
+		Data  json.RawMessage
+	}{owner, event.Data})
+	if e != nil {
+		return e
+	}
+	event.revisionSubject = stream
+	event.Data = payload
+	return s.runPrepared(ctx, []string{"group:" + g, "owner:" + owner}, func(tx *preparedTx) error {
 		ok, e := tx.Accept(event)
 		if e != nil || !ok {
 			return e
@@ -149,17 +213,17 @@ func (s *Service) MemberEvent(ctx context.Context, g string, event Event, owner 
 			return e
 		}
 		if event.Type == "groups.member_joined" {
-			if _, e = s.admission(ctx, tx, account.Principal{}, c, owner, true); e != nil {
-				return e
-			}
+			_, e = s.admission(ctx, tx, account.Principal{}, c, owner, joinAdmission)
+			return e
 		}
 		var m Member
 		if e = tx.Get(bucket(g, "members"), owner, &m); e != nil {
 			return e
 		}
 		m.Joined = event.Type == "groups.member_joined"
-		if !m.Joined {
-			m.State = "removed"
+		m.State = "removed"
+		if err := tx.Delete(bucket(g, "admissions"), owner); err != nil {
+			return err
 		}
 		return tx.Put(bucket(g, "members"), owner, m)
 	})

@@ -30,19 +30,46 @@ type transaction struct {
 	tx  pgx.Tx
 }
 
-func (r *Repository) Transaction(ctx context.Context, fn func(g.Tx) error) error {
+func (r *Repository) ReadOnly(ctx context.Context, fn func(g.ReadTx) error) error {
+	tx, e := r.Pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
+	if e != nil {
+		return e
+	}
+	defer func() { _ = tx.Rollback(context.WithoutCancel(ctx)) }()
+	if e = fn(&transaction{ctx, tx}); e != nil {
+		return e
+	}
+	return tx.Commit(ctx)
+}
+
+func (r *Repository) ScopedTransaction(ctx context.Context, scopes []string, fn func(g.Tx) error) error {
 	tx, e := r.Pool.Begin(ctx)
 	if e != nil {
 		return e
 	}
-	defer func() { _ = tx.Rollback(context.WithoutCancel(ctx)) }() // Module-local serialization prevents lost updates across workflows.
-	if _, e = tx.Exec(ctx, "SELECT pg_advisory_xact_lock(7420719)"); e != nil {
-		return e
+	defer func() { _ = tx.Rollback(context.WithoutCancel(ctx)) }()
+	if len(scopes) == 0 {
+		if _, e = tx.Exec(ctx, "SELECT pg_advisory_xact_lock(7420719)"); e != nil {
+			return e
+		}
+	} else {
+		// Legacy transactions take the exclusive module lock. Scoped writers may coexist.
+		if _, e = tx.Exec(ctx, "SELECT pg_advisory_xact_lock_shared(7420719)"); e != nil {
+			return e
+		}
+		// Acquire hash locks in strict ascending int32 order so multi-group operations never deadlock.
+		if _, e = tx.Exec(ctx, "SELECT pg_advisory_xact_lock(7420719, h) FROM (SELECT DISTINCT hashtext(k) AS h FROM unnest($1::text[]) AS k ORDER BY h) q", scopes); e != nil {
+			return e
+		}
 	}
 	if e = fn(&transaction{ctx, tx}); e != nil {
 		return e
 	}
 	return tx.Commit(ctx)
+}
+
+func (r *Repository) Transaction(ctx context.Context, fn func(g.Tx) error) error {
+	return r.ScopedTransaction(ctx, nil, fn)
 }
 func (t *transaction) Get(bucket, id string, v any) error {
 	var b []byte
@@ -60,7 +87,15 @@ func (t *transaction) Put(bucket, id string, v any) error {
 	if e != nil {
 		return e
 	}
-	_, e = t.tx.Exec(t.ctx, "INSERT INTO groups.records(bucket,id,data,query_changed_at) VALUES($1,$2,$3,clock_timestamp()) ON CONFLICT(bucket,id) DO UPDATE SET data=EXCLUDED.data,query_changed_at=clock_timestamp()", bucket, id, b)
+	var meta struct {
+		Created *time.Time `json:"created"`
+	}
+	var createdAt *time.Time
+	if json.Unmarshal(b, &meta) == nil && meta.Created != nil && !meta.Created.IsZero() {
+		ts := meta.Created.UTC().Truncate(time.Microsecond)
+		createdAt = &ts
+	}
+	_, e = t.tx.Exec(t.ctx, "INSERT INTO groups.records(bucket,id,data,created_at,query_changed_at) VALUES($1,$2,$3,COALESCE($4::timestamptz,clock_timestamp()),clock_timestamp()) ON CONFLICT(bucket,id) DO UPDATE SET data=EXCLUDED.data,query_changed_at=clock_timestamp()", bucket, id, b, createdAt)
 	return e
 }
 func (t *transaction) Delete(bucket, id string) error {
@@ -68,10 +103,37 @@ func (t *transaction) Delete(bucket, id string) error {
 	return e
 }
 func (t *transaction) List(bucket, cursor string, limit int) ([]g.Row, error) {
-	if limit < 1 || limit > 100 {
+	return t.QueryList(bucket, g.ListQuery{Cursor: cursor, Limit: limit})
+}
+func (t *transaction) QueryList(bucket string, q g.ListQuery) ([]g.Row, error) {
+	if q.Limit < 1 || q.Limit > 100 {
 		return nil, g.ErrInvalid
 	}
-	rows, e := t.tx.Query(t.ctx, `SELECT id,data FROM groups.records WHERE bucket=$1 AND id COLLATE "C">$2 COLLATE "C" ORDER BY id COLLATE "C" LIMIT $3`, bucket, cursor, limit)
+	var rows pgx.Rows
+	var e error
+	if q.Desc {
+		rows, e = t.tx.Query(t.ctx, `SELECT id,data,created_at FROM groups.records
+ WHERE bucket=$1
+ AND ($2='' OR data->>'state'=$2)
+ AND ($3='' OR data->'command'->>'kind'=$3)
+ AND ($4::boolean IS NULL OR (data->>'joined'='true')=$4)
+ AND ($5::boolean IS NULL OR (data->>'exempt'='true')=$5)
+ AND ($6::boolean IS NULL OR (data->>'recalled'='true')=$6)
+ AND ($7::timestamptz IS NULL OR created_at<$7 OR (created_at=$7 AND id COLLATE "C"<$8 COLLATE "C"))
+ ORDER BY created_at DESC,id COLLATE "C" DESC LIMIT $9`,
+			bucket, q.State, q.Kind, q.Joined, q.Exempt, q.Recalled, q.CursorTime, q.Cursor, q.Limit)
+	} else {
+		rows, e = t.tx.Query(t.ctx, `SELECT id,data,created_at FROM groups.records
+ WHERE bucket=$1
+ AND ($2='' OR data->>'state'=$2)
+ AND ($3='' OR data->'command'->>'kind'=$3)
+ AND ($4::boolean IS NULL OR (data->>'joined'='true')=$4)
+ AND ($5::boolean IS NULL OR (data->>'exempt'='true')=$5)
+ AND ($6::boolean IS NULL OR (data->>'recalled'='true')=$6)
+ AND id COLLATE "C">$7 COLLATE "C"
+ ORDER BY id COLLATE "C" ASC LIMIT $8`,
+			bucket, q.State, q.Kind, q.Joined, q.Exempt, q.Recalled, q.Cursor, q.Limit)
+	}
 	if e != nil {
 		return nil, e
 	}
@@ -79,7 +141,7 @@ func (t *transaction) List(bucket, cursor string, limit int) ([]g.Row, error) {
 	out := []g.Row{}
 	for rows.Next() {
 		var r g.Row
-		if e = rows.Scan(&r.ID, &r.Data); e != nil {
+		if e = rows.Scan(&r.ID, &r.Data, &r.CreatedAt); e != nil {
 			return nil, e
 		}
 		out = append(out, r)
@@ -105,7 +167,7 @@ func (t *transaction) Emit(event g.Event) error {
 	return e
 }
 func (t *transaction) Accept(event g.Event) (bool, error) {
-	if event.SpecVersion != "1.0" || event.ID == "" || event.Source == "" || event.Subject == "" || event.Revision < 1 || event.Time.IsZero() {
+	if event.SpecVersion != "1.0" || event.ID == "" || event.Source == "" || event.Subject == "" || event.Revision < 1 || event.Time.IsZero() || len(event.TraceParent) > 256 {
 		return false, g.ErrInvalid
 	}
 	b, e := json.Marshal(event)
@@ -129,18 +191,18 @@ func (t *transaction) Accept(event g.Event) (bool, error) {
 	if e != nil {
 		return false, e
 	}
-	tag, e := t.tx.Exec(t.ctx, "INSERT INTO groups.revisions(source,subject,revision) VALUES($1,$2,$3) ON CONFLICT(source,subject) DO UPDATE SET revision=EXCLUDED.revision WHERE groups.revisions.revision<EXCLUDED.revision", event.Source, event.Subject, event.Revision)
+	tag, e := t.tx.Exec(t.ctx, "INSERT INTO groups.revisions(source,subject,revision) VALUES($1,$2,$3) ON CONFLICT(source,subject) DO UPDATE SET revision=EXCLUDED.revision WHERE groups.revisions.revision<EXCLUDED.revision", event.Source, event.RevisionSubject(), event.Revision)
 	return tag.RowsAffected() == 1, e
 }
 
 func (r *Repository) Failed(ctx context.Context, id string, now time.Time) error {
-	_, e := r.Pool.Exec(ctx, `UPDATE groups.outbox SET attempts=attempts+1,next_attempt=$2::timestamptz+make_interval(secs=>LEAST(3600,5*power(2,LEAST(attempts,10)))::double precision),held=($2::timestamptz-created_at>=interval '24 hours') WHERE id=$1 AND sent_at IS NULL`, id, now)
+	_, e := r.Pool.Exec(ctx, `UPDATE groups.outbox SET attempts=attempts+1,next_attempt=$2::timestamptz+make_interval(secs=>LEAST(3600,5*power(2,LEAST(attempts,10)))::double precision),first_failed_at=COALESCE(first_failed_at,$2),held=($2::timestamptz-COALESCE(first_failed_at,$2)>=interval '24 hours') WHERE id=$1 AND sent_at IS NULL`, id, now)
 	return e
 }
 
 // Retry is a host-only administrative boundary; host must authorize and audit.
 func (r *Repository) Retry(ctx context.Context, id string, now time.Time) error {
-	_, e := r.Pool.Exec(ctx, "UPDATE groups.outbox SET held=false,attempts=0,created_at=$2,next_attempt=$2 WHERE id=$1 AND sent_at IS NULL", id, now)
+	_, e := r.Pool.Exec(ctx, "UPDATE groups.outbox SET held=false,attempts=0,first_failed_at=NULL,next_attempt=$2 WHERE id=$1 AND sent_at IS NULL", id, now)
 	return e
 }
 
@@ -148,6 +210,14 @@ func (t *transaction) PendingActions(group string) (int, error) {
 	var n int
 	e := t.tx.QueryRow(t.ctx, "SELECT count(*) FROM (SELECT 1 FROM groups.records WHERE bucket=$1 AND data->>'state' IN ('pending','executing','unknown') LIMIT 1000) q", group+"/actions").Scan(&n)
 	return n, e
+}
+
+func (t *transaction) DeleteSentOutboxBefore(cutoff time.Time, limit int) (int, error) {
+	if limit < 1 || limit > 100 {
+		return 0, g.ErrInvalid
+	}
+	tag, e := t.tx.Exec(t.ctx, `DELETE FROM groups.outbox WHERE sequence IN (SELECT sequence FROM groups.outbox WHERE NOT held AND sent_at IS NOT NULL AND sent_at<=$1 ORDER BY sent_at,sequence LIMIT $2 FOR UPDATE SKIP LOCKED)`, cutoff, limit)
+	return int(tag.RowsAffected()), e
 }
 
 // GroupCounts computes the requested page's counts in one query. Bucket indexes
@@ -177,4 +247,14 @@ func (t *transaction) GroupCounts(ids []string) (map[string]g.GroupCounts, error
 		out[id] = n
 	}
 	return out, rows.Err()
+}
+
+// PendingAdmissionKick includes legacy actions that predate admission history.
+func (t *transaction) PendingAdmissionKick(group, owner string) (bool, error) {
+	var pending bool
+	err := t.tx.QueryRow(t.ctx, `SELECT EXISTS (
+ SELECT 1 FROM groups.records WHERE bucket=$1 AND data->>'state' IN ('pending','executing','unknown')
+ AND data->>'capability'='admission' AND data->'command'->>'kind'='kick' AND data->'command'->>'target'=$2
+ )`, group+"/actions", owner).Scan(&pending)
+	return pending, err
 }

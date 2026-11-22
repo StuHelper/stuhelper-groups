@@ -342,6 +342,7 @@ func TestCommandDiscriminatorRequiresKindSpecificFields(t *testing.T) {
 	if count(t, f, "g/actions") != 2 {
 		t.Fatal("valid commands not queued")
 	}
+	command(t, f, manager, "enable", g.Command{Kind: "subscribe", Receiver: "g", Enabled: true})
 	w := api(t, f, manager, "POST", "/api/v1/groups/g/commands", "subscribe", map[string]any{"kind": "subscribe", "receiver": "g", "enabled": false})
 	if w.Code != 200 {
 		t.Fatal(w.Body.String())
@@ -412,6 +413,7 @@ func TestExplicitErrorResponsesAndBulkDiscriminator(t *testing.T) {
 	invalid["command"] = map[string]any{"kind": "mute", "seconds": 30, "target": user.Key()}
 	problem(t, api(t, f, manager, "POST", path, "extra-target", invalid), 422, "groups_unprocessable")
 	invalid["command"] = map[string]any{"kind": "mute", "seconds": 30}
+	putBatchMember(t, f, user.Key(), "restored", true)
 	w := api(t, f, manager, "POST", path, "batch", invalid)
 	if w.Code != 200 || count(t, f, "g/actions") != 1 {
 		t.Fatal(w.Code, w.Body.String())

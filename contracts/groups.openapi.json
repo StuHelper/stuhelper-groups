@@ -36,7 +36,8 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 128
+              "maxLength": 128,
+              "pattern": "^[ -~]{1,128}$"
             }
           }
         ],
@@ -230,7 +231,8 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 128
+              "maxLength": 128,
+              "pattern": "^[ -~]{1,128}$"
             }
           }
         ],
@@ -348,7 +350,8 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 128
+              "maxLength": 128,
+              "pattern": "^[ -~]{1,128}$"
             }
           }
         ],
@@ -457,7 +460,8 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 128
+              "maxLength": 128,
+              "pattern": "^[ -~]{1,128}$"
             }
           }
         ],
@@ -741,6 +745,37 @@
               "maximum": 100,
               "default": 50
             }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "requested",
+                "awaiting_verification",
+                "grace",
+                "extended",
+                "exempt",
+                "restored",
+                "removal_pending",
+                "removed"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "joined",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "exempt",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -837,6 +872,70 @@
               "minimum": 1,
               "maximum": 100,
               "default": 50
+            }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "executing",
+                "unknown",
+                "succeeded",
+                "failed",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ai_execute",
+                "analyze",
+                "apply",
+                "approve",
+                "blacklist",
+                "card",
+                "dice",
+                "exempt",
+                "extend",
+                "feedback",
+                "forward",
+                "kick",
+                "mute",
+                "password",
+                "preview",
+                "recall",
+                "recheck",
+                "remind",
+                "report",
+                "rule",
+                "self_mute",
+                "send",
+                "subscribe",
+                "unblacklist",
+                "unmute",
+                "warn",
+                "watch",
+                "welcome"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
             }
           }
         ],
@@ -935,6 +1034,31 @@
               "maximum": 100,
               "default": 50
             }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "suggested",
+                "pending_execution",
+                "resolved"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            }
           }
         ],
         "responses": {
@@ -1032,6 +1156,18 @@
               "maximum": 100,
               "default": 50
             }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            }
           }
         ],
         "responses": {
@@ -1128,6 +1264,25 @@
               "minimum": 1,
               "maximum": 100,
               "default": 50
+            }
+          },
+          {
+            "in": "query",
+            "name": "recalled",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
             }
           }
         ],
@@ -1586,7 +1741,7 @@
     },
     "/api/v1/groups/{group}/deliveries": {
       "get": {
-        "operationId": "listDeliverys",
+        "operationId": "listDeliveries",
         "parameters": [
           {
             "in": "path",
@@ -1678,7 +1833,7 @@
             }
           }
         },
-        "description": "Ascending record ID in bytewise (C collation) order; cursor is the last scanned ID. Current authorization and retention are checked on every page. Empty items with next_cursor may occur after filtering."
+        "description": "Lists delivery results."
       }
     },
     "/api/v1/groups/me": {
@@ -1748,6 +1903,204 @@
         },
         "description": "Authenticated user only; no owner/issuer/subject parameter or management role is accepted. Includes joined memberships and active applications in configured groups; excludes removed or unmanaged groups. Ordered by group ID in bytewise ascending order. Read-only: no admission, punishment, inbox or audit writes."
       }
+    },
+    "/api/v1/groups/{group}/audit": {
+      "get": {
+        "operationId": "listAudit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Group management audit entries; never contains message bodies or recalled content.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Current identity cannot perform this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "groups_not_found: Requested group, member, message or related object does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Ascending record ID in bytewise (C collation) order; requires groups.configure on the target group. Contains only sanitized management audit metadata and never records or exposes recalled message bodies."
+      }
+    },
+    "/api/v1/groups/directory": {
+      "get": {
+        "operationId": "listGroupDirectory",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "school",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "school",
+                "department",
+                "grade",
+                "course",
+                "club"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 128
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Discoverable public group cards within the caller's campus eligibility or public visibility policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectoryGroupPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "groups_invalid_request: Invalid school, category or pagination query parameters.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "groups_unauthenticated: Missing or invalid authenticated identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "groups_forbidden: Caller is restricted from discovering groups in the requested scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "groups_unavailable: Database or fact provider is unavailable, or an upstream result cannot be verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Authenticated user discovery directory for managed QQ groups with discoverable=true. Groups requiring student verification are visible only when the caller currently holds valid campus eligibility in that school; groups without student requirement remain publicly discoverable to authenticated users. Discloses only masked group numbers, admission summary and the caller's own joined/state."
+      }
     }
   },
   "components": {
@@ -1785,6 +2138,9 @@
             "$ref": "#/components/schemas/ExemptCommand"
           },
           {
+            "$ref": "#/components/schemas/UnexemptCommand"
+          },
+          {
             "$ref": "#/components/schemas/WarnCommand"
           },
           {
@@ -1815,6 +2171,9 @@
             "$ref": "#/components/schemas/CardCommand"
           },
           {
+            "$ref": "#/components/schemas/CardPreviewCommand"
+          },
+          {
             "$ref": "#/components/schemas/AnalyzeCommand"
           },
           {
@@ -1834,6 +2193,12 @@
           },
           {
             "$ref": "#/components/schemas/AiExecuteCommand"
+          },
+          {
+            "$ref": "#/components/schemas/CancelActionCommand"
+          },
+          {
+            "$ref": "#/components/schemas/RetryActionCommand"
           }
         ],
         "discriminator": {
@@ -1847,6 +2212,7 @@
             "recheck": "#/components/schemas/RecheckCommand",
             "extend": "#/components/schemas/ExtendCommand",
             "exempt": "#/components/schemas/ExemptCommand",
+            "unexempt": "#/components/schemas/UnexemptCommand",
             "warn": "#/components/schemas/WarnCommand",
             "mute": "#/components/schemas/MuteCommand",
             "unmute": "#/components/schemas/UnmuteCommand",
@@ -1857,13 +2223,16 @@
             "forward": "#/components/schemas/ForwardCommand",
             "recall": "#/components/schemas/RecallCommand",
             "card": "#/components/schemas/CardCommand",
+            "card_preview": "#/components/schemas/CardPreviewCommand",
             "analyze": "#/components/schemas/AnalyzeCommand",
             "preview": "#/components/schemas/PreviewCommand",
             "rule": "#/components/schemas/RuleCommand",
             "subscribe": "#/components/schemas/SubscribeCommand",
             "feedback": "#/components/schemas/FeedbackCommand",
             "watch": "#/components/schemas/WatchCommand",
-            "ai_execute": "#/components/schemas/AiExecuteCommand"
+            "ai_execute": "#/components/schemas/AiExecuteCommand",
+            "cancel_action": "#/components/schemas/CancelActionCommand",
+            "retry_action": "#/components/schemas/RetryActionCommand"
           }
         }
       },
@@ -1891,6 +2260,42 @@
           "detail": {
             "type": "string",
             "maxLength": 2048
+          },
+          "max_value": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "Configured upper bound for randomized commands such as dice_sides."
+          },
+          "seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "description": "Effective duration in seconds for timed dispositions or voluntary self_mute."
+          },
+          "pity_remaining": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "description": "Remaining attempts before guaranteed pity trigger when pity > 0."
+          },
+          "missing_fields": {
+            "type": "array",
+            "uniqueItems": true,
+            "maxItems": 7,
+            "items": {
+              "type": "string",
+              "enum": [
+                "school",
+                "grade",
+                "department",
+                "name",
+                "student_id",
+                "gender",
+                "nickname"
+              ]
+            },
+            "description": "Optional list of card template field keys not yet disclosed or available."
           }
         },
         "required": [
@@ -1919,6 +2324,39 @@
               "groups_unavailable"
             ],
             "description": "groups_invalid_request: Malformed JSON, invalid pagination or missing/invalid idempotency key. groups_unauthenticated: Missing or invalid authenticated identity. groups_forbidden: Current identity cannot perform this operation. groups_not_found: Requested group, member, message or related object does not exist. groups_conflict: Stale expected_revision, immutable school change, or idempotency key reused with different content. groups_unprocessable: Body does not match the selected command or request schema. groups_disabled: Feature is not configured or enabled. groups_cooldown: Cooldown or pending action capacity prevents this operation. groups_unavailable: Database, authorization or fact provider is unavailable, or an upstream result cannot be verified."
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "member_cooldown",
+              "action_queue_full",
+              "revision_mismatch",
+              "school_immutable",
+              "idempotency_mismatch",
+              "action_executing",
+              "bot_disabled",
+              "password_mode_disabled",
+              "dice_disabled",
+              "self_mute_disabled",
+              "card_check_disabled",
+              "invalid_field",
+              "missing_mute_seconds",
+              "missing_cooldown_seconds",
+              "missing_password",
+              "schema_validation_failed"
+            ],
+            "description": "Optional sanitized subcode for localized UI and bot prompts."
+          },
+          "field": {
+            "type": "string",
+            "maxLength": 128,
+            "description": "Optional request field name associated with validation or conflict errors."
+          },
+          "retry_after_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "Optional remaining cooldown seconds; paired with the HTTP Retry-After header."
           }
         },
         "required": [
@@ -1955,29 +2393,26 @@
       "BulkResult": {
         "type": "object",
         "required": [
-          "items"
+          "items",
+          "executed",
+          "skipped"
         ],
         "properties": {
           "items": {
+            "$ref": "#/components/schemas/BulkItems"
+          },
+          "executed": {
+            "$ref": "#/components/schemas/BulkItems"
+          },
+          "skipped": {
             "type": "array",
+            "maxItems": 100,
             "items": {
-              "type": "object",
-              "required": [
-                "target",
-                "result"
-              ],
-              "properties": {
-                "target": {
-                  "type": "string",
-                  "maxLength": 2048
-                },
-                "result": {
-                  "$ref": "#/components/schemas/Result"
-                }
-              }
+              "$ref": "#/components/schemas/BulkSkippedItem"
             }
           }
-        }
+        },
+        "description": "items contains every target in request order. executed contains accepted commands (pending means queued) or projected commands in preview. skipped lists all other targets with a stable code and a display reason. Both lists preserve request order and may be empty."
       },
       "BlacklistInput": {
         "type": "object",
@@ -2011,7 +2446,8 @@
           "seconds": {
             "type": "integer",
             "format": "int64",
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 31536000
           },
           "remove": {
             "type": "boolean"
@@ -2039,6 +2475,12 @@
           },
           "password": {
             "type": "boolean"
+          },
+          "password_epoch": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "Dynamic password generation matched by this member."
           },
           "exempt": {
             "type": "boolean"
@@ -2156,6 +2598,10 @@
             "type": "string",
             "format": "date-time"
           },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
           "attachments": {
             "type": "array",
             "maxItems": 20,
@@ -2182,6 +2628,10 @@
           "reporter": {
             "type": "string"
           },
+          "target": {
+            "type": "string",
+            "description": "Owner key of the reported message author when the message was retained at report creation time; never includes message body."
+          },
           "message": {
             "type": "string"
           },
@@ -2202,6 +2652,17 @@
           },
           "feedback": {
             "type": "string"
+          },
+          "resolved_by": {
+            "$ref": "#/components/schemas/Actor"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time"
           },
           "id": {
             "type": "string"
@@ -2233,6 +2694,10 @@
           },
           "state": {
             "type": "string"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
           },
           "id": {
             "type": "string"
@@ -2284,6 +2749,7 @@
               "approve",
               "blacklist",
               "card",
+              "card_preview",
               "dice",
               "exempt",
               "extend",
@@ -2302,10 +2768,13 @@
               "send",
               "subscribe",
               "unblacklist",
+              "unexempt",
               "unmute",
               "warn",
               "watch",
-              "welcome"
+              "welcome",
+              "cancel_action",
+              "retry_action"
             ]
           },
           "target": {
@@ -2353,6 +2822,14 @@
           },
           "permanent": {
             "type": "boolean"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "required": [
@@ -2389,6 +2866,14 @@
           },
           "reason": {
             "type": "string"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time"
           },
           "id": {
             "type": "string"
@@ -2432,12 +2917,25 @@
           "id": {
             "type": "string",
             "maxLength": 128,
-            "minLength": 1
+            "minLength": 1,
+            "pattern": "^[^/]+$",
+            "not": {
+              "enum": [
+                "me",
+                "*"
+              ]
+            }
           },
           "school": {
             "type": "string",
             "maxLength": 128,
-            "minLength": 1
+            "minLength": 1,
+            "pattern": "^[^/]+$",
+            "not": {
+              "enum": [
+                "*"
+              ]
+            }
           },
           "mode": {
             "type": "string",
@@ -2485,7 +2983,12 @@
             "type": "integer",
             "format": "int64",
             "minimum": 0,
-            "maximum": 1000000
+            "maximum": 1000000,
+            "not": {
+              "enum": [
+                1
+              ]
+            }
           },
           "mute_probability": {
             "type": "integer",
@@ -2593,6 +3096,35 @@
           },
           "password_set": {
             "type": "boolean"
+          },
+          "password_epoch": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "Monotonic generation counter incremented whenever the dynamic password is set, rotated or cleared."
+          },
+          "discoverable": {
+            "type": "boolean",
+            "description": "Whether the group appears in the student-facing directory."
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "",
+              "school",
+              "department",
+              "grade",
+              "course",
+              "club"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "password_hint": {
+            "type": "string",
+            "maxLength": 256
           }
         },
         "required": [
@@ -2625,6 +3157,10 @@
           "warning_limit",
           "name",
           "bot_enabled",
+          "discoverable",
+          "category",
+          "description",
+          "password_hint",
           "number",
           "revision",
           "password_set"
@@ -2640,14 +3176,23 @@
             "minLength": 1,
             "not": {
               "enum": [
-                "me"
+                "me",
+                "*",
+                "directory"
               ]
-            }
+            },
+            "pattern": "^[^/]+$"
           },
           "school": {
             "type": "string",
             "maxLength": 128,
-            "minLength": 1
+            "minLength": 1,
+            "pattern": "^[^/]+$",
+            "not": {
+              "enum": [
+                "*"
+              ]
+            }
           },
           "mode": {
             "type": "string",
@@ -2695,7 +3240,12 @@
             "type": "integer",
             "format": "int64",
             "minimum": 0,
-            "maximum": 1000000
+            "maximum": 1000000,
+            "not": {
+              "enum": [
+                1
+              ]
+            }
           },
           "mute_probability": {
             "type": "integer",
@@ -2747,7 +3297,8 @@
                 "kick",
                 "blacklist"
               ]
-            }
+            },
+            "uniqueItems": true
           },
           "welcome": {
             "type": "string",
@@ -2808,6 +3359,32 @@
             "maxLength": 256,
             "writeOnly": true,
             "description": "Omitted preserves password; empty clears it (not allowed in password mode). Never returned or saved as plaintext."
+          },
+          "discoverable": {
+            "type": "boolean",
+            "description": "Optional directory visibility flag; defaults to false when omitted."
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "",
+              "school",
+              "department",
+              "grade",
+              "course",
+              "club"
+            ],
+            "description": "Optional directory category; empty when uncategorized."
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 512,
+            "description": "Optional public group summary shown in the directory."
+          },
+          "password_hint": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "Optional hint telling applicants where to obtain the dynamic password."
           }
         },
         "required": [
@@ -3314,6 +3891,34 @@
           "text"
         ],
         "description": "Management command; requires current group-scoped capability."
+      },
+      "UnexemptCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "unexempt"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "target",
+          "text"
+        ],
+        "description": "Management command; revokes member exemption and re-evaluates current admission eligibility."
       },
       "WarnCommand": {
         "type": "object",
@@ -3926,6 +4531,28 @@
         ],
         "description": "Management command; requires current group-scoped capability."
       },
+      "UnexemptBatchCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "unexempt"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        },
+        "required": [
+          "kind",
+          "text"
+        ],
+        "description": "Management command; revokes member exemption and re-evaluates current admission eligibility."
+      },
       "CardBatchCommand": {
         "type": "object",
         "additionalProperties": false,
@@ -3972,6 +4599,9 @@
             "$ref": "#/components/schemas/ExemptBatchCommand"
           },
           {
+            "$ref": "#/components/schemas/UnexemptBatchCommand"
+          },
+          {
             "$ref": "#/components/schemas/CardBatchCommand"
           }
         ],
@@ -3985,6 +4615,7 @@
             "recheck": "#/components/schemas/RecheckBatchCommand",
             "extend": "#/components/schemas/ExtendBatchCommand",
             "exempt": "#/components/schemas/ExemptBatchCommand",
+            "unexempt": "#/components/schemas/UnexemptBatchCommand",
             "card": "#/components/schemas/CardBatchCommand"
           }
         }
@@ -4089,6 +4720,29 @@
               ]
             },
             "description": "UI action categories, not authorization grants. Unknown facts suggest refresh. Unsupported stages suggest contacting an administrator rather than repeating verification."
+          },
+          "missing_card_fields": {
+            "type": "array",
+            "uniqueItems": true,
+            "maxItems": 7,
+            "items": {
+              "type": "string",
+              "enum": [
+                "school",
+                "grade",
+                "department",
+                "name",
+                "student_id",
+                "gender",
+                "nickname"
+              ]
+            },
+            "description": "Optional card template field keys not yet disclosed or available for this group's card check; never contains field values."
+          },
+          "password_hint": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "Optional hint describing where to locate the dynamic password; present only when requires_password is true and a hint is configured."
           }
         },
         "required": [
@@ -4125,6 +4779,296 @@
           "items",
           "next_cursor"
         ]
+      },
+      "CardPreviewCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "card_preview"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 1024,
+            "description": "Optional candidate card_template override; uses the group's stored card_template when omitted or empty."
+          }
+        },
+        "required": [
+          "kind",
+          "target"
+        ],
+        "description": "Read-only management command; previews expected card rendering and missing profile fields without queuing bot actions."
+      },
+      "CancelActionCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "cancel_action"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "kind",
+          "target"
+        ],
+        "description": "Management command; cancels a pending bot action without affecting executing or unknown actions."
+      },
+      "RetryActionCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "retry_action"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "kind",
+          "target"
+        ],
+        "description": "Management command; queues a controlled retry for a confirmed failed bot action."
+      },
+      "AuditEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "result": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "actor",
+          "action",
+          "target",
+          "result",
+          "time"
+        ]
+      },
+      "AuditPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEntry"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Opaque cursor for the next scan, or empty when exhausted."
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ]
+      },
+      "DirectoryGroup": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Internal group ID."
+          },
+          "school": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "pattern": "^(?:|\\*+[0-9]{4})$",
+            "description": "Masked group number showing at most the final four digits; empty when not recorded."
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "",
+              "school",
+              "department",
+              "grade",
+              "course",
+              "club"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "before",
+              "muted",
+              "password"
+            ]
+          },
+          "require_student": {
+            "type": "boolean"
+          },
+          "accept_alumni": {
+            "type": "boolean"
+          },
+          "accept_temporary": {
+            "type": "boolean"
+          },
+          "requires_password": {
+            "type": "boolean"
+          },
+          "password_hint": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "Optional hint describing where to locate the dynamic password when requires_password is true."
+          },
+          "joined": {
+            "type": "boolean",
+            "description": "True only when the caller's own membership has been confirmed by the bot."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "",
+              "requested",
+              "awaiting_verification",
+              "grace",
+              "extended",
+              "exempt",
+              "restored",
+              "removal_pending"
+            ],
+            "description": "Caller's own active membership or application state, or empty when none."
+          }
+        },
+        "required": [
+          "id",
+          "school",
+          "name",
+          "number",
+          "category",
+          "description",
+          "mode",
+          "require_student",
+          "accept_alumni",
+          "accept_temporary",
+          "requires_password",
+          "joined",
+          "state"
+        ]
+      },
+      "DirectoryGroupPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DirectoryGroup"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Last scanned group ID if another page may exist, or empty when exhausted."
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ]
+      },
+      "BulkItems": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "target",
+            "result"
+          ],
+          "properties": {
+            "target": {
+              "type": "string",
+              "maxLength": 2048
+            },
+            "result": {
+              "$ref": "#/components/schemas/Result"
+            }
+          }
+        },
+        "maxItems": 100
+      },
+      "BulkSkippedItem": {
+        "type": "object",
+        "required": [
+          "target",
+          "reason_code",
+          "reason"
+        ],
+        "properties": {
+          "target": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "reason_code": {
+            "type": "string",
+            "description": "Stable reason for localization, e.g. not_found (no member record), not_joined, bot_disabled or action_queue_full."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Human-readable explanation in Chinese."
+          }
+        }
       }
     }
   }
