@@ -20,7 +20,6 @@ try {
   fs.writeFileSync(goInput, JSON.stringify(goContract));
   execFileSync('go', ['run', 'github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.8.0', '-generate', 'types,client', '-package', 'sdk', '-o', goOutput, goInput], { stdio: 'inherit' });
   execFileSync('pnpm', ['exec', 'openapi-typescript', 'contracts/groups.openapi.json', '-o', tsOutput], { stdio: 'inherit' });
-  fs.appendFileSync(tsOutput, '\nexport interface operations {\n    /** @deprecated Use listDeliveries. */\n    listDeliverys: operations["listDeliveries"];\n}\n');
   if (check) {
     for (const [expected, actual] of [['sdk/groups.gen.go', goOutput], ['sdk/groups.gen.ts', tsOutput]]) {
       assert.equal(fs.readFileSync(expected, 'utf8'), fs.readFileSync(actual, 'utf8'), `Generated contract differs: ${expected}`);
