@@ -261,7 +261,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Lists delivery results. The SDK also accepts the legacy listDeliverys spelling. */
+        /** @description Lists delivery results. */
         get: operations["listDeliveries"];
         put?: never;
         post?: never;
@@ -2656,9 +2656,4 @@ export interface operations {
             };
         };
     };
-}
-
-export interface operations {
-    /** @deprecated Use listDeliveries. */
-    listDeliverys: operations["listDeliveries"];
 }

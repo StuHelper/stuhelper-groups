@@ -1833,7 +1833,7 @@
             }
           }
         },
-        "description": "Lists delivery results. The SDK also accepts the legacy listDeliverys spelling."
+        "description": "Lists delivery results."
       }
     },
     "/api/v1/groups/me": {
